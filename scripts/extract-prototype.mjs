@@ -22,24 +22,28 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'prototypes', '随口说原型-07191700.html');
 const OUT = join(ROOT, 'prototypes', 'extracted');
 
-/** 段 → 现有 React 实现的映射。null = 无对应路由（待建）。 */
+/**
+ * 段 → 现有 React 实现的映射。null = 无对应路由（待建）。
+ * 只写「文件/路由是否存在」，保真与功能缺口见 prototypes/PROTOTYPE_GAP.md。
+ */
 const REACT_MAP = {
-  顶栏: null,
-  Hero: null,
-  四环节: null,
-  技术: null,
-  '价格 + CTA': null,
-  侧边栏: null,
-  主区域: null,
-  工作台: 'src/pages/Workbench.tsx  (/)',
-  个人中心: null,
+  顶栏: 'src/pages/Landing.tsx  (/) —— Landing 内顶栏区块',
+  Hero: 'src/pages/Landing.tsx  (/) —— Landing 内 Hero 区块',
+  四环节: 'src/pages/Landing.tsx  (/) —— Landing 内 #landing-features',
+  技术: 'src/pages/Landing.tsx  (/) —— Landing 内 #landing-tech',
+  '价格 + CTA': 'src/pages/Landing.tsx  (/) —— Landing 内 #landing-price',
+  侧边栏: 'src/components/Sidebar.tsx  （AppLayout 挂载）',
+  主区域: 'src/components/AppLayout.tsx  （layout route）',
+  工作台: 'src/pages/Workbench.tsx  (/workbench)',
+  个人中心: 'src/pages/Profile.tsx  (/profile)',
   校准对话: 'src/pages/Calibrate.tsx  (/calibrate)',
-  账号定位: null,
-  选题库: null,
+  账号定位: 'src/pages/Positioning.tsx  (/positioning)',
+  选题库: 'src/pages/Topics.tsx  (/topics)',
   文案创作: 'src/pages/Create.tsx  (/create)',
   对标拆解: 'src/pages/Analyze.tsx  (/analyze)',
   知识库: 'src/pages/KB.tsx  (/kb)',
-  历史稿件: 'src/pages/Review.tsx  (/review) —— 原型此段标题为「发布复盘」，需核覆盖度',
+  // 提取脚本按 HTML 注释段名「历史稿件」索引；原型 UI 标题与侧栏均为「发布复盘」
+  历史稿件: 'src/pages/Review.tsx  (/review) —— UI 标题应对齐「发布复盘」',
 };
 
 /**
@@ -159,6 +163,8 @@ const md = [
   '| # | 段 | 显隐条件 | 包裹标签 | 原文行 | 行数 | 分段文件 | 现有 React 实现 |',
   '|---|---|---|---|---|---|---|---|',
   ...rows.map((r, i) => `| ${i + 1} | ${r.name}${r.wrapped.length ? '（容器）' : ''} | ${r.cond ? `\`${r.cond}\`` : '—' } | \`${r.tag}\` | ${r.line}–${r.endLine} | ${r.lines} | \`sections/${r.file}\` | ${REACT_MAP[r.name] ?? '**缺**'} |`),
+  '',
+  '> 本表只回答「段 ↔ 文件/路由」。令牌保真与功能覆盖见 [`../PROTOTYPE_GAP.md`](../PROTOTYPE_GAP.md)（尺子：令牌过线）。',
   '',
 ].join('\n');
 writeFileSync(join(OUT, 'SECTIONS.md'), md);
