@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listTopics, type Topic } from '../api/topic';
+import { topicSourceMeta } from '../lib/topicSourceMeta';
 
 /**
  * 选题库 `/topics`——对齐原型「选题库」段（`prototypes/extracted/sections/12-选题库.html`，
@@ -9,22 +10,6 @@ import { listTopics, type Topic } from '../api/topic';
  * <p>四路来源聚合展示，每条一行：来源标签 + 标题 + 来源说明 + 「生成文案」。
  * 「生成文案」带 `?topic=<id>` 跳创作页，让创作页知道从哪个选题来。
  */
-
-/**
- * 四路来源的标签样式。原型里标签色是模板变量（`t.tagColor/tagBorder/tagBg`），
- * 其取值未随存档持久化，故按令牌表里已有的语义色分配：热点用强调棕、FAQ 用金、
- * 对标用信息蓝、复盘用成功绿。非原型原值。
- */
-const SOURCE_META: Record<string, { label: string; cls: string }> = {
-  hot: { label: '每日热点', cls: 'border-paper-goldPale bg-paper-tint text-paper-primary' },
-  faq: { label: '你的 FAQ', cls: 'border-paper-goldSoft bg-paper-sunken text-paper-gold' },
-  benchmark: { label: '对标拆解', cls: 'border-paper-lineStrong bg-paper-sunken text-paper-info' },
-  replay: { label: '爆款复盘', cls: 'border-paper-lineStrong bg-paper-successTint text-paper-success' },
-};
-
-function sourceMeta(source: string) {
-  return SOURCE_META[source] ?? { label: source || '未分类', cls: 'border-paper-line bg-paper-sunken text-paper-muted' };
-}
 
 export default function Topics() {
   const navigate = useNavigate();
@@ -77,7 +62,7 @@ export default function Topics() {
       ) : (
         <div className="flex flex-col gap-2.5">
           {list.map((t) => {
-            const meta = sourceMeta(t.source);
+            const meta = topicSourceMeta(t.source);
             return (
               <div
                 key={t.id}
