@@ -136,7 +136,7 @@ export default function Analyze() {
           </p>
         </div>
         <Link
-          to="/"
+          to="/workbench"
           className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
         >
           返回工作台

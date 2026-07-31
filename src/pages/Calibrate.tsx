@@ -75,7 +75,7 @@ export default function Calibrate() {
     mutationFn: () => confirmProfile(sessionId),
     onSuccess: () => {
       setError(null);
-      navigate('/');
+      navigate('/workbench');
     },
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
   });
@@ -166,7 +166,7 @@ export default function Calibrate() {
           </p>
         </div>
         <Link
-          to="/"
+          to="/workbench"
           className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
         >
           返回工作台

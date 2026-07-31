@@ -18,4 +18,13 @@ body {
   h1, h2, h3 {
     @apply font-serif;
   }
+
+  /* 原型 <style> 里的全局链接色（a{color:#8a5a2b} / a:hover{color:#6e4620}）。
+     Tailwind preflight 会把 a 重置成 inherit，不在这里补就丢了。 */
+  a {
+    @apply text-paper-primary;
+  }
+  a:hover {
+    @apply text-paper-primaryHover;
+  }
 }

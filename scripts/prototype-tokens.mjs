@@ -26,8 +26,10 @@ const html = readFileSync(FULL, 'utf8');
 // 只看 body：<head> 里那 521KB 是内嵌字体，混进来会污染统计
 const body = html.slice(html.indexOf('<body'));
 
+// 同时收 style-hover：原型把 hover 态写在这个自定义属性里（如侧边栏 hover #3a382f），
+// 只解析 style= 会漏掉整套交互态颜色——而 hover 也是保真的一部分。
 const decls = [];
-for (const m of body.matchAll(/style="([^"]*)"/g)) {
+for (const m of body.matchAll(/style(?:-hover)?="([^"]*)"/g)) {
   for (const part of m[1].split(';')) {
     const i = part.indexOf(':');
     if (i < 0) continue;

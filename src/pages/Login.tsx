@@ -44,7 +44,8 @@ export default function Login() {
         localStorage.removeItem('sks_return_to');
         navigate(ret);
       } else {
-        navigate('/');
+        // `/` 现在是公开落地页，登录后要进工作台，否则会被送回营销页
+        navigate('/workbench');
       }
     },
     onError: (e: unknown) => setError(getBizMessage(e, '登录失败')),

@@ -2,7 +2,7 @@
 
 由 `node scripts/prototype-tokens.mjs` 生成，数据源是 `extracted/full.html` 的 body inline 样式。
 
-样式声明总数 **3122** 条，来自 **730** 处 `style="..."`。
+样式声明总数 **3230** 条，来自 **730** 处 `style="..."`。
 原型无任何 class 选择器，令牌全部由此反推。**出现 ≥3 次的值才建议进 tailwind.config**，
 只出现 1 次的多为局部微调，照搬会把令牌表撑烂。
 
@@ -12,35 +12,38 @@
 
 | 色值 | 出现次数 | 现有令牌 |
 |---|---|---|
-| `#8a5a2b` | 114 | `paper.primary` |
+| `#8a5a2b` | 165 | `paper.primary` |
 | `#ffffff` | 91 | `paper.card` |
 | `#8a8578` | 83 | `paper.muted` |
 | `#e2dccd` | 61 | `paper.line` |
 | `#6b6558` | 48 | `paper.inkSoft` |
 | `#23231f` | 44 | `paper.ink` |
 | `#d8d2c4` | 44 | `paper.lineStrong` |
+| `#f7f3ea` | 39 | `paper.tint` |
 | `#faf8f2` | 36 | `paper.sunken` |
-| `#f7f3ea` | 27 | `paper.tint` |
+| `#6e4620` | 25 | `paper.primaryHover` |
 | `#c89a5e` | 21 | `paper.gold` |
 | `#eee8da` | 18 | `paper.tintDeep` |
+| `#b0492f` | 16 | `paper.danger` |
 | `#a09a8a` | 14 | `paper.mutedLight` |
-| `#b0492f` | 12 | `paper.danger` |
 | `#c9b997` | 11 | `paper.goldSoft` |
+| `#3a382f` | 9 |  |
+| `#faf0ec` | 9 | `paper.dangerTint` |
 | `#4a8c5c` | 8 | `paper.success` |
 | `#f2efe6` | 8 | `paper.shade` |
-| `#faf0ec` | 8 | `paper.dangerTint` |
 | `#9a937f` | 7 | `paper.mutedFaint` |
 | `#dcc6a4` | 7 | `paper.goldPale` |
+| `#e9e4d6` | 7 | `paper.shadeDeep` |
 | `#2e2c25` | 6 | `paper.coal` |
 | `#4a4536` | 6 | `paper.coalLine` |
 | `#4a6c8c` | 6 | `paper.info` |
 | `#e4b9ab` | 6 | `paper.dangerLine` |
-| `#e9e4d6` | 5 | `paper.shadeDeep` |
 | `#444136` | 4 | `paper.coalLine2` |
 | `#7a3a26` | 4 | `paper.primaryDeep` |
 | `rgba(0,0,0,0.25)` | 4 |  |
 | `rgba(35,35,31,0.45)` | 4 |  |
 | `#2f5c3b` | 3 | `paper.successDeep` |
+| `#8f3a25` | 3 |  |
 | `#b5ae9a` | 3 | `paper.mutedPale` |
 | `#edf5ef` | 3 | `paper.successTint` |
 | `#b3c5d6` | 2 |  |
@@ -49,6 +52,7 @@
 | `rgba(138,90,43,0.22)` | 2 |  |
 | `#bcd8c4` | 1 |  |
 | `#c9c2ae` | 1 |  |
+| `#f4e3dd` | 1 |  |
 | `#f7f5ee` | 1 |  |
 | `rgba(0,0,0,0.2)` | 1 |  |
 | `rgba(0,0,0,0.4)` | 1 |  |
@@ -57,9 +61,7 @@
 
 ### 与现有 tailwind.config 的冲突
 
-以下令牌在 tailwind.config 里有，但原型**一次都没用过**——值可能与原型不一致，需人工核对后校准：
-
-- `paper.primaryHover` = `#6e4620`
+无——现有令牌的色值原型都在用。
 
 ## 字号（`font-size`）
 

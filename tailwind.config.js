@@ -39,6 +39,7 @@ export default {
 
           // ── 暖炭系（侧边栏内部层次）
           coal: '#2e2c25',      // ×6
+          coalHover: '#3a382f', // ×9  侧边栏项 hover（来自 style-hover 属性）
           coalLine: '#4a4536',  // ×6
           coalLine2: '#444136', // ×4
 
@@ -52,6 +53,7 @@ export default {
 
           // ── 语义色
           danger: '#b0492f',      // ×12
+          dangerHover: '#8f3a25', // ×3  来自 style-hover
           dangerTint: '#faf0ec',  // ×8
           dangerLine: '#e4b9ab',  // ×6
           success: '#4a8c5c',     // ×8
@@ -112,8 +114,23 @@ export default {
       },
 
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+        // 与原型 <style> 里的 body 声明一致：'Noto Sans SC', 'PingFang SC', sans-serif。
+        // 原先以 system-ui 打头，中文字形与原型不同，是「看着不像」的另一处来源。
+        sans: ['Noto Sans SC', 'PingFang SC', 'system-ui', '-apple-system', 'Microsoft YaHei', 'sans-serif'],
         serif: ['Noto Serif SC', 'serif'],
+      },
+
+      // 原型 <style> 里定义的两个动画：pulse 用于加载中的呼吸态，slideup 用于弹窗入场。
+      keyframes: {
+        pulse: { '0%,100%': { opacity: '0.35' }, '50%': { opacity: '1' } },
+        slideup: {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+      },
+      animation: {
+        pulse: 'pulse 1.5s ease-in-out infinite',
+        slideup: 'slideup 0.3s ease',
       },
     },
   },
