@@ -25,7 +25,7 @@
 | 5 | 价格 + CTA | — | 同上 `#landing-price` | 过 | 过 | 过 | 三档价卡 + CTA→登录 | — |
 | 6 | 侧边栏 | — | `Sidebar.tsx` | 过 | 过 | 偏 | 七项导航/额度/头像齐；缺原型「新账号视角（演示）」开关 | 7 |
 | 7 | 主区域 | — | `AppLayout.tsx` | 过 | 过 | 过 | `h-screen` + 216 侧栏 + 主区 `px-10 py-8` 滚动 | — |
-| 8 | 工作台 | `isHome` | `Workbench.tsx` `/workbench` | 过 | 不过 | 缺 | 令牌：`text-2xl`/`text-5xl`/`text-sm`/`text-xs` + 多处裸 `#d8c9b2`。功能：仅余额卡+资料捷径；无 `homeNew`「三步开始」与 `homeNormal`（指标/今日选题/知识空白）双态 | **1** |
+| 8 | 工作台 | `isHome` | `Workbench.tsx` `/workbench` | 过 | 过 | 过 | 双态 homeNew/homeNormal；指标由 cards/scripts 聚合；今日选题取 open 前 3 + 空态；知识空白条无 API 未做（接受，见 backlog） | — |
 | 9 | 个人中心 | `isProfile` | `Profile.tsx` `/profile` | 过 | 过 | 过 | `text-title`/`paper-*`；完善度 + 双栏 + 换绑 | — |
 | 10 | 校准对话 | `isCalib` | `Calibrate.tsx` `/calibrate` | 过 | 不过 | 偏 | 令牌：`text-2xl`/`text-sm` 主导 + 裸 hex。功能：贴素材→问答→确认可走；缺原型三步进度/档案卡呈现（草稿偏 `JSON.stringify`） | 6 |
 | 11 | 账号定位 | `isPos` | `Positioning.tsx` `/positioning` | 过 | 过 | 偏 | 令牌过。功能：空态三步+档案/支柱有；右侧「建库对话回放」缺（代码注明无历史对话 API） | 8 |
@@ -44,7 +44,7 @@
 
 ## 建议施工 backlog（按建议序）
 
-1. **工作台** — 补 `homeNew` / `homeNormal` 双态 + 令牌化（登录后第一屏）
+1. ~~**工作台** — 补 `homeNew` / `homeNormal` 双态 + 令牌化（登录后第一屏）~~ ✅ 完成（双态 + 令牌过线；知识空白条无 API 延期）
 2. **文案创作** — 令牌化 + 对齐原型选题区/平台态/查重等缺失块（按后端是否已有字段裁）
 3. **对标拆解** — 结果区改原型①对比表 + 编号块；去掉纯 FieldBlock 堆叠感
 4. **知识库** — 令牌化 + 分层网格 / 补卡提醒（能接 API 的先接）
