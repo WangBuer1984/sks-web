@@ -38,3 +38,27 @@ export function login(phone: string, code: string): Promise<LoginResult> {
 export function fetchMe(): Promise<MeResponse> {
   return userClient.get<MeResponse, MeResponse>('/user/me');
 }
+
+/**
+ * 更新资料（对齐 Java `UpdateMe` record 的 9 个字段，全部可选/可为 null）。
+ *
+ * <p>后端会重算 `completeness`，口径是**只按创作资料 5 字段**算：
+ * nickname/industry/identity/style/weeklyGoal 已填数 ÷ 5 × 100 取整。
+ * gender/age/city/defaultPlatform 影响生成质量但不计入分母——所以填了基础资料完善度不动是正常的。
+ */
+export interface UpdateMePayload {
+  nickname?: string | null;
+  gender?: string | null;
+  age?: number | null;
+  city?: string | null;
+  industry?: string | null;
+  identity?: string | null;
+  style?: string | null;
+  weeklyGoal?: number | null;
+  defaultPlatform?: string | null;
+}
+
+/** 保存资料，返回更新后的 me（含重算过的 completeness）。 */
+export function updateMe(payload: UpdateMePayload): Promise<MeResponse> {
+  return userClient.put<MeResponse, MeResponse>('/user/me', payload);
+}

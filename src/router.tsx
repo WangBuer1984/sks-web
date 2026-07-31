@@ -8,6 +8,9 @@ import Create from './pages/Create';
 import Calibrate from './pages/Calibrate';
 import Analyze from './pages/Analyze';
 import Review from './pages/Review';
+import Profile from './pages/Profile';
+import Positioning from './pages/Positioning';
+import Topics from './pages/Topics';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminConsole from './pages/admin/AdminConsole';
 import AppLayout from './components/AppLayout';
@@ -59,12 +62,16 @@ export default function AppRoutes() {
         }
       >
         <Route path="/workbench" element={<Workbench />} />
+        <Route path="/positioning" element={<Positioning />} />
+        <Route path="/topics" element={<Topics />} />
         {/* 校准对话原型里不在侧边栏（从工作台/账号定位进），但保留独立路由 */}
         <Route path="/calibrate" element={<Calibrate />} />
         <Route path="/create" element={<Create />} />
         <Route path="/analyze" element={<Analyze />} />
         <Route path="/kb" element={<KB />} />
         <Route path="/review" element={<Review />} />
+        {/* 个人中心原型里不在侧边栏导航，是点底部头像块进 */}
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminLogin />} />

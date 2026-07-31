@@ -52,3 +52,23 @@ export function asrVoice(audio: Blob): Promise<string> {
 export function confirmProfile(sessionId: string): Promise<void> {
   return userClient.post<void, void>('/profile/confirm', { sessionId });
 }
+
+/**
+ * active 定位档案（对齐 Java `ProfileController.ActiveProfileView`）。
+ *
+ * <p>`content` 的键由 Python summarize 产出，契约为 `人设 / 人群 / 差异化 / 变现 / 红线 / 支柱配比`
+ * ——**中文键**，且 prompt 迭代频繁故后端整体透传不拆字段，前端也按 `Record` 读、缺键降级显示。
+ *
+ * <p>未校准不是错误：`calibrated=false` + `content={}`，据此渲染引导态而非报错。
+ */
+export interface ActiveProfileView {
+  calibrated: boolean;
+  version: number | null;
+  calibratedAt: string | null;
+  content: Record<string, unknown>;
+}
+
+/** 读取当前用户的 active 定位档案。未校准返回 calibrated=false（非 404）。 */
+export function getActiveProfile(): Promise<ActiveProfileView> {
+  return userClient.get<ActiveProfileView, ActiveProfileView>('/profile');
+}
