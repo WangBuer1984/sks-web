@@ -1,0 +1,61 @@
+<!-- 段：账号定位　条件：{{ isPos }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4497–4555 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isPos }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 1040px; margin: 0 auto;">
+        <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 4px;">账号定位</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">这份定位档案是所有智能体的公共上下文——选题、创作、拆解都基于它工作</div>
+        <sc-if value="{{ posNotCalibrated }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 44px 40px; text-align: center;">
+            <div style="font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 900; margin-bottom: 8px;">你的账号还没有定位档案</div>
+            <div style="font-size: 14px; color: #8a8578; line-height: 1.8; margin-bottom: 26px;">没有定位档案，AI 只能写出「谁都能用」的通用文案<br>花 15 分钟聊一次，之后每条稿子都像你本人写的</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 640px; margin: 0 auto 28px; font-size: 12.5px;">
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 10px; padding: 14px;"><div style="font-weight: 700; margin-bottom: 4px;">① 贴个链接</div><div style="color: #8a8578; line-height: 1.6;">主页/过往文案任意一样，AI 先猜一版你的人设</div></div>
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 10px; padding: 14px;"><div style="font-weight: 700; margin-bottom: 4px;">② 聊几个问题</div><div style="color: #8a8578; line-6: 1.6; line-height: 1.6;">像访谈一样一问一答，支持语音，大白话即可</div></div>
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 10px; padding: 14px;"><div style="font-weight: 700; margin-bottom: 4px;">③ 立刻见效</div><div style="color: #8a8578; line-height: 1.6;">当场对比「有/无定位」两版文案的差别</div></div>
+            </div>
+            <button sc-camel-on-click="{{ startCalibrate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 14px 40px; font-size: 15px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ calibrateBtnLabel }}</button>
+            <div style="font-size: 12px; color: #a09a8a; margin-top: 12px;">约 15 分钟 · 不消耗额度 · 随时可以重新校准</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ posCalibrated }}" hint-placeholder-val="{{ true }}">
+        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 18px;">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px;">
+                <div style="font-size: 13px; font-weight: 700;">定位档案</div>
+                <div style="font-size: 11px; color: #4a8c5c;">✓ 已校准 · 基于 31 次改稿记录持续更新</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">人设</div><div style="line-height: 1.6;">说真话的工厂人 · 12 年全屋定制工厂主</div></div>
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">目标人群</div><div style="line-height: 1.6;">30–45 岁装修业主，怕被坑、比价中</div></div>
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">差异化</div><div style="line-height: 1.6;">工厂直营视角拆行业内幕，敢报真实价格</div></div>
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">转化路径</div><div style="line-height: 1.6;">评论扣字 → 私域群 → 免费拆报价单 → 到店</div></div>
+              </div>
+            </div>
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">内容支柱 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">选题库按此配比推荐</span></div>
+              <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>行业揭秘</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 40%; background: #8a5a2b; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">40%</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>避坑清单</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 30%; background: #c89a5e; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">30%</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>客户案例</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 20%; background: #4a8c5c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">20%</span></div>
+                <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>产品种草</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 10%; background: #4a6c8c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">10%</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">建库引导对话</div>
+            <div style="font-size: 11.5px; color: #8a8578; margin-bottom: 14px;">你注册时 15 分钟聊出来的档案，随时可以重聊校准</div>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px; flex: 1;">
+              <div style="background: #f7f3ea; border-radius: 10px 10px 10px 2px; padding: 10px 12px; line-height: 1.6; max-width: 92%;">我看了你贴的抖音主页，猜你的人设是「说真话的工厂人」——对吗？</div>
+              <div style="background: #23231f; color: #e9e4d6; border-radius: 10px 10px 2px 10px; padding: 10px 12px; line-height: 1.6; max-width: 92%; align-self: flex-end;">对，但我不想显得太攻击同行</div>
+              <div style="background: #f7f3ea; border-radius: 10px 10px 10px 2px; padding: 10px 12px; line-height: 1.6; max-width: 92%;">明白，已加入表达规则：「不贬低具体同行品牌」。那客户最常问你的问题是什么？</div>
+              <div style="background: #23231f; color: #e9e4d6; border-radius: 10px 10px 2px 10px; padding: 10px 12px; line-height: 1.6; max-width: 92%; align-self: flex-end;">🎤 为什么报价能差一倍…（语音 42s）</div>
+              <div style="background: #f7f3ea; border-radius: 10px 10px 10px 2px; padding: 10px 12px; line-height: 1.6; max-width: 92%;">已整理成 FAQ 卡「板材差价」，你确认一下 →</div>
+            </div>
+            <button sc-camel-on-click="{{ recalibrate }}" style="margin-top: 14px; border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 10px; font-size: 13px; cursor: pointer;" style-hover="background: #f7f3ea;">重新校准定位</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </sc-if>

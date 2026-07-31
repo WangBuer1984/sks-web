@@ -1,0 +1,27 @@
+# 原型分段索引（自动生成，勿手改）
+
+由 `node scripts/extract-prototype.mjs` 生成。改原型后重跑本脚本。
+
+源文件：`prototypes/随口说原型-07191700.html`（页面源码在第 387 行的 JSON 字符串里）
+还原后：5471 行；其中前约 4080 行是 505 条 `@font-face` 内嵌字体，App 标记从 4084 行起。
+
+`<sc-if value="{{ isXxx }}">` 是原型的显隐条件，等价于一份路由/状态表——建 React 路由时可直接对照。
+
+| # | 段 | 显隐条件 | 包裹标签 | 原文行 | 行数 | 分段文件 | 现有 React 实现 |
+|---|---|---|---|---|---|---|---|
+| 1 | 顶栏 | — | `div` | 4084–4098 | 14 | `sections/01-顶栏.html` | **缺** |
+| 2 | Hero | — | `div` | 4099–4109 | 10 | `sections/02-Hero.html` | **缺** |
+| 3 | 四环节 | — | `div` | 4110–4138 | 28 | `sections/03-四环节.html` | **缺** |
+| 4 | 技术 | — | `div` | 4139–4173 | 34 | `sections/04-技术.html` | **缺** |
+| 5 | 价格 + CTA | — | `div` | 4174–4198 | 24 | `sections/05-价格-+-CTA.html` | **缺** |
+| 6 | 侧边栏 | — | `div` | 4239–4271 | 32 | `sections/06-侧边栏.html` | **缺** |
+| 7 | 主区域（容器） | — | `div` | 4273–5030 | 3 | `sections/07-主区域.html` | **缺** |
+| 8 | 工作台 | `isHome` | `sc-if` | 4276–4365 | 89 | `sections/08-工作台.html` | src/pages/Workbench.tsx  (/) |
+| 9 | 个人中心 | `isProfile` | `sc-if` | 4367–4423 | 56 | `sections/09-个人中心.html` | **缺** |
+| 10 | 校准对话 | `isCalib` | `sc-if` | 4425–4495 | 70 | `sections/10-校准对话.html` | src/pages/Calibrate.tsx  (/calibrate) |
+| 11 | 账号定位 | `isPos` | `sc-if` | 4497–4555 | 58 | `sections/11-账号定位.html` | **缺** |
+| 12 | 选题库 | `isTopics` | `sc-if` | 4557–4588 | 31 | `sections/12-选题库.html` | **缺** |
+| 13 | 文案创作 | `isCreate` | `sc-if` | 4590–4684 | 94 | `sections/13-文案创作.html` | src/pages/Create.tsx  (/create) |
+| 14 | 对标拆解 | `isBench` | `sc-if` | 4686–4886 | 200 | `sections/14-对标拆解.html` | src/pages/Analyze.tsx  (/analyze) |
+| 15 | 知识库 | `isKb` | `sc-if` | 4888–4959 | 71 | `sections/15-知识库.html` | src/pages/KB.tsx  (/kb) |
+| 16 | 历史稿件 | `isHistory` | `sc-if` | 4961–5029 | 68 | `sections/16-历史稿件.html` | src/pages/Review.tsx  (/review) —— 原型此段标题为「发布复盘」，需核覆盖度 |

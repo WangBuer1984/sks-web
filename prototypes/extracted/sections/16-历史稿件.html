@@ -1,0 +1,71 @@
+<!-- 段：历史稿件　条件：{{ isHistory }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4961–5029 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 980px; margin: 0 auto;">
+        <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 4px;">发布复盘</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">闭环的最后一站：登记发布地址 → 数据回来 → 爆款沉淀进知识库 → 续集回到选题库</div>
+        <sc-if value="{{ historyEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 44px 40px; text-align: center;">
+            <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">还没有稿件</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">生成并采用第一条文案后，它会出现在这里<br>发布后登记视频地址，数据回来自动做爆款归因</div>
+            <button sc-camel-on-click="{{ goTopics }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">去选题库挑一个选题</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ historyHasData }}" hint-placeholder-val="{{ true }}">
+        <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 1fr 96px 78px 64px 64px 200px; gap: 12px; padding: 12px 20px; background: #faf8f2; border-bottom: 1px solid #e2dccd; font-size: 12px; font-weight: 700; color: #8a8578;">
+            <div>选题</div><div>平台</div><div>状态</div><div>播放</div><div>点赞</div><div>复盘动作</div>
+          </div>
+          <sc-for list="{{ historyList }}" as="h" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 1fr 96px 78px 64px 64px 200px; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eee8da; font-size: 13.5px; align-items: center;">
+              <div style="line-height: 1.5;">{{ h.title }}<div style="font-size: 11.5px; color: #a09a8a; margin-top: 2px;">{{ h.date }} 生成</div></div>
+              <div style="color: #6b6558; font-size: 12.5px;">{{ h.platform }}</div>
+              <div><span style="font-size: 12px; color: {{ h.stColor }}; background: {{ h.stBg }}; padding: 3px 10px; border-radius: 12px; white-space: nowrap;">{{ h.status }}</span></div>
+              <div style="font-size: 12.5px; color: #6b6558;">{{ h.views }}</div>
+              <div style="font-size: 12.5px; color: #6b6558;">{{ h.likes }}</div>
+              <div style="font-size: 12px;">
+                <sc-if value="{{ h.isHot }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button sc-camel-on-click="{{ h.mark }}" style="border: 1px solid {{ h.markBorder }}; color: {{ h.markColor }}; background: {{ h.markBg }}; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;">{{ h.markLabel }}</button>
+                    <button sc-camel-on-click="{{ h.sequel }}" style="border: 1px solid {{ h.seqBorder }}; color: {{ h.seqColor }}; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="background: #f7f3ea;">{{ h.seqLabel }}</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ h.isRejected }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ h.fbPending }}" hint-placeholder-val="{{ true }}">
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                      <span style="color: #8a8578;">没用它是因为？</span>
+                      <button sc-camel-on-click="{{ h.fbTopic }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">选题不对</button>
+                      <button sc-camel-on-click="{{ h.fbVoice }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">不像我说话</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ h.fbDone }}" hint-placeholder-val="{{ false }}">
+                    <span style="color: #4a8c5c;">✓ {{ h.fbNote }}</span>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ h.isPlain }}" hint-placeholder-val="{{ false }}">
+                  <span style="color: #a09a8a;">数据正常，无需动作</span>
+                </sc-if>
+                <sc-if value="{{ h.isPending }}" hint-placeholder-val="{{ false }}">
+                  <button sc-camel-on-click="{{ h.openPub }}" style="border: 1px solid #b0492f; color: #b0492f; background: #faf0ec; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #f4e3dd;">登记视频地址 →</button>
+                </sc-if>
+                <sc-if value="{{ h.isTracking }}" hint-placeholder-val="{{ false }}">
+                  <span style="color: #4a8c5c;">✓ 已登记，追踪中 · 24h 后出归因</span>
+                </sc-if>
+                <sc-if value="{{ h.flopPending }}" hint-placeholder-val="{{ false }}">
+                  <button sc-camel-on-click="{{ h.flopWhy }}" style="border: 1px solid #b0492f; color: #b0492f; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #faf0ec;">低于预期 · 看归因</button>
+                </sc-if>
+                <sc-if value="{{ h.flopDone }}" hint-placeholder-val="{{ false }}">
+                  <span style="color: #6b6558; line-height: 1.5;">归因：钩子前 3 秒无冲突 + 发布时段偏差<br><span style="color: #4a8c5c;">✓ 改进建议已写入创作偏好</span></span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px;">
+          <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65;"><strong>本周归因：</strong>清单体（验收 5 个地方）播放是均值的 6 倍——你的观众为「可保存的干货」停留，建议下周清单体占比提到 2/4 条。</div>
+          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65; color: #6b6558;">「未采用」的回答会写回账号档案与口吻样本；「爆款素材」进知识库 C 层，供后续创作引用。</div>
+        </div>
+        </sc-if>
+      </div>
+    </sc-if>

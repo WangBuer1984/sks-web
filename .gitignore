@@ -3,3 +3,8 @@ dist/
 .env
 .vite/
 .idea/
+
+# 原型还原产物：full.html 有 656KB，其中 521KB 是 505 条 @font-face 内嵌字体，
+# 无 diff 价值且随时可由 scripts/extract-prototype.mjs 重生成。
+# 同目录的 sections/ 与 SECTIONS.md / TOKENS.md 要入库——那是逐段保真的对照基准。
+prototypes/extracted/full.html

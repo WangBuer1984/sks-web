@@ -1,0 +1,203 @@
+<!-- 段：对标拆解　条件：{{ isBench }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4686–4886 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isBench }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 1040px; margin: 0 auto;">
+        <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 4px;">对标拆解</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 16px;">拆账号看「它为什么值得抄、抄什么」，拆视频看「这条为什么火」</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <div sc-camel-on-click="{{ setModeAcct }}" style="padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer; font-weight: {{ acctTabW }}; background: {{ acctTabBg }}; color: {{ acctTabC }}; border: 1px solid {{ acctTabBd }};">拆账号</div>
+          <div sc-camel-on-click="{{ setModeVideo }}" style="padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer; font-weight: {{ videoTabW }}; background: {{ videoTabBg }}; color: {{ videoTabC }}; border: 1px solid {{ videoTabBd }};">拆视频</div>
+        </div>
+
+        <!-- 拆账号 -->
+        <sc-if value="{{ isAcctMode }}" hint-placeholder-val="{{ true }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
+            <div style="display: flex; gap: 10px;">
+              <input value="{{ acctInput }}" sc-camel-on-change="{{ onAcctInput }}" placeholder="粘贴对标账号主页链接，如 douyin.com/user/…" style="flex: 1; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; background: #faf8f2; color: #23231f; outline: none;">
+              <button sc-camel-on-click="{{ acctGo }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;" style-hover="background: #6e4620;">{{ acctBtnLabel }}</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px;">
+              <span style="font-size: 12px; color: #8a8578;">试试示例：</span>
+              <span sc-camel-on-click="{{ acctSample }}" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="background: #f7f3ea;">装修避坑老张 · 抖音 86w 粉</span>
+              <span style="margin-left: auto; font-size: 12px; color: #a09a8a;">消耗 10 条文案额度 · 抓取播放 TOP20 逐条拆解</span>
+            </div>
+          </div>
+          <sc-if value="{{ acctLoading }}" hint-placeholder-val="{{ false }}">
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 30px; text-align: center;">
+              <div style="font-size: 14px; color: #8a5a2b; animation: pulse 1.2s ease-in-out infinite;">{{ acctLoadingMsg }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ acctDone }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 16px; animation: slideup 0.4s ease;">
+              <!-- ① 账号画像对比 -->
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">① 账号画像 · 与你的定位对比</div>
+                <div style="display: grid; grid-template-columns: 84px 1fr 1fr; gap: 10px 14px; font-size: 12.5px;">
+                  <div></div>
+                  <div style="font-weight: 700; color: #4a6c8c;">装修避坑老张</div>
+                  <div style="font-weight: 700; color: #8a5a2b;">你（王姐·全屋定制）</div>
+                  <div style="color: #8a8578;">人设</div><div style="line-height: 1.6;">第三方监理，站业主立场揭施工方</div><div style="line-height: 1.6;">工厂主，敢自曝行业内幕</div>
+                  <div style="color: #8a8578;">变现</div><div style="line-height: 1.6;">监理服务 + 团购佣金</div><div style="line-height: 1.6;">私域拆报价单 → 到店成交</div>
+                  <div style="color: #8a8578;">频率</div><div style="line-height: 1.6;">日更，晚 19 点发布</div><div style="line-height: 1.6;">周 3–4 条</div>
+                </div>
+                <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 12.5px; line-height: 1.65;"><strong>可借鉴：</strong>他靠「站业主立场」建立信任再变现，路径与你一致；<strong>差异点：</strong>他不能报价格（会得罪合作方），你能报真实价格——这是你独有的内容武器，TOP20 里没有一条报价内容。</div>
+              </div>
+              <!-- ② TOP20 清单 -->
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; overflow: hidden;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 18px 24px 12px;">
+                  <div style="font-size: 13px; font-weight: 700;">② 播放 TOP20 视频清单 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">文案与结构已全部留存，展示前 5 条</span></div>
+                  <span style="font-size: 12px; color: #8a5a2b; cursor: pointer;" style-hover="color: #6e4620;">展开全部 20 条</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 28px 1fr 70px 60px 200px 150px; gap: 10px; padding: 8px 24px; background: #faf8f2; border-bottom: 1px solid #e2dccd; font-size: 11.5px; font-weight: 700; color: #8a8578;">
+                  <div>#</div><div>标题</div><div>播放</div><div>收藏</div><div>结构</div><div></div>
+                </div>
+                <sc-for list="{{ acctTop }}" as="v" hint-placeholder-count="5">
+                  <div style="display: grid; grid-template-columns: 28px 1fr 70px 60px 200px 150px; gap: 10px; padding: 12px 24px; border-bottom: 1px solid #eee8da; font-size: 12.5px; align-items: center;">
+                    <div style="color: #a09a8a; font-weight: 700;">{{ v.rank }}</div>
+                    <div style="line-height: 1.5; font-size: 13px;">{{ v.title }}<div style="font-size: 11px; color: #a09a8a; margin-top: 2px;">文案全文已留存 · {{ v.dur }}</div></div>
+                    <div style="color: #6b6558;">{{ v.views }}</div>
+                    <div style="color: #6b6558;">{{ v.saves }}</div>
+                    <div style="color: #8a8578; line-height: 1.5;">{{ v.structure }}</div>
+                    <div style="display: flex; gap: 6px;">
+                      <button sc-camel-on-click="{{ v.deep }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">深拆</button>
+                      <button sc-camel-on-click="{{ v.imitate }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #f7f3ea;">仿写</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <!-- ③ 规律 + ④ 迁移 -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+                  <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">③ TOP20 爆款规律</div>
+                  <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px;">
+                    <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>验收/避坑清单</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 55%; background: #8a5a2b; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">11条</span></div>
+                    <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>行业内幕</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 30%; background: #c89a5e; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">6条</span></div>
+                    <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>翻车实录</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 15%; background: #4a6c8c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">3条</span></div>
+                  </div>
+                  <div style="font-size: 12.5px; color: #6b6558; line-height: 1.7; margin-top: 12px; border-top: 1px solid #eee8da; padding-top: 12px;">钩子句式：14/20 用「对立视角」（XX 最怕你/不会告诉你）；时长集中 45–75s；收藏率 &gt; 3% 的 9 条全部是清单体。</div>
+                </div>
+                <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column;">
+                  <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">④ 迁移到你的账号</div>
+                  <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; line-height: 1.65; flex: 1;">
+                    <div style="background: #edf5ef; border-radius: 6px; padding: 9px 12px;"><strong style="color: #2f5c3b;">✓ 适合你：</strong>清单体 + 对立视角钩子，但立场换成「工厂人欢迎较真客户」</div>
+                    <div style="background: #edf5ef; border-radius: 6px; padding: 9px 12px;"><strong style="color: #2f5c3b;">✓ 空白机会：</strong>他做不了报价拆解，你的「拆报价单」系列没有竞争</div>
+                    <div style="background: #faf0ec; border-radius: 6px; padding: 9px 12px;"><strong style="color: #7a3a26;">✗ 别学：</strong>「揭施工方黑幕」类会打到你自己的工厂人设，违反你的表达规则</div>
+                  </div>
+                  <button sc-camel-on-click="{{ acctSaveTopics }}" style="margin-top: 14px; border: none; background: {{ acctSaveBg }}; color: #fff; border-radius: 8px; padding: 12px; font-size: 13.5px; font-weight: 500; cursor: pointer;">{{ acctSaveLabel }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ acctIdle }}" hint-placeholder-val="{{ false }}">
+            <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 40px; text-align: center; color: #a09a8a; font-size: 13.5px; line-height: 1.8;">输入账号链接，AI 将抓取其播放量 TOP20 视频<br>逐条转写并留存完整文案与结构 → 归纳爆款规律 → 对照你的定位给出迁移建议（全程约 5 分钟）</div>
+          </sc-if>
+        </sc-if>
+
+        <!-- 拆视频 -->
+        <sc-if value="{{ isVideoMode }}" hint-placeholder-val="{{ false }}">
+        <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
+          <textarea value="{{ benchInput }}" sc-camel-on-change="{{ onBenchInput }}" placeholder="粘贴爆款视频链接或完整文案…" style="width: 100%; height: 72px; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+            <span style="font-size: 12px; color: #8a8578;">试试示例：</span>
+            <span sc-camel-on-click="{{ benchSample }}" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="background: #f7f3ea;">「装修避坑老张」验收爆款 · 12w 赞</span>
+            <button sc-camel-on-click="{{ benchGo }}" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ benchBtnLabel }}</button>
+          </div>
+        </div>
+        <sc-if value="{{ benchLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 30px; text-align: center;">
+            <div style="font-size: 14px; color: #8a5a2b; animation: pulse 1.2s ease-in-out infinite;">已创建拆解任务：下载音频 → 转写文案 → 拆结构、归因爆点（贴链接约 1 分钟，可先去别处稍后回来看结果）…</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ benchDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 18px; animation: slideup 0.4s ease;">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">结构拆解 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">「全屋定制验收，师傅最怕你检查这 4 个地方」· 58 秒</span></div>
+                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start;">
+                    <span style="font-size: 11px; font-weight: 700; color: #b0492f; border: 1px solid #e4b9ab; background: #faf0ec; padding: 3px 0; border-radius: 4px; text-align: center;">钩子 0–4s</span>
+                    <div style="line-height: 1.65;">「师傅最怕你检查」——用<strong>对立视角</strong>制造信息差，暗示内幕。</div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start;">
+                    <span style="font-size: 11px; font-weight: 700; color: #8a5a2b; border: 1px solid #dcc6a4; background: #f7f3ea; padding: 3px 0; border-radius: 4px; text-align: center;">承诺 4–8s</span>
+                    <div style="line-height: 1.65;">「看完这条，验收时你比监理还专业」——给出明确的观看收益。</div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start;">
+                    <span style="font-size: 11px; font-weight: 700; color: #8a5a2b; border: 1px solid #dcc6a4; background: #f7f3ea; padding: 3px 0; border-radius: 4px; text-align: center;">清单 8–48s</span>
+                    <div style="line-height: 1.65;">4 个检查点，每个都是「位置 + 手法 + 不查的后果」三段式，节奏一致、可截图保存——<strong>收藏率是这条爆的主因</strong>（收藏 2.1w &gt; 点赞除外的一切互动）。</div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start;">
+                    <span style="font-size: 11px; font-weight: 700; color: #4a6c8c; border: 1px solid #b3c5d6; background: #eef3f8; padding: 3px 0; border-radius: 4px; text-align: center;">转化 48–58s</span>
+                    <div style="line-height: 1.65;">「评论区扣『验收』领完整清单」——用清单作钩子沉淀私域。</div>
+                  </div>
+                </div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">可复用框架</div>
+                <div style="font-size: 13.5px; line-height: 1.7; color: #23231f; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">对立视角钩子（「XX 最怕你…」）→ 观看收益承诺 → N 个三段式清单（位置+手法+后果）→ 清单引流转化</div>
+                <div style="font-size: 12.5px; color: #8a8578; line-height: 1.6;">⚠ 差异提醒：老张人设是「第三方监理」，你是「工厂主」。照搬「师傅最怕」会打到自己人，建议换成「工厂人教你验自家柜子，我们最欢迎较真的客户」——反差感更强，且符合你的表达规则。</div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">爆点归因</div>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #6b6558; line-height: 1.6;">
+                  <div><strong style="color: #23231f;">高收藏结构</strong> · 清单体天然可保存</div>
+                  <div><strong style="color: #23231f;">对立视角</strong> · 「他们怕你知道」驱动完播</div>
+                  <div><strong style="color: #23231f;">评论钩子</strong> · 扣字领资料拉互动权重</div>
+                </div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">与你知识库的连接</div>
+                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.65;">案例卡「杭州客户验收返工」可直接作为第 3 个检查点的真实故事；FAQ 卡「工期」可回应评论区高频追问。</div>
+              </div>
+              <button sc-camel-on-click="{{ benchImitate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 20px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">用这个框架仿写 →</button>
+              <button sc-camel-on-click="{{ benchSave }}" style="border: 1px solid #d8d2c4; background: none; color: {{ benchSaveColor }}; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">{{ benchSaveLabel }}</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ benchIdle }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom: 18px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;">
+              <div style="font-size: 16px; font-weight: 700;">监控中的对标账号</div>
+              <span style="font-size: 12.5px; color: #8a5a2b; cursor: pointer;" style-hover="color: #6e4620;">+ 添加对标</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #4a6c8c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">张</div>
+                  <div>
+                    <div style="font-size: 13.5px; font-weight: 700;">装修避坑老张</div>
+                    <div style="font-size: 11px; color: #8a8578;">抖音 · 86w 粉</div>
+                  </div>
+                </div>
+                <div style="font-size: 12.5px; color: #b0492f; line-height: 1.6;">🔥 昨日 1 条破 12w 赞（验收话题）</div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #4a8c5c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">默</div>
+                  <div>
+                    <div style="font-size: 13.5px; font-weight: 700;">默默住范儿</div>
+                    <div style="font-size: 11px; color: #8a8578;">抖音 · 120w 粉</div>
+                  </div>
+                </div>
+                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.6;">近 7 天更新 5 条，均值 8k 赞</div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #c89a5e; color: #23231f; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">柜</div>
+                  <div>
+                    <div style="font-size: 13.5px; font-weight: 700;">柜子厂小妹</div>
+                    <div style="font-size: 11px; color: #8a8578;">小红书 · 23w 粉</div>
+                  </div>
+                </div>
+                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.6;">同类工厂号 · 定位最接近你</div>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: #a09a8a; margin-top: 12px;">监控账号有新爆款时，工作台会收到「对标动态」选题建议。</div>
+          </div>
+        </sc-if>
+        </sc-if>
+      </div>
+    </sc-if>

@@ -1,0 +1,97 @@
+<!-- 段：文案创作　条件：{{ isCreate }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4590–4684 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isCreate }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 1040px; margin: 0 auto;">
+        <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 20px;">文案创作</div>
+        <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">这条视频想讲什么？</div>
+          <textarea value="{{ topic }}" sc-camel-on-change="{{ onTopic }}" placeholder="输入关键词、一句话选题，或粘贴要仿写的爆款文案…" style="width: 100%; height: 72px; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+            <span style="font-size: 12px; color: #8a8578;">时长</span>
+            <span style="font-size: 12.5px; border: 1px solid #8a5a2b; color: #8a5a2b; background: #f7f3ea; border-radius: 20px; padding: 5px 14px;">45 秒口播</span>
+            <span style="font-size: 12.5px; border: 1px solid #d8d2c4; color: #6b6558; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">90 秒</span>
+            <span style="font-size: 12.5px; border: 1px solid #d8d2c4; color: #6b6558; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">3 分钟深度</span>
+            <button sc-camel-on-click="{{ generate }}" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ genBtnLabel }}</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ genLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 30px; text-align: center;">
+            <div style="font-size: 14px; color: #8a5a2b; animation: pulse 1.2s ease-in-out infinite;">① 检索知识库（命中 3 张卡片）→ ② 撰写口播稿 → ③ 安全审核 · 约 30-60 秒，完成后整稿一次呈现</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ genDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: 1fr 280px; gap: 18px; animation: slideup 0.4s ease;">
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; overflow: hidden;">
+              <div style="display: flex; border-bottom: 1px solid #e2dccd; background: #faf8f2;">
+                <div sc-camel-on-click="{{ setDouyin }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ douyinWeight }}; color: {{ douyinColor }}; border-bottom: 2px solid {{ douyinBorder }};">抖音口播稿</div>
+                <div sc-camel-on-click="{{ setXhs }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ xhsWeight }}; color: {{ xhsColor }}; border-bottom: 2px solid {{ xhsBorder }};">小红书图文（切换时生成）</div>
+                <div sc-camel-on-click="{{ setGzh }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ gzhWeight }}; color: {{ gzhColor }}; border-bottom: 2px solid {{ gzhBorder }};">视频号版（切换时生成）</div>
+              </div>
+              <div style="padding: 24px 26px;">
+                <div style="background: #faf0ec; border: 1px solid #e4b9ab; border-radius: 6px; padding: 9px 14px; font-size: 12.5px; color: #b0492f; margin-bottom: 18px;">查重提醒：「报价差一倍」角度与你 6 月 28 日的稿件相似度 41%，本稿已自动换用「拆报价单」切入。</div>
+                <sc-if value="{{ isDouyin }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size: 15px; line-height: 2; color: #23231f;">
+                    <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【开场钩子 0–5s】</strong><br>同样一套柜子，别人报 3 万，我报 1 万 6，是我在亏本做慈善吗？不是，今天我把报价单拆开给你看。</p>
+                    <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【痛点展开 5–20s】</strong><br>很多商家报价低，是把<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：FAQ 卡「板材差价」">板材偷偷换成颗粒板贴皮</span>，五金用杂牌，你住进去两年门板就下沉。我们<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：产品卡「全屋定制套餐」">19800 的整柜套餐用的是 ENF 级实木多层板，五金是百隆的</span>，报价单上每一项都写清楚品牌型号。</p>
+                    <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【案例佐证 20–35s】</strong><br>上个月<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：案例卡「杭州客户比价」">杭州一位客户拿着别家 3 万 2 的报价单来找我，我们逐项对比，同样的配置我们做下来省了 4 万多</span>——不是我们便宜，是工厂直营没有中间商。</p>
+                    <p style="margin: 0;"><strong style="color: #8a5a2b;">【转化引导 35–45s】</strong><br>你手上有报价单看不懂的，评论区扣「报价」，我拉你进群免费帮你逐项拆。</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ isXhs }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 14.5px; line-height: 1.9; color: #23231f;">
+                    <p style="margin: 0 0 12px; font-weight: 700;">标题：全屋定制报价差一倍？教你 3 步拆穿报价单猫腻</p>
+                    <p style="margin: 0 0 12px;">做了 12 年定制工厂，说句得罪同行的话：报价单越简单的，坑越大。</p>
+                    <p style="margin: 0 0 12px;">第一步看板材：一定要写清楚等级，<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：FAQ 卡「板材差价」">「颗粒板贴皮」和「ENF 级实木多层」差价能到 40%</span>。<br>第二步看五金：只写「进口五金」不写品牌的，直接问到型号。<br>第三步逐项比总价：<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：案例卡「杭州客户比价」">我有位杭州客户逐项对比后省了 4 万+</span>。</p>
+                    <p style="margin: 0;">看不懂报价单的可以评论区发我，一条条帮你看。#全屋定制 #装修避坑 #报价单</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ isGzh }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 15px; line-height: 2; color: #23231f;">
+                    <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【开场 0–8s】</strong><br>如果你最近在做全屋定制，这条视频能帮你省下几万块——我是做了 12 年定制工厂的王姐。</p>
+                    <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【正文 8–40s】</strong><br>报价差一倍，差的不是利润，是材料。<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：FAQ 卡「板材差价」">低价单大多在板材和五金上做文章</span>，视频号的朋友年纪多是给自己家装修的，更要看清楚：<span style="background: #f7f3ea; border-bottom: 2px solid #c89a5e; cursor: pointer;" title="来源：产品卡「全屋定制套餐」">我们的报价单每一项都写明品牌和型号，19800 套餐用什么板子、什么五金，白纸黑字</span>。</p>
+                    <p style="margin: 0;"><strong style="color: #8a5a2b;">【转化 40–50s】</strong><br>点头像进主页，私信「报价」两个字，我帮你免费看报价单。</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ adopted }}" hint-placeholder-val="{{ false }}">
+                  <div style="background: #f7f3ea; border: 1px solid #dcc6a4; border-left: 3px solid #8a5a2b; border-radius: 8px; padding: 12px 16px; margin-top: 18px; display: flex; align-items: center; gap: 14px; animation: slideup 0.3s ease;">
+                    <div style="flex: 1; font-size: 13px; line-height: 1.6;"><strong>拍完发布后，把视频链接贴回来</strong>——「发布复盘」才能追踪播放数据、归因爆点。</div>
+                    <button sc-camel-on-click="{{ openPubFromCreate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #6e4620;">登记视频地址</button>
+                  </div>
+                </sc-if>
+                <div style="display: flex; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid #eee8da;">
+                  <button sc-camel-on-click="{{ adopt }}" style="border: none; background: {{ adoptBg }}; color: #fff; border-radius: 8px; padding: 10px 22px; font-size: 13.5px; font-weight: 500; cursor: pointer;">{{ adoptLabel }}</button>
+                  <button sc-camel-on-click="{{ regenerate }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 8px; padding: 10px 22px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">换个角度</button>
+                  <button sc-camel-on-click="{{ copyAll }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 8px; padding: 10px 22px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">复制全文</button>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="font-size: 13px; font-weight: 700; color: #6b6558;">本稿引用的知识卡片</div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 14px 16px;">
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 5px;">产品卡</div>
+                <div style="font-size: 13.5px; font-weight: 500; margin-bottom: 4px;">全屋定制套餐 ¥19,800</div>
+                <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">ENF 级实木多层板 · 百隆五金 · 报价单逐项列明</div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 14px 16px;">
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 5px;">FAQ 卡</div>
+                <div style="font-size: 13.5px; font-weight: 500; margin-bottom: 4px;">板材差价：为什么报价差一倍</div>
+                <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">颗粒板贴皮 vs 实木多层，差价约 40%</div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 14px 16px;">
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 5px;">案例卡</div>
+                <div style="font-size: 13.5px; font-weight: 500; margin-bottom: 4px;">杭州客户比价省 4 万</div>
+                <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">逐项对比 3.2 万报价单，最终省 4 万+</div>
+              </div>
+              <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #8a5a2b; line-height: 1.6;">文中下划线部分即引用位置，悬停可查看来源卡片。发现信息过时？点卡片直接更新。</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ genIdle }}" hint-placeholder-val="{{ false }}">
+          <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 40px; text-align: center; color: #a09a8a; font-size: 13.5px;">输入选题后点击「生成口播稿」，AI 会结合你的账号档案和知识库卡片来写</div>
+        </sc-if>
+      </div>
+    </sc-if>

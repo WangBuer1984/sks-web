@@ -1,0 +1,59 @@
+<!-- 段：个人中心　条件：{{ isProfile }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4367–4423 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 880px; margin: 0 auto;">
+        <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 4px;">个人中心</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 18px;">这些资料会注入每次创作——AI 越了解你，稿子越像你</div>
+        <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 18px 24px; margin-bottom: 18px; display: flex; align-items: center; gap: 20px;">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;"><span style="font-weight: 700;">资料完善度</span><span style="color: #8a5a2b; font-weight: 700;">{{ profilePct }}%</span></div>
+            <div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: {{ profilePctW }}; background: linear-gradient(90deg, #c89a5e, #8a5a2b); border-radius: 4px; transition: width 0.4s ease;"></div></div>
+          </div>
+          <div style="font-size: 12.5px; color: #8a8578; line-height: 1.6; max-width: 300px;">{{ profileHint }}</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">基础资料</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">昵称 <span style="color: #c9b997;">· 出现在口播稿的自我介绍里</span></div><input value="{{ pNick }}" sc-camel-on-change="{{ onPNick }}" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">性别</div>
+                  <div style="display: flex; gap: 6px;">
+                    <div sc-camel-on-click="{{ pickFemale }}" style="flex: 1; text-align: center; padding: 9px; border-radius: 8px; font-size: 13px; cursor: pointer; background: {{ femaleBg }}; border: 1px solid {{ femaleBd }}; color: {{ femaleC }};">女</div>
+                    <div sc-camel-on-click="{{ pickMale }}" style="flex: 1; text-align: center; padding: 9px; border-radius: 8px; font-size: 13px; cursor: pointer; background: {{ maleBg }}; border: 1px solid {{ maleBd }}; color: {{ maleC }};">男</div>
+                  </div>
+                </div>
+                <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">年龄</div><input value="{{ pAge }}" sc-camel-on-change="{{ onPAge }}" placeholder="如 42" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+              </div>
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">所在城市 <span style="color: #c9b997;">· 用于本地化选题和方言梗</span></div><input value="{{ pCity }}" sc-camel-on-change="{{ onPCity }}" placeholder="如 杭州" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">手机号</div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <div style="flex: 1; border: 1px solid #eee8da; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #f7f5ee; color: #8a8578;">138****6621</div>
+                  <button sc-camel-on-click="{{ changePhone }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 8px; padding: 10px 14px; font-size: 12.5px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">换绑</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">创作资料 <span style="font-size: 11px; color: #8a5a2b; font-weight: 400;">直接影响文案质量</span></div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">行业/赛道 <span style="color: #c9b997;">· 决定选题推荐方向</span></div><input value="{{ pIndustry }}" sc-camel-on-change="{{ onPIndustry }}" placeholder="如 全屋定制家居" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">职业身份 <span style="color: #c9b997;">· 稿件的第一人称立场</span></div><input value="{{ pRole }}" sc-camel-on-change="{{ onPRole }}" placeholder="如 工厂主 / 12 年从业" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">出镜风格 <span style="color: #c9b997;">· 影响稿件语气与节奏</span></div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <div sc-camel-on-click="{{ pickStyle1 }}" style="padding: 8px 14px; border-radius: 20px; font-size: 12.5px; cursor: pointer; background: {{ style1Bg }}; border: 1px solid {{ style1Bd }}; color: {{ style1C }};">直爽敢说</div>
+                  <div sc-camel-on-click="{{ pickStyle2 }}" style="padding: 8px 14px; border-radius: 20px; font-size: 12.5px; cursor: pointer; background: {{ style2Bg }}; border: 1px solid {{ style2Bd }}; color: {{ style2C }};">亲和唠嗑</div>
+                  <div sc-camel-on-click="{{ pickStyle3 }}" style="padding: 8px 14px; border-radius: 20px; font-size: 12.5px; cursor: pointer; background: {{ style3Bg }}; border: 1px solid {{ style3Bd }}; color: {{ style3C }};">专业讲解</div>
+                </div>
+              </div>
+              <div><div style="font-size: 12px; color: #8a8578; margin-bottom: 5px;">每周更新目标 <span style="color: #c9b997;">· 用于选题库备货量</span></div><input value="{{ pFreq }}" sc-camel-on-change="{{ onPFreq }}" placeholder="如 3–4 条" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; background: #faf8f2; outline: none; color: #23231f;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; margin-top: 18px;">
+          <button sc-camel-on-click="{{ saveProfile }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 32px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">保存资料</button>
+          <div style="font-size: 12.5px; color: #8a8578;">人设、口吻、目标人群等更深入的设定在 <a href="#" sc-camel-on-click="{{ goPosFromProfile }}" style="color: #8a5a2b;">账号定位</a> 里维护</div>
+        </div>
+      </div>
+    </sc-if>

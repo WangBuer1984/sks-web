@@ -1,0 +1,73 @@
+<!-- 段：校准对话　条件：{{ isCalib }}
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4425–4495 行
+     本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
+<sc-if value="{{ isCalib }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 720px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+          <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900;">校准定位</div>
+          <div sc-camel-on-click="{{ exitCalib }}" style="font-size: 13px; color: #8a8578; cursor: pointer;" style-hover="color: #8a5a2b;">保存并退出</div>
+        </div>
+        <div style="display: flex; gap: 6px; margin-bottom: 22px;">
+          <div style="flex: 1; height: 5px; border-radius: 3px; background: {{ calibBar1 }};"></div>
+          <div style="flex: 1; height: 5px; border-radius: 3px; background: {{ calibBar2 }};"></div>
+          <div style="flex: 1; height: 5px; border-radius: 3px; background: {{ calibBar3 }};"></div>
+        </div>
+
+        <!-- 步骤1：贴链接 -->
+        <sc-if value="{{ calibStep1 }}" hint-placeholder-val="{{ true }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 30px 32px; animation: slideup 0.3s ease;">
+            <div style="font-size: 12px; font-weight: 700; color: #8a5a2b; letter-spacing: 0.1em; margin-bottom: 10px;">第 1 步 · 共 3 步 · 约 3 分钟</div>
+            <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">先给我一点「你」的素材</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.7; margin-bottom: 18px;">主页链接、过往视频文案、朋友圈长文，任意一样即可——AI 先猜一版你的人设，比让你填空快得多。没有素材也可以跳过，直接聊。</div>
+            <textarea value="{{ calibInput }}" sc-camel-on-change="{{ onCalibInput }}" placeholder="粘贴主页链接或一段你写过的文案…" style="width: 100%; height: 90px; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px;">
+              <span sc-camel-on-click="{{ calibSample }}" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="background: #f7f3ea;">用示例：王姐的抖音主页</span>
+              <div style="margin-left: auto; display: flex; gap: 10px;">
+                <button sc-camel-on-click="{{ calibSkip }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">没有素材，直接聊</button>
+                <button sc-camel-on-click="{{ calibNext1 }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 26px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ calibNext1Label }}</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 步骤2：确认AI猜的人设 + 问答 -->
+        <sc-if value="{{ calibStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 26px 28px; animation: slideup 0.3s ease;">
+            <div style="font-size: 12px; font-weight: 700; color: #8a5a2b; letter-spacing: 0.1em; margin-bottom: 14px;">第 2 步 · 确认并补充 · 约 8 分钟</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; margin-bottom: 18px;">
+              <div style="background: #f7f3ea; border-radius: 12px 12px 12px 3px; padding: 14px 16px; line-height: 1.7; max-width: 94%;">看完你的素材，我猜你的人设是——<br><strong>「说真话的工厂人」</strong>：12 年全屋定制工厂主，敢自曝行业内幕、敢报真实价格，说话直接、爱用数字。目标观众是 30–45 岁、怕被坑的装修业主。<br>猜得对吗？</div>
+              <div style="display: flex; gap: 8px; align-self: flex-end;">
+                <button sc-camel-on-click="{{ calibConfirm }}" style="border: 1px solid {{ confirmBd }}; background: {{ confirmBg }}; color: {{ confirmC }}; border-radius: 20px; padding: 8px 18px; font-size: 13px; cursor: pointer;">基本对</button>
+                <button sc-camel-on-click="{{ calibDeny }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 20px; padding: 8px 18px; font-size: 13px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">不太对，我来说</button>
+              </div>
+              <sc-if value="{{ calibQ2 }}" hint-placeholder-val="{{ false }}">
+                <div style="background: #f7f3ea; border-radius: 12px 12px 12px 3px; padding: 14px 16px; line-height: 1.7; max-width: 94%; animation: slideup 0.3s ease;">好。那有没有什么是你<strong>不想</strong>在视频里说的？比如不想得罪谁、不想承诺什么。（这会成为你的表达红线）</div>
+                <textarea value="{{ calibAnswer }}" sc-camel-on-change="{{ onCalibAnswer }}" placeholder="🎤 打字或语音都行，大白话即可…" style="width: 94%; align-self: flex-end; height: 64px; border: 1px solid #d8d2c4; border-radius: 12px 12px 3px 12px; padding: 12px 14px; font-size: 13.5px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
+              </sc-if>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee8da; padding-top: 16px;">
+              <div style="font-size: 12px; color: #a09a8a;">正式版会连续问 5–8 个问题（人群、案例、口头禅…），原型演示只走一问</div>
+              <button sc-camel-on-click="{{ calibNext2 }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 26px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">生成定位档案 →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 步骤3：档案确认 -->
+        <sc-if value="{{ calibStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 26px 28px; animation: slideup 0.3s ease;">
+            <div style="font-size: 12px; font-weight: 700; color: #8a5a2b; letter-spacing: 0.1em; margin-bottom: 10px;">第 3 步 · 你的定位档案</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 16px;">
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">人设</div><div style="line-height: 1.6;">说真话的工厂人 · 12 年全屋定制工厂主</div></div>
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">目标人群</div><div style="line-height: 1.6;">30–45 岁装修业主，怕被坑、比价中</div></div>
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">差异化</div><div style="line-height: 1.6;">工厂直营视角拆行业内幕，敢报真实价格</div></div>
+              <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">表达红线</div><div style="line-height: 1.6;">不贬低具体同行品牌 · 不承诺零甲醛</div></div>
+            </div>
+            <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 6px; padding: 12px 16px; font-size: 12.5px; line-height: 1.7; margin-bottom: 18px;">试试效果：同一个选题「报价为什么差一倍」——<br><span style="color: #8a8578;">无档案版开头：</span>「今天教大家如何看懂全屋定制报价单…」<br><span style="color: #8a5a2b; font-weight: 700;">有档案版开头：</span>「同样一套柜子，别人报 3 万我报 1 万 6，是我在做慈善吗？」</div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button sc-camel-on-click="{{ calibBack }}" style="border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">再补充几句</button>
+              <button sc-camel-on-click="{{ calibFinish }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 26px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">确认档案，开始创作</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
