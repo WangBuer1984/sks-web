@@ -12,11 +12,11 @@ import { useRechargeStore } from '../store/recharge';
  * 避免像先前那样每页手写一行 ad-hoc 链接。
  */
 
-/** 导航项。`ready:false` = 原型有此段但 React 尚无路由（账号定位 / 选题库）。 */
+/** 导航项。全部已实现（positioning/topics 在基础地基 commit 落地）。`ready` 留作将来占位标记。 */
 const NAV: { to: string; label: string; ready: boolean }[] = [
   { to: '/workbench', label: '工作台', ready: true },
-  { to: '/positioning', label: '账号定位', ready: false },
-  { to: '/topics', label: '选题库', ready: false },
+  { to: '/positioning', label: '账号定位', ready: true },
+  { to: '/topics', label: '选题库', ready: true },
   { to: '/create', label: '文案创作', ready: true },
   { to: '/analyze', label: '对标拆解', ready: true },
   { to: '/kb', label: '知识库', ready: true },
