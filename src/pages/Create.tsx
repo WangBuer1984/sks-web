@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import { type CardSummary, listCards } from '../api/kb';
@@ -18,58 +18,98 @@ import ScriptView from './create/ScriptView';
 /**
  * C 端创作页 `/create`——对齐原型 `sections/13-文案创作.html`（B 混合）。
  *
- * <p>结构：自由 textarea + 时长芯片 + 生成（CreateInput）→ 单行 pulse（genLoading）→
- * 三平台 Tab + 查重条 + 逐句编辑 + 采纳/换个角度/复制（ScriptView）+ 引用卡 + 历史稿件
- * （CreateAside）。逐句编辑/换个说法保留真 API（editSentence/rewriteSentence）。
+ * <p>两条入参路径：
+ * - 自由 textarea → createTopic → generateScript(topicId, platform, duration)
+ * - `?topic=<id>` 深链（Topics/HomeNormal「生成文案」）→ 复用已有选题直接 generate，不造重复选题
  *
- * <p>输入模型：自由 textarea → createTopic → generateScript(topicId, platform, duration)。
- * 时长真传后端控篇幅（Task 0 跨仓）。三平台 Tab 切换 = 按平台重生。查重接 dedupWarnScriptId。
+ * <p>时长真传后端控篇幅（Task 0 跨仓）；三平台 Tab 切换重生；查重接 dedupWarnScriptId；
+ * genLoading 用多阶段进度动画（CLAUDE.md 硬不变量「无流式→多阶段进度动画 mask 等待」）。
  */
+const PROGRESS_STAGES = ['检索知识库', '撰写中', '安全审核中'];
+
 type Platform = 'douyin' | 'xhs' | 'gzh';
 type Duration = '45' | '90' | '180';
 
 export default function Create() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const presetTopicId = params.get('topic');
 
   const { data: history } = useQuery<ScriptSummary[]>({
     queryKey: ['scripts', 'draft'],
     queryFn: () => listScripts('draft'),
   });
+
+  // script 必须在 bCards query 之前声明——bCards 的 enabled 引用它（否则 TDZ 崩页）。
+  const [script, setScript] = useState<ScriptDetail | null>(null);
   const { data: bCards } = useQuery<CardSummary[]>({
     queryKey: ['kb-cards', 'B'],
     queryFn: () => listCards('B'),
     enabled: script != null && script.citedCardIds.length > 0,
   });
 
-  const [script, setScript] = useState<ScriptDetail | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState<Duration>('45');
   const [platform, setPlatform] = useState<Platform>('douyin');
+  const [stage, setStage] = useState(-1);
+  // createTopic await 期间也禁用按钮——否则二次点击会再 createTopic+generate，双扣额度。
+  const [submitting, setSubmitting] = useState(false);
 
   const genMut = useMutation({
     mutationFn: (vars: { topicId: number; platform?: Platform; duration?: Duration }) =>
       generateScript(vars.topicId, vars.platform, vars.duration),
-    onMutate: () => setGenError(null),
+    onMutate: () => {
+      setGenError(null);
+      setStage(0);
+    },
     onSuccess: (s) => {
       setScript(s);
+      setStage(-1);
       queryClient.invalidateQueries({ queryKey: ['scripts'] });
     },
-    onError: (e: unknown) => setGenError(getBizMessage(e, '生成失败')),
+    onError: (e: unknown) => {
+      setStage(-1);
+      setGenError(getBizMessage(e, '生成失败'));
+    },
   });
 
-  // 自由 textarea → createTopic → generateScript(topicId, platform, duration)
+  // 多阶段进度自动推进（每 7s，掩盖 30-60s 等待）
+  useEffect(() => {
+    if (stage < 0) return;
+    const t = setTimeout(() => setStage((s) => (s + 1 < PROGRESS_STAGES.length ? s + 1 : s)), 7000);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  // ?topic=<id> 深链：复用已有选题直接生成（不 createTopic）。ref 防 StrictMode 双调。
+  const presetFiredRef = useRef(false);
+  useEffect(() => {
+    if (presetFiredRef.current) return;
+    if (!presetTopicId) return;
+    const tid = Number(presetTopicId);
+    if (Number.isNaN(tid)) return;
+    presetFiredRef.current = true;
+    setScript(null);
+    genMut.mutate({ topicId: tid, platform, duration });
+    // 依赖只看 presetTopicId：深链值变才重跑，平台/时长切换不重跑（由 Tab/handleGenerate 走）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetTopicId]);
+
+  // 自由 textarea → createTopic → generateScript
   const handleGenerate = async () => {
     const t = topic.trim();
-    if (!t || genMut.isPending) return;
+    if (!t || submitting || genMut.isPending) return;
     setScript(null);
     setGenError(null);
+    setSubmitting(true);
     try {
       const topicId = await createTopic(t, '');
       genMut.mutate({ topicId, platform, duration });
     } catch (e: unknown) {
       setGenError(getBizMessage(e, '创建选题失败'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -86,6 +126,8 @@ export default function Create() {
     queryClient.invalidateQueries({ queryKey: ['scripts'] });
   };
 
+  const generating = submitting || genMut.isPending || stage >= 0;
+
   return (
     <div className="mx-auto max-w-[1040px]">
       <h1 className="mb-5 font-serif text-title font-black text-paper-ink">文案创作</h1>
@@ -95,19 +137,37 @@ export default function Create() {
         duration={duration}
         onDuration={setDuration}
         onGenerate={handleGenerate}
-        generating={genMut.isPending}
+        generating={generating}
       />
 
-      {genMut.isPending && (
-        <div className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-[30px] py-7.5 text-center">
-          <p className="animate-pulse text-lead text-paper-primary">
-            ① 检索知识库 → ② 撰写口播稿 → ③ 安全审核 · 约 30-60 秒，完成后整稿一次呈现
+      {stage >= 0 && (
+        <div className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-[30px] py-7.5">
+          <ol className="flex flex-col gap-1.5">
+            {PROGRESS_STAGES.map((label, i) => (
+              <li
+                key={label}
+                className={`flex items-center gap-2 text-body ${
+                  i <= stage ? 'text-paper-primary' : 'text-paper-muted'
+                }`}
+              >
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${
+                    i <= stage ? 'bg-paper-primary' : 'bg-paper-line'
+                  }`}
+                />
+                {label}
+                {i === stage && <span className="ml-1 animate-pulse text-hint">…</span>}
+              </li>
+            ))}
+          </ol>
+          <p className="mt-3 text-center text-caption text-paper-muted">
+            约 30-60 秒，完成后整稿一次呈现
           </p>
         </div>
       )}
       <CreateProgress error={genError} />
 
-      {!script && !genMut.isPending && (
+      {!script && !generating && (
         <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body text-paper-mutedLight">
           输入选题后点击「生成口播稿」，AI 会结合你的账号档案和知识库卡片来写
         </div>

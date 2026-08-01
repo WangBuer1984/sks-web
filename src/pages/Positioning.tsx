@@ -56,8 +56,8 @@ function parsePillars(v: unknown): { name: string; pct: number }[] | null {
 }
 
 export default function Positioning() {
-  const { data, isLoading } = useQuery<ActiveProfileView>({
-    queryKey: ['activeProfile'],
+  const { data, isLoading, error } = useQuery<ActiveProfileView>({
+    queryKey: ['profile'],
     queryFn: getActiveProfile,
   });
 
@@ -76,6 +76,8 @@ export default function Positioning() {
 
       {isLoading ? (
         <p className="text-copy text-paper-muted">加载中…</p>
+      ) : error ? (
+        <p className="text-copy text-paper-danger">定位档案加载失败，请刷新重试。</p>
       ) : !data?.calibrated ? (
         <div className="rounded-block border border-paper-line bg-paper-card px-10 py-11 text-center">
           <p className="mb-2 font-serif text-[20px] font-black">你的账号还没有定位档案</p>

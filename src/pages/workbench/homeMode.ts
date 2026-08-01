@@ -6,7 +6,8 @@ export function deriveHomeMode(calibrated: boolean): HomeMode {
 
 export function homeGreeting(nickname: string | null | undefined, now = new Date()): string {
   const h = now.getHours();
-  const slot = h >= 5 && h < 11 ? '早上' : h < 14 ? '中午' : h < 18 ? '下午' : '晚上';
+  const slot =
+    h >= 5 && h < 11 ? '早上' : h >= 11 && h < 14 ? '中午' : h >= 14 && h < 18 ? '下午' : '晚上';
   const name = nickname?.trim();
   return name ? `${name}，${slot}好` : `${slot}好`;
 }

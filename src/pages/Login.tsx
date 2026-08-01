@@ -42,7 +42,9 @@ export default function Login() {
       setUserAuth(data.token, data.userId);
       setError(null);
       if (data.isNew) {
-        // 新用户：原型 loginStep2——展示「账号已创建 + 加微信开通额度」引导，不直接进工作台
+        // 新用户：原型 loginStep2——展示「账号已创建 + 加微信开通额度」引导，不直接进工作台。
+        // 清掉深链回跳：新用户进 onboarding，不该带着旧 return_to，否则后续登录会被 stale 回跳带偏。
+        localStorage.removeItem('sks_return_to');
         setStep('onboard');
         return;
       }

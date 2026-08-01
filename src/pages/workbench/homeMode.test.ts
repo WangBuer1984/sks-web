@@ -20,6 +20,9 @@ describe('homeGreeting', () => {
   it('无昵称晚上', () => {
     expect(homeGreeting(null, new Date('2026-08-01T20:00:00'))).toBe('晚上好');
   });
+  it('凌晨2点是晚上不是中午', () => {
+    expect(homeGreeting(null, new Date('2026-08-01T02:00:00'))).toBe('晚上好');
+  });
 });
 
 describe('homeSub', () => {
