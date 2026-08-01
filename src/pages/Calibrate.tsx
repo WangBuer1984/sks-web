@@ -124,7 +124,12 @@ export default function Calibrate() {
         setAsrPending(true);
         try {
           const text = await asrVoice(blob);
-          setInput(text); // 转出文字先回显给用户确认 / 编辑再提交（brief）
+          // 后端曾因回调钩子写错返回 200 + 空串——空结果不能当成功静默清输入。
+          if (!text.trim()) {
+            setError('没听清，请再说一次或改用文字输入');
+          } else {
+            setInput(text); // 转出文字先回显给用户确认 / 编辑再提交（brief）
+          }
         } catch (e) {
           setError('语音识别失败，请改用文字输入（不阻断访谈）');
         } finally {
