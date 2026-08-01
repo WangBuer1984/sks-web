@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BizError, getBizMessage } from '../api/client';
@@ -6,17 +6,16 @@ import { type CardSummary, listCards } from '../api/kb';
 import {
   type ScriptDetail,
   type ScriptSummary,
-  type Topic,
   createTopic,
   editSentence,
   generateScript,
   getScript,
   listScripts,
-  listTopics,
   parseSection,
   rewriteSentence,
 } from '../api/script';
 import CreateInput from './create/CreateInput';
+import CreateProgress from './create/CreateProgress';
 
 /**
  * C 端创作页 {@code /create}：选选题 → 生成 → 多阶段进度动画 → 三段逐句渲染
@@ -32,28 +31,20 @@ type SectionKey = 'hook' | 'body' | 'cta';
 
 const SECTION_LABELS: Record<SectionKey, string> = { hook: '钩子', body: '正文', cta: '转化' };
 
-/** 多阶段进度动画的阶段（每 6-8s 推进，掩盖 30-60s 等待）。 */
-const PROGRESS_STAGES = ['检索知识库', '撰写中', '安全审核中'];
-
 export default function Create() {
   const queryClient = useQueryClient();
 
-  const { data: topics, isLoading: topicsLoading } = useQuery<Topic[]>({
-    queryKey: ['topics'],
-    queryFn: listTopics,
-  });
   const { data: history } = useQuery<ScriptSummary[]>({
     queryKey: ['scripts', 'draft'],
     queryFn: () => listScripts('draft'),
   });
 
-  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [script, setScript] = useState<ScriptDetail | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
-  const [stage, setStage] = useState(-1); // -1 闲置；0..2 进度阶段
-  // 新输入模型：自由 textarea + 时长 + 平台（Task 1 起手；onGenerate 占位，Task 5 接 genMut）
+  // 新输入模型：自由 textarea + 时长 + 平台（Task 4 加平台 Tab）
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState<'45' | '90' | '180'>('45');
+  const [platform, setPlatform] = useState<'douyin' | 'xhs' | 'gzh'>('douyin');
 
   const { data: bCards } = useQuery<CardSummary[]>({
     queryKey: ['kb-cards', 'B'],
@@ -62,34 +53,32 @@ export default function Create() {
   });
 
   const genMut = useMutation({
-    mutationFn: (vars: { topicId: number; platform?: string }) =>
-      generateScript(vars.topicId, vars.platform),
+    mutationFn: (vars: { topicId: number; platform?: string; duration?: '45' | '90' | '180' }) =>
+      generateScript(vars.topicId, vars.platform, vars.duration),
     onMutate: () => {
       setGenError(null);
-      setStage(0);
     },
     onSuccess: (s) => {
       setScript(s);
-      setStage(-1);
       queryClient.invalidateQueries({ queryKey: ['scripts'] });
     },
     onError: (e: unknown) => {
-      setStage(-1);
       setGenError(getBizMessage(e, '生成失败'));
     },
   });
 
-  // 进度阶段自动推进（掩盖长等待）
-  useEffect(() => {
-    if (stage < 0) return;
-    const t = setTimeout(() => setStage((s) => (s + 1 < PROGRESS_STAGES.length ? s + 1 : s)), 7000);
-    return () => clearTimeout(t);
-  }, [stage]);
-
-  const handleGenerate = () => {
-    if (selectedTopicId == null) return;
+  // 自由 textarea → createTopic → generateScript(topicId, platform, duration)
+  const handleGenerate = async () => {
+    const t = topic.trim();
+    if (!t || genMut.isPending) return;
     setScript(null);
-    genMut.mutate({ topicId: selectedTopicId });
+    setGenError(null);
+    try {
+      const topicId = await createTopic(t, '');
+      genMut.mutate({ topicId, platform, duration });
+    } catch (e: unknown) {
+      setGenError(getBizMessage(e, '创建选题失败'));
+    }
   };
 
   const handleEdited = (s: ScriptDetail) => {
@@ -105,146 +94,71 @@ export default function Create() {
         onTopic={setTopic}
         duration={duration}
         onDuration={setDuration}
-        onGenerate={() => {
-          /* Task 5 接：createTopic(topic) → genMut.mutate({topicId, platform, duration}) */
-        }}
-        generating={genMut.isPending || stage >= 0}
+        onGenerate={handleGenerate}
+        generating={genMut.isPending}
       />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_18rem]">
-        {/* 左：主创作区 */}
-        <div className="flex flex-col gap-5">
-          {/* 选题区 */}
-          <section className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-base font-bold text-paper-ink">选题</h2>
-              <CreateTopicButton onCreated={(id) => setSelectedTopicId(id)} />
-            </div>
-            {topicsLoading && <p className="text-sm text-paper-muted">加载中…</p>}
-            {topics && topics.length === 0 && (
-              <p className="text-sm text-paper-muted">暂无选题，点「新建选题」添加。</p>
-            )}
-            {topics && topics.length > 0 && (
-              <ul className="flex flex-col gap-1.5">
-                {topics.map((t) => (
-                  <li key={t.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTopicId(t.id)}
-                      className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
-                        selectedTopicId === t.id
-                          ? 'border-paper-primary bg-[#fdf3e4] text-paper-primary'
-                          : 'border-paper-line bg-paper-card text-paper-ink hover:bg-[#f7f2e7]'
-                      }`}
-                    >
-                      <span className="font-bold">{t.title}</span>
-                      {t.rationale && (
-                        <span className="ml-2 text-[12px] text-paper-muted">{t.rationale}</span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* 生成按钮 + 进度动画 */}
-          <section className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={selectedTopicId == null || genMut.isPending || stage >= 0}
-              className="w-full rounded-xl bg-paper-primary px-4 py-3 font-serif text-base font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {stage >= 0 ? '生成中…' : '生成文案'}
-            </button>
-            <p className="mt-2 text-[11.5px] text-paper-muted">1 条 / 次 · 失败自动退回额度</p>
-
-            {/* 多阶段进度动画 */}
-            {stage >= 0 && (
-              <ol className="mt-4 flex flex-col gap-1.5">
-                {PROGRESS_STAGES.map((label, i) => (
-                  <li
-                    key={label}
-                    className={`flex items-center gap-2 text-sm ${
-                      i <= stage ? 'text-paper-primary' : 'text-paper-muted'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full ${
-                        i <= stage ? 'bg-paper-primary' : 'bg-paper-line'
-                      }`}
-                    />
-                    {label}
-                    {i === stage && <span className="ml-1 animate-pulse text-[11px]">…</span>}
-                  </li>
-                ))}
-              </ol>
-            )}
-
-            {genError && (
-              <div
-                role="alert"
-                className="mt-3 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]"
-              >
-                {genError}
-              </div>
-            )}
-          </section>
-
-          {/* 三段逐句渲染 */}
-          {script && (
-            <ScriptEditor script={script} bCards={bCards ?? []} onEdited={handleEdited} />
-          )}
+      {genMut.isPending && (
+        <div className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-[30px] py-7.5 text-center">
+          <p className="animate-pulse text-lead text-paper-primary">
+            ① 检索知识库 → ② 撰写口播稿 → ③ 安全审核 · 约 30-60 秒，完成后整稿一次呈现
+          </p>
         </div>
+      )}
+      <CreateProgress error={genError} />
 
-        {/* 右：引用卡片 + 历史稿件 */}
-        <aside className="flex flex-col gap-5">
-          {script && script.citedCardIds.length > 0 && (
+      {!script && !genMut.isPending && (
+        <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body text-paper-mutedLight">
+          输入选题后点击「生成口播稿」，AI 会结合你的账号档案和知识库卡片来写
+        </div>
+      )}
+      {script && (
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_18rem]">
+          <div className="flex flex-col gap-5">
+            <ScriptEditor script={script} bCards={bCards ?? []} onEdited={handleEdited} />
+          </div>
+          <aside className="flex flex-col gap-5">
+            {script.citedCardIds.length > 0 && (
+              <section className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm">
+                <h2 className="mb-3 font-serif text-sm font-bold text-paper-ink">引用卡片</h2>
+                <ul className="flex flex-col gap-1.5">
+                  {script.citedCardIds.map((cid) => {
+                    const c = (bCards ?? []).find((x) => x.id === cid);
+                    return (
+                      <li
+                        key={cid}
+                        className="rounded-lg border border-paper-line bg-paper-base px-2.5 py-1.5 text-[12px] text-paper-ink"
+                      >
+                        {c ? c.title : `卡 #${cid}`}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
             <section className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm">
-              <h2 className="mb-3 font-serif text-sm font-bold text-paper-ink">引用卡片</h2>
-              <ul className="flex flex-col gap-1.5">
-                {script.citedCardIds.map((cid) => {
-                  const c = (bCards ?? []).find((x) => x.id === cid);
-                  return (
-                    <li
-                      key={cid}
-                      className="rounded-lg border border-paper-line bg-paper-base px-2.5 py-1.5 text-[12px] text-paper-ink"
-                    >
-                      {c ? c.title : `卡 #${cid}`}
+              <h2 className="mb-3 font-serif text-sm font-bold text-paper-ink">历史稿件</h2>
+              {(!history || history.length === 0) && (
+                <p className="text-[12px] text-paper-muted">暂无草稿稿件。</p>
+              )}
+              {history && history.length > 0 && (
+                <ul className="flex flex-col gap-1.5">
+                  {history.map((s) => (
+                    <li key={s.id}>
+                      <Link
+                        to="/review"
+                        className="block rounded-lg border border-paper-line bg-paper-base px-2.5 py-1.5 text-[12px] text-paper-ink transition hover:bg-[#f7f2e7]"
+                      >
+                        #{s.id} · {s.platform} · {s.reviewState}
+                      </Link>
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                </ul>
+              )}
             </section>
-          )}
-
-          <section className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm">
-            <h2 className="mb-3 font-serif text-sm font-bold text-paper-ink">历史稿件</h2>
-            {(!history || history.length === 0) && (
-              <p className="text-[12px] text-paper-muted">暂无草稿稿件。</p>
-            )}
-            {history && history.length > 0 && (
-              <ul className="flex flex-col gap-1.5">
-                {history.map((s) => (
-                  <li key={s.id}>
-                    <Link
-                      to="/create"
-                      onClick={() => {
-                        // 简化：历史稿件入口仅刷新本页；详情拉取留给后续增强
-                        setScript(null);
-                      }}
-                      className="block rounded-lg border border-paper-line bg-paper-base px-2.5 py-1.5 text-[12px] text-paper-ink transition hover:bg-[#f7f2e7]"
-                    >
-                      #{s.id} · {s.platform} · {s.reviewState}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
@@ -467,86 +381,4 @@ function SectionEditor({
   );
 }
 
-/** 新建选题小弹窗。title 走 UGC 内容安全（后端 safetyCheck）。 */
-function CreateTopicButton({ onCreated }: { onCreated: (id: number) => void }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [rationale, setRationale] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const mut = useMutation({
-    mutationFn: () => createTopic(title, rationale),
-    onSuccess: (id) => {
-      setOpen(false);
-      setTitle('');
-      setRationale('');
-      setError(null);
-      onCreated(id);
-    },
-    onError: (e: unknown) => setError(getBizMessage(e, '新建失败')),
-  });
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3 py-1.5 text-[12px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-      >
-        + 新建选题
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-paper-line bg-paper-card p-6 shadow-lg">
-            <h3 className="mb-4 font-serif text-lg font-bold text-paper-ink">新建选题</h3>
-            {error && (
-              <div
-                role="alert"
-                className="mb-3 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]"
-              >
-                {error}
-              </div>
-            )}
-            <div className="mb-3">
-              <label className="mb-1 block text-xs font-semibold text-paper-muted">标题</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="如：如何挑选口播选题"
-                className="w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3 py-2 text-sm outline-none focus:border-paper-primary"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="mb-1 block text-xs font-semibold text-paper-muted">选题理由</label>
-              <textarea
-                rows={2}
-                value={rationale}
-                onChange={(e) => setRationale(e.target.value)}
-                placeholder="为什么选这个题"
-                className="w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3 py-2 text-sm outline-none focus:border-paper-primary"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-lg border border-[#d8c9b2] bg-paper-card px-4 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                disabled={!title.trim() || mut.isPending}
-                onClick={() => mut.mutate()}
-                className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:opacity-45"
-              >
-                {mut.isPending ? '提交中…' : '创建'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+/** 新建选题已并入 CreateInput 自由 textarea（→ createTopic → generate），此弹窗移除。 */
