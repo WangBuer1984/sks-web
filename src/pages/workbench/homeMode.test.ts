@@ -44,3 +44,20 @@ describe('countSince', () => {
     ).toBe(1);
   });
 });
+
+describe('weekStart', () => {
+  // 周日要回退到上一个周一，周一保持当天——用 getDay()=1 断言不依赖具体日期。
+  it('结果总是周一 00:00、不晚于输入、且在一周内', () => {
+    for (const d of [
+      new Date('2026-08-01T10:00:00'),
+      new Date('2026-08-02T22:00:00'),
+      new Date('2026-08-03T03:00:00'),
+    ]) {
+      const s = weekStart(d);
+      expect(s.getDay()).toBe(1);
+      expect(s.getHours()).toBe(0);
+      expect(s.getTime()).toBeLessThanOrEqual(d.getTime());
+      expect(s.getTime()).toBeGreaterThan(d.getTime() - 7 * 86_400_000);
+    }
+  });
+});
