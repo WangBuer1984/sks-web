@@ -90,6 +90,9 @@ export default function Sidebar() {
           <div className="mb-1.5 text-meta text-paper-mutedFaint">剩余额度</div>
           <div className="text-[18px] font-bold">
             {balance}
+            {totalQuota > 0 && (
+              <span className="ml-1 text-meta font-normal text-paper-mutedFaint">/ {totalQuota}</span>
+            )}
             <span className="ml-1 text-meta font-normal text-paper-mutedFaint">条</span>
           </div>
           <div className="mt-2 h-1 rounded-sm bg-paper-coalLine2">
