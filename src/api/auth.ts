@@ -15,6 +15,8 @@ export interface MeResponse {
   defaultPlatform: string | null;
   completeness: number;
   balance: number;
+  /** 历史入账总额（credit+refund 之和），侧边栏进度条分母。后端 totalCredited。 */
+  totalQuota: number;
 }
 
 /** C 端登录返回体：user JWT + 用户 id + 是否首次注册。 */

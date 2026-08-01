@@ -23,12 +23,6 @@ const NAV: { to: string; label: string; ready: boolean }[] = [
   { to: '/review', label: '发布复盘', ready: true },
 ];
 
-/**
- * 额度进度条的参考上限。原型写死「{{ quota }} / 50 条」，但套餐有 p50/p150 两种，
- * 对买了 150 条的用户显示「/ 50」是错的，故这里不显示分母、只按 50 作条宽参考并夹到 100%。
- */
-const QUOTA_BAR_REF = 50;
-
 export default function Sidebar() {
   const navigate = useNavigate();
   const logoutUser = useAuthStore((s) => s.logoutUser);
@@ -41,7 +35,10 @@ export default function Sidebar() {
   });
 
   const balance = me?.balance ?? 0;
-  const barWidth = Math.min(100, (balance / QUOTA_BAR_REF) * 100);
+  const totalQuota = me?.totalQuota ?? 0;
+  // 进度条分母 = 历史入账总额（后端 totalCredited：credit+refund 的 delta 之和），非写死 50——
+  // p150 用户不再「满格却还剩额度」。totalQuota=0（无入账）时条宽 0。
+  const barWidth = totalQuota > 0 ? Math.min(100, (balance / totalQuota) * 100) : 0;
   const nickname = me?.nickname?.trim() || '未设昵称';
   const initial = nickname.slice(0, 1);
 
