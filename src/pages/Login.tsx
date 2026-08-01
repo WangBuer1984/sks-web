@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import { login, sendCode } from '../api/auth';
 import { useAuthStore } from '../store/auth';
+import LoginOnboarding from './LoginOnboarding';
 
 /**
  * C 端登录页：手机号 + 验证码（登录即注册）。
@@ -15,6 +16,7 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<'form' | 'onboard'>('form');
   const navigate = useNavigate();
   const setUserAuth = useAuthStore((s) => s.setUserAuth);
 
@@ -39,6 +41,11 @@ export default function Login() {
     onSuccess: (data) => {
       setUserAuth(data.token, data.userId);
       setError(null);
+      if (data.isNew) {
+        // 新用户：原型 loginStep2——展示「账号已创建 + 加微信开通额度」引导，不直接进工作台
+        setStep('onboard');
+        return;
+      }
       const ret = localStorage.getItem('sks_return_to');
       if (ret) {
         localStorage.removeItem('sks_return_to');
@@ -62,6 +69,10 @@ export default function Login() {
           <p className="mt-1.5 text-[11px] tracking-[0.22em] text-paper-muted">SUIKOUSHUO</p>
         </header>
 
+        {step === 'onboard' ? (
+          <LoginOnboarding onEnter={() => navigate('/workbench')} />
+        ) : (
+          <>
         {error && (
           <div
             role="alert"
@@ -127,6 +138,8 @@ export default function Login() {
             管理端入口 →
           </Link>
         </div>
+          </>
+        )}
       </div>
     </main>
   );

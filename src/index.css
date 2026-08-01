@@ -28,3 +28,12 @@ body {
     @apply text-paper-primaryHover;
   }
 }
+
+@layer components {
+  /* 微信二维码占位图案——原型 loginStep2 的 repeating-conic-gradient，
+     颜色取 paper 令牌（不在组件里裸 hex）。上线前替换为真实二维码 <img>。 */
+  .qr-placeholder {
+    background-image: repeating-conic-gradient(theme('colors.paper.ink') 0% 25%, theme('colors.paper.card') 0% 50%);
+    background-size: 24px 24px;
+  }
+}
