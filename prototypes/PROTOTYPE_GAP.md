@@ -40,6 +40,7 @@
 | 项 | 说明 |
 |---|---|
 | `Login.tsx` `/login` + `LoginOnboarding.tsx` | 原型登录对话框内嵌两步（在第 387 行内嵌源码，extract-prototype.mjs 未切成独立 section，故矩阵 16 段无此页）：`loginStep1` 手机号+验证码表单（`Login.tsx`，旧式 `text-3xl/sm` + 裸 hex，未令牌化——认证门，低优）；`loginStep2` 新用户开通额度引导（`LoginOnboarding.tsx`，`isNew` 后展示，令牌过线 ✅，QR 花纹走 `index.css` `.qr-placeholder`）。上线前换真二维码、改微信号占位 |
+| `RechargeDialog.tsx`（全局弹窗，非路由） | 原型 `{{ rechargeModal }}` 块（第 387 行内嵌，未切独立 section）。触发：侧边栏「联系我充值」/ 工作台「查看二维码」→ `useRechargeStore.open()`，AppLayout 单实例挂载。令牌过线 ✅：380px 定宽 + 14px 圆角（`rounded-soft`）+ 无边框 + `shadow-modal`；说明「网站暂不支持在线支付」+ 备注手机尾号（动态 `me.phone` 后 4 位）；微信二维码占位 + 微信号 + 三个静态 chip（50条/¥49、150条/¥129 高亮、拆账号1次=10条）+ 单「知道了」次要按钮。无在线支付，站长手动开通。上线前换真二维码、改微信号占位 |
 | Admin（`/admin*`） | 另有 `prototypes/随口说后台管理原型-admin.html`；**本期不评** |
 
 ## 建议施工 backlog（按建议序）
