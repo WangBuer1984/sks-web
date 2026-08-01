@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { topicSourceMeta } from '../../lib/topicSourceMeta';
 
@@ -25,7 +26,7 @@ export interface HomeNormalProps {
   }[];
 }
 
-function MetricCard({ label, children }: { label: string; children: React.ReactNode }) {
+function MetricCard({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="rounded-panel border border-paper-line bg-paper-card px-5 py-[18px]">
       <div className="mb-2 text-meta text-paper-muted">{label}</div>
