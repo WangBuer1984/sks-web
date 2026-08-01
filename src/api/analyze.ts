@@ -72,6 +72,18 @@ export function analyzeAccount(url: string): Promise<TaskAccepted> {
   return userClient.post<TaskAccepted, TaskAccepted>('/analyze/account', { url });
 }
 
+/** 拆账号预检结果（免费，不扣费）：视频数 + 预估扣费。 */
+export interface PrecheckView {
+  reachable: boolean;
+  videoCount: number;
+  estimatedCharge: number;
+}
+
+/** 拆账号预检（免费，不扣费）：返视频数 N + 预估扣费 max(1,min(10,N/2))。前端 pre-submit 显示数字。 */
+export function precheckAccount(url: string): Promise<PrecheckView> {
+  return userClient.post<PrecheckView, PrecheckView>('/analyze/account/precheck', { url });
+}
+
 /** 任务详情（轮询进度/结果，IDOR 校验）。 */
 export function getAnalyzeTask(id: number): Promise<TaskDetail> {
   return userClient.get<TaskDetail, TaskDetail>(`/analyze/tasks/${id}`);
