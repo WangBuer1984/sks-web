@@ -7,13 +7,14 @@ import {
   analyzeVideoLink,
   analyzeVideoText,
   getAnalyzeTask,
+  getCosts,
   parseAccountResult,
   parseStructure,
-  precheckAccount,
-  type PrecheckView,
+  type Costs,
   type TaskDetail,
   type VideoTextResponse,
 } from '../api/analyze';
+import { fetchMe, type MeResponse } from '../api/auth';
 
 /**
  * C 端拆解页 {@code /analyze}（§4.3 拆视频 / 拆账号）。
@@ -38,7 +39,6 @@ export default function Analyze() {
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<VideoTextResponse | null>(null);
   const [taskId, setTaskId] = useState<number | null>(null);
-  const [precheckResult, setPrecheckResult] = useState<PrecheckView | null>(null);
   const pollRef = useRef<boolean>(false);
 
   // 同步：拆视频·粘文案（扣 1，一次返回）
@@ -73,18 +73,9 @@ export default function Analyze() {
     },
   });
 
-  // 拆账号预检（免费，不扣费）：返 videoCount + 预估扣费，pre-submit 显示数字替代公式原文
-  const precheckMut = useMutation({
-    mutationFn: (url: string) => precheckAccount(url),
-    onSuccess: (r) => {
-      setPrecheckResult(r);
-      setError(null);
-    },
-    onError: (e: unknown) => {
-      setPrecheckResult(null);
-      setError(getBizMessage(e, '预检失败，请稍后重试'));
-    },
-  });
+  // 各模式扣费（后端传，不写死）+ 当前余额（余额不足判定）
+  const { data: costs } = useQuery({ queryKey: ['analyze-costs'], queryFn: getCosts });
+  const { data: me } = useQuery<MeResponse>({ queryKey: ['me'], queryFn: fetchMe, staleTime: 30_000 });
 
   // 轮询任务详情
   const { data: task } = useQuery<TaskDetail>({
@@ -137,12 +128,15 @@ export default function Analyze() {
         ? '粘贴单条视频链接…'
         : '粘贴账号主页链接…';
 
+  const accountCost = costs?.account ?? 10;
+  const balance = me?.balance ?? 0;
+  const insufficient = mode === 'account' && balance < accountCost;
   const chargeHint =
     mode === 'videoText' || mode === 'videoLink'
-      ? '扣 1 条 / 次'
-      : precheckResult
-        ? `扣 ${precheckResult.estimatedCharge} 条 / 次（${precheckResult.videoCount} 个视频）`
-        : '扣 max(1, min(10, floor(视频数/2))) 条 / 次，预检后显示具体数';
+      ? `扣 ${costs?.videoText ?? 1} 条 / 次`
+      : insufficient
+        ? `扣 ${accountCost} 条 / 次 · 额度不够`
+        : `扣 ${accountCost} 条 / 次`;
 
   return (
     <main className="mx-auto min-h-full max-w-4xl px-5 py-8">
@@ -187,7 +181,6 @@ export default function Analyze() {
               setSyncResult(null);
               setTaskId(null);
               setError(null);
-              setPrecheckResult(null);
             }}
             className={`rounded-lg border px-3.5 py-2 text-[13px] font-bold transition ${
               mode === m
@@ -206,15 +199,12 @@ export default function Analyze() {
           rows={mode === 'videoText' ? 8 : 3}
           placeholder={placeholder}
           value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            setPrecheckResult(null);
-          }}
+          onChange={(e) => setInput(e.target.value)}
           className="mb-4 w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
         />
         <button
           type="button"
-          disabled={pending || !input.trim()}
+          disabled={pending || !input.trim() || insufficient}
           onClick={submit}
           className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
         >
@@ -224,16 +214,6 @@ export default function Analyze() {
               ? '开始拆解'
               : '提交拆解'}
         </button>
-        {mode === 'account' && (
-          <button
-            type="button"
-            disabled={precheckMut.isPending || !input.trim()}
-            onClick={() => precheckMut.mutate(input.trim())}
-            className="ml-2 rounded-lg border border-[#d8c9b2] bg-paper-card px-4 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            {precheckMut.isPending ? '预检中…' : '预检'}
-          </button>
-        )}
         {mode !== 'videoText' && (
           <p className="mt-2 text-[11.5px] text-paper-muted">
             异步任务受理后可先去别处稍后回来看结果——进度条会持续更新。
