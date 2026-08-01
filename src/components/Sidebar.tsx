@@ -88,12 +88,13 @@ export default function Sidebar() {
               style={{ width: `${barWidth}%` }}
             />
           </div>
-          <a
-            href="#recharge"
+          <button
+            type="button"
+            onClick={() => window.alert('请联系站长微信充值（备注手机尾号）')}
             className="mt-2.5 block rounded-chip border border-paper-gold py-[7px] text-center text-meta text-paper-gold hover:bg-paper-coalHover hover:text-paper-gold"
           >
             联系我充值
-          </a>
+          </button>
         </div>
 
         {/* 原型这里整块可点进个人中心，右侧「退出」是块内独立点击目标 */}
