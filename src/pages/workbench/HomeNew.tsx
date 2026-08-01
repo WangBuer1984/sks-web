@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useRechargeStore } from '../../store/recharge';
 
 /**
  * 工作台 `homeNew` 态——未校准用户的三步引导。
@@ -30,6 +31,7 @@ const STEPS = [
 ] as const;
 
 export default function HomeNew({ balance }: { balance: number }) {
+  const openRecharge = useRechargeStore((s) => s.open);
   return (
     <>
       <section className="mb-5 rounded-block border border-paper-line bg-paper-card px-[32px] py-[30px]">
@@ -61,7 +63,7 @@ export default function HomeNew({ balance }: { balance: number }) {
           <button
             type="button"
             className="whitespace-nowrap rounded-chip bg-paper-danger px-4 py-2 text-copy text-white hover:bg-paper-dangerHover"
-            onClick={() => window.alert('请联系站长微信开通额度（备注手机尾号）')}
+            onClick={openRecharge}
           >
             查看二维码
           </button>

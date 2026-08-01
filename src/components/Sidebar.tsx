@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMe, type MeResponse } from '../api/auth';
 import { useAuthStore } from '../store/auth';
+import { useRechargeStore } from '../store/recharge';
 
 /**
  * App 持久侧边栏——对齐原型「侧边栏」段（`prototypes/extracted/sections/06-侧边栏.html`）。
@@ -31,6 +32,7 @@ const QUOTA_BAR_REF = 50;
 export default function Sidebar() {
   const navigate = useNavigate();
   const logoutUser = useAuthStore((s) => s.logoutUser);
+  const openRecharge = useRechargeStore((s) => s.open);
 
   const { data: me } = useQuery<MeResponse>({
     queryKey: ['me'],
@@ -90,7 +92,7 @@ export default function Sidebar() {
           </div>
           <button
             type="button"
-            onClick={() => window.alert('请联系站长微信充值（备注手机尾号）')}
+            onClick={openRecharge}
             className="mt-2.5 block rounded-chip border border-paper-gold py-[7px] text-center text-meta text-paper-gold hover:bg-paper-coalHover hover:text-paper-gold"
           >
             联系我充值

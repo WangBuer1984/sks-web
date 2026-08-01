@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import RechargeDialog from './RechargeDialog';
 import Sidebar from './Sidebar';
 
 /**
@@ -16,6 +17,7 @@ export default function AppLayout() {
       <main className="flex-1 overflow-y-auto px-10 py-8">
         <Outlet />
       </main>
+      <RechargeDialog />
     </div>
   );
 }
