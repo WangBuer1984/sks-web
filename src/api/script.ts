@@ -22,6 +22,8 @@ export interface ScriptDetail {
   platform: string;
   reviewState: string;
   citedCardIds: number[];
+  /** 生成命中查重则非空（不阻断，DedupChecker SimHash）；仅 /scripts/generate 响应带。 */
+  dedupWarnScriptId: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,8 +65,12 @@ export function createTopic(title: string, rationale: string, source?: string): 
 }
 
 /** 生成文案（§4.1 额度事务链；30-60s）。platform 缺省取用户主平台。 */
-export function generateScript(topicId: number, platform?: string): Promise<ScriptDetail> {
-  return userClient.post<ScriptDetail, ScriptDetail>('/scripts/generate', { topicId, platform });
+export function generateScript(
+  topicId: number,
+  platform?: string,
+  duration?: '45' | '90' | '180',
+): Promise<ScriptDetail> {
+  return userClient.post<ScriptDetail, ScriptDetail>('/scripts/generate', { topicId, platform, duration });
 }
 
 /** 稿件列表（可选 review_state 过滤）。 */
