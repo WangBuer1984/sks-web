@@ -16,6 +16,7 @@ import {
   parseSection,
   rewriteSentence,
 } from '../api/script';
+import CreateInput from './create/CreateInput';
 
 /**
  * C 端创作页 {@code /create}：选选题 → 生成 → 多阶段进度动画 → 三段逐句渲染
@@ -50,6 +51,9 @@ export default function Create() {
   const [script, setScript] = useState<ScriptDetail | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [stage, setStage] = useState(-1); // -1 闲置；0..2 进度阶段
+  // 新输入模型：自由 textarea + 时长 + 平台（Task 1 起手；onGenerate 占位，Task 5 接 genMut）
+  const [topic, setTopic] = useState('');
+  const [duration, setDuration] = useState<'45' | '90' | '180'>('45');
 
   const { data: bCards } = useQuery<CardSummary[]>({
     queryKey: ['kb-cards', 'B'],
@@ -94,21 +98,18 @@ export default function Create() {
   };
 
   return (
-    <main className="mx-auto min-h-full max-w-5xl px-5 py-8">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl font-black text-paper-ink">创作</h1>
-          <p className="mt-1 text-sm text-paper-muted">选选题 · 生成口播稿 · 逐句打磨</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/workbench"
-            className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-          >
-            返回工作台
-          </Link>
-        </div>
-      </header>
+    <div className="mx-auto max-w-[1040px]">
+      <h1 className="mb-5 font-serif text-title font-black text-paper-ink">文案创作</h1>
+      <CreateInput
+        topic={topic}
+        onTopic={setTopic}
+        duration={duration}
+        onDuration={setDuration}
+        onGenerate={() => {
+          /* Task 5 接：createTopic(topic) → genMut.mutate({topicId, platform, duration}) */
+        }}
+        generating={genMut.isPending || stage >= 0}
+      />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_18rem]">
         {/* 左：主创作区 */}
@@ -244,7 +245,7 @@ export default function Create() {
           </section>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
 
