@@ -111,15 +111,17 @@ export default function Sidebar() {
         </div>
 
         <div className="flex items-center gap-2.5 rounded-card p-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-paper-gold text-lead font-bold text-paper-ink">
-            {initial}
-          </div>
-          <div className="flex-1">
-            <div className="text-copy font-medium">{nickname}</div>
-            <div className="text-hint text-paper-mutedFaint">
-              资料完善度 {me?.completeness ?? 0}%
+          <NavLink to="/profile" className="flex flex-1 items-center gap-2.5 hover:text-paper-shadeDeep">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-paper-gold text-lead font-bold text-paper-ink">
+              {initial}
             </div>
-          </div>
+            <div className="flex-1">
+              <div className="text-copy font-medium">{nickname}</div>
+              <div className="text-hint text-paper-mutedFaint">
+                资料完善度 {me?.completeness ?? 0}%
+              </div>
+            </div>
+          </NavLink>
           <button
             type="button"
             onClick={logout}
