@@ -39,7 +39,7 @@
 
 | 项 | 说明 |
 |---|---|
-| `Login.tsx` `/login` | 无对应 `sections/*.html` 段；认证门，本期矩阵不评令牌 |
+| `Login.tsx` `/login` + `LoginOnboarding.tsx` | 原型登录对话框内嵌两步（在第 387 行内嵌源码，extract-prototype.mjs 未切成独立 section，故矩阵 16 段无此页）：`loginStep1` 手机号+验证码表单（`Login.tsx`，旧式 `text-3xl/sm` + 裸 hex，未令牌化——认证门，低优）；`loginStep2` 新用户开通额度引导（`LoginOnboarding.tsx`，`isNew` 后展示，令牌过线 ✅，QR 花纹走 `index.css` `.qr-placeholder`）。上线前换真二维码、改微信号占位 |
 | Admin（`/admin*`） | 另有 `prototypes/随口说后台管理原型-admin.html`；**本期不评** |
 
 ## 建议施工 backlog（按建议序）
