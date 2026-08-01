@@ -6,7 +6,7 @@ import { userClient } from './client';
  * 三种模式：
  * - video/text（同步）：粘文案 → 结构化拆解，扣 1，一次返回。
  * - video/link（异步）：粘链接 → 返回 taskId，轮询 GET /tasks/{id}。
- * - account（异步）：粘账号 → precheck → 扣 max(1,min(10,floor(N/2))) → 返回 taskId，轮询。
+ * - account（异步）：粘账号 → precheck → 扣 10 条 → 返回 taskId，轮询。
  *
  * 无流式（硬不变量）：异步任务前端轮询 GET /tasks/{id}，进度直写 analyze_task。
  */

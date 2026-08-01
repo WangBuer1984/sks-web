@@ -23,7 +23,7 @@ import { fetchMe, type MeResponse } from '../api/auth';
  * <ol>
  *   <li>拆视频·粘文案（同步）：贴文案 → 结构化拆解，扣 1，一次返回（无流式，等待动画掩盖 30-60s）。
  *   <li>拆视频·粘链接（异步）：贴链接 → 扣 1 → 返回 taskId，进度条轮询 → 四字段结构。
- *   <li>拆账号（异步）：贴账号链接 → precheck → 扣 max(1,min(10,floor(N/2))) → 返回 taskId，
+ *   <li>拆账号（异步）：贴账号链接 → precheck → 扣 10 条 → 返回 taskId，
  *       进度条轮询 → TOP20 清单 + 三层归纳。对齐原型「可先去别处稍后回来看结果」。
  * </ol>
  *
