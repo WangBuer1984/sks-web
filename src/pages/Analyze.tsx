@@ -126,7 +126,7 @@ export default function Analyze() {
       ? '粘贴视频完整文案…'
       : mode === 'videoLink'
         ? '粘贴单条视频链接（抖音或视频号分享链）…'
-        : '抖音：账号主页链接。视频号：sph 开头的视频号 ID，或该号任意一条分享链接。';
+        : '抖音：账号主页链接。视频号：该号任意一条分享链接（weixin.qq.com/sph/…）。';
 
   const accountCost = costs?.account ?? 10;
   const balance = me?.balance ?? 0;
@@ -221,7 +221,7 @@ export default function Analyze() {
         )}
         {mode === 'account' && (
           <p className="mt-2 text-[11.5px] text-paper-muted">
-            抖音请粘贴主页链接；视频号请粘贴视频号 ID（以 sph 开头）或该账号下任意一条分享链接（weixin.qq.com/sph/…）。
+            抖音请粘贴主页链接；视频号请粘贴该账号下任意一条分享链接（weixin.qq.com/sph/…）。
           </p>
         )}
       </section>
