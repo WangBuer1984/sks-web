@@ -72,3 +72,23 @@ export interface ActiveProfileView {
 export function getActiveProfile(): Promise<ActiveProfileView> {
   return userClient.get<ActiveProfileView, ActiveProfileView>('/profile');
 }
+
+/** /api/profile/sample-opening 响应（对齐 Java AiClient.SampleOpeningResponse）。 */
+export interface SampleOpeningView {
+  found: boolean;
+  topic: string;
+  without: string | null;
+  with: string | null;
+}
+
+/**
+ * 试试效果对比块：取「无档案/有档案」两版开场钩子。
+ * sessionId 由前端生成（与 interviewStep 同一 session）；topic 省略时后端默认「报价为什么差一倍」。
+ * found=false（访谈未完成）时前端按失败处理——静默隐藏对比块。
+ */
+export function sampleOpening(sessionId: string, topic?: string): Promise<SampleOpeningView> {
+  return userClient.post<SampleOpeningView, SampleOpeningView>('/profile/sample-opening', {
+    sessionId,
+    topic: topic ?? null,
+  });
+}

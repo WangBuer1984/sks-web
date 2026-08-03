@@ -6,6 +6,7 @@ import {
   asrVoice,
   confirmProfile,
   interviewStep,
+  sampleOpening,
   type InterviewStepView,
 } from '../api/profile';
 import { asText, extractProfileContent } from '../lib/profileText';
@@ -79,6 +80,20 @@ export default function Calibrate() {
     },
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
   });
+
+  const sampleMut = useMutation({
+    mutationFn: () => sampleOpening(sessionId),
+    onSuccess: (resp) => setSampleData(resp),
+    onError: () => setSampleData(null), // 静默失败：隐藏对比块，不阻断 confirm
+  });
+
+  // 进入 done 阶段触发样例开头（失败静默）
+  useEffect(() => {
+    if (phase === 'done') {
+      sampleMut.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const submitMaterials = () => {
     if (!materials.trim()) {
@@ -274,7 +289,7 @@ export default function Calibrate() {
                   </div>
                   {/* await_feedback 阶段：最新 AI 气泡下挂确认/否认胶囊 */}
                   {t.role === 'ai' && phase === 'await_feedback' && i === turns.length - 1 && (
-                    <div className="mt-2.5 flex gap-2 self-end">
+                    <div className="mt-2.5 flex gap-2 ml-auto">
                       <button
                         type="button"
                         disabled={pending}
