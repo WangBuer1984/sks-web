@@ -2,31 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
-import { asrVoice, confirmProfile, interviewStep, type InterviewStepView } from '../api/profile';
+import {
+  asrVoice,
+  confirmProfile,
+  interviewStep,
+  type InterviewStepView,
+} from '../api/profile';
+import { asText, extractProfileContent } from '../lib/profileText';
+import { currentStep, type Phase, type SampleState, shouldShowSampleBlock } from './calibrateMode';
 
-/**
- * C 端定位校准页 {@code /calibrate}（§5 / §4.2 校准免费）。
- *
- * <p>多轮对话式问答（文字输入 + 按住录音的语音输入 → ASR 转文字先回显可改后提交），走完 5 轮 →
- * summarize 出最终档案草稿 → 用户确认生效（写 active 档案 + A 层卡）。一次 /interview 一次 JSON
- * 返回（无流式——硬不变量），等待 30-60s 时显示「思考中…」进度动画。
- *
- * <p>流程：
- * <ol>
- *   <li>贴素材 → 首轮 /interview（materials 非空、reply 空）→ AI 猜人设 + 反馈问题。
- *   <li>确认 / 调整人设 → 进入多轮提问（5 轮），每轮可文字或语音回答。
- *   <li>语音回答：按住录音 → 松开调 /voice → 文本回显可编辑 → 提交走 /interview（reply=文本）。
- *   <li>done=true → 展示档案草稿 → 确认生效（/confirm）→ 跳回工作台。
- * </ol>
- *
- * <p>沿用纸感样式（paper palette + serif 标题），token 由 userClient 拦截器自动注入。
- */
-type Phase = 'materials' | 'await_feedback' | 'ask' | 'summarize' | 'done';
+const SAMPLE_MATERIAL = `我叫王姐，在佛山做了12年全屋定制工厂。自家厂房自家工人，不外包。
+专治装修怕被坑的业主——报价单每一项给你拆清楚，哪家贵在哪、哪家便宜在哪，
+敢把真实价格摆出来。不诋毁同行，但不说假话。`;
 
 interface Turn {
   role: 'ai' | 'user';
   text: string;
 }
+
+/** Step3 四宫格 → 档案键。原型「表达红线」对应档案 `红线`。 */
+const CARDS: { title: string; key: string }[] = [
+  { title: '人设', key: '人设' },
+  { title: '目标人群', key: '人群' },
+  { title: '差异化', key: '差异化' },
+  { title: '表达红线', key: '红线' },
+];
 
 export default function Calibrate() {
   const navigate = useNavigate();
@@ -40,10 +40,10 @@ export default function Calibrate() {
   const [banner, setBanner] = useState<string>('');
   const [asrPending, setAsrPending] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [sampleData, setSampleData] = useState<SampleState | null>(null); // Task 4 接线前恒 null
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // 首轮 / 后续轮统一走 interviewStep mutation
   const stepMut = useMutation({
     mutationFn: (vars: { reply?: string; materials?: string }) =>
       interviewStep(sessionId, vars.reply, vars.materials),
@@ -80,9 +80,9 @@ export default function Calibrate() {
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
   });
 
-  // --- 首轮：贴素材 ---
   const submitMaterials = () => {
     if (!materials.trim()) {
+      // 允许空素材「直接聊」分支调到这里时 materials 已被清空校验跳过——见「没有素材，直接聊」按钮直接 mutate
       setError('请先粘贴素材（主页说明 / 过往文案 / 朋友圈长文）');
       return;
     }
@@ -91,20 +91,25 @@ export default function Calibrate() {
     stepMut.mutate({ materials: materials.trim() });
   };
 
-  // --- 文字回答提交 ---
-  const submitReply = () => {
-    if (!input.trim()) {
+  const skipMaterials = () => {
+    setTurns([]);
+    setPhase('ask');
+    stepMut.mutate({ materials: null });
+  };
+
+  const submitReply = (reply?: string) => {
+    const text = (reply ?? input).trim();
+    if (!text) {
       setError('请输入回答');
       return;
     }
-    setTurns((t) => [...t, { role: 'user', text: input.trim() }]);
-    const reply = input.trim();
+    setTurns((t) => [...t, { role: 'user', text }]);
     setInput('');
     setPhase('ask');
-    stepMut.mutate({ reply });
+    stepMut.mutate({ reply: text });
   };
 
-  // --- 语音：按住录音 → 松开 ASR → 回显可改 ---
+  // 语音：按住录音 → 松开 ASR → 回显可改（逻辑不变）
   const startRecording = async () => {
     setError(null);
     try {
@@ -124,11 +129,10 @@ export default function Calibrate() {
         setAsrPending(true);
         try {
           const text = await asrVoice(blob);
-          // 后端曾因回调钩子写错返回 200 + 空串——空结果不能当成功静默清输入。
           if (!text.trim()) {
             setError('没听清，请再说一次或改用文字输入');
           } else {
-            setInput(text); // 转出文字先回显给用户确认 / 编辑再提交（brief）
+            setInput(text);
           }
         } catch (e) {
           setError('语音识别失败，请改用文字输入（不阻断访谈）');
@@ -152,7 +156,6 @@ export default function Calibrate() {
     }
   };
 
-  // 组件卸载时停录音
   useEffect(() => {
     return () => stopRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,26 +163,35 @@ export default function Calibrate() {
 
   const pending = stepMut.isPending || confirmMut.isPending;
   const showQA = phase === 'await_feedback' || phase === 'ask' || phase === 'summarize';
+  const step = currentStep(phase);
+  const content = extractProfileContent(draft);
 
   return (
     <main className="mx-auto min-h-full max-w-3xl px-5 py-8">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-paper-ink">定位校准</h1>
-          <p className="mt-1 text-sm text-paper-muted">
-            贴素材 → AI 猜人设 → 5 轮问答 → 归纳档案 · 校准免费
-          </p>
-        </div>
+      <header className="mb-[18px] flex items-center justify-between">
+        <h1 className="font-serif text-title font-black text-paper-ink">校准定位</h1>
         <Link
           to="/workbench"
-          className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
+          className="text-copy text-paper-muted transition hover:text-paper-primary"
         >
-          返回工作台
+          保存并退出
         </Link>
       </header>
 
+      {/* 三步进度条 */}
+      <div className="mb-[22px] flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className={`h-[5px] flex-1 rounded-[3px] ${
+              i < step ? 'bg-paper-primary' : 'bg-paper-shade'
+            }`}
+          />
+        ))}
+      </div>
+
       {banner && (
-        <p className="mb-4 rounded-lg border border-[#ecd4ae] bg-[#fdf3e4] px-3 py-2 text-[12px] font-semibold text-[#a8712e]">
+        <p className="mb-4 rounded-card border border-paper-goldPale bg-paper-tint px-3 py-2 text-meta font-semibold text-paper-primary">
           {banner}
         </p>
       )}
@@ -187,83 +199,123 @@ export default function Calibrate() {
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]"
+          className="mb-4 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger"
         >
           {error}
         </div>
       )}
 
-      {/* 第一步：贴素材 */}
+      {/* 第 1 步：贴素材 */}
       {phase === 'materials' && (
-        <section className="rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-          <h2 className="mb-3 font-serif text-lg font-bold text-paper-ink">第一步 · 贴素材</h2>
-          <p className="mb-3 text-[13px] text-paper-muted">
-            粘贴你的主页说明 / 过往文案 / 朋友圈长文（纯文本拼接），AI 据此先猜一版人设。
+        <section className="rounded-block border border-paper-line bg-paper-card p-[30px_32px]">
+          <div className="mb-2.5 text-meta font-bold tracking-wide text-paper-primary">
+            第 1 步 · 共 3 步 · 约 3 分钟
+          </div>
+          <h2 className="mb-1.5 text-[18px] font-bold text-paper-ink">先给我一点「你」的素材</h2>
+          <p className="mb-[18px] text-body leading-relaxed text-paper-inkSoft">
+            主页链接、过往视频文案、朋友圈长文，任意一样即可——AI 先猜一版你的人设，比让你填空快得多。没有素材也可以跳过，直接聊。
           </p>
           <textarea
-            rows={8}
-            placeholder="把素材文本贴在这里…"
+            rows={4}
+            placeholder="粘贴主页链接或一段你写过的文案…"
             value={materials}
             onChange={(e) => setMaterials(e.target.value)}
-            className="mb-4 w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
+            className="mb-3 w-full rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-ink outline-none focus:border-paper-primary"
           />
-          <button
-            type="button"
-            disabled={pending || !materials.trim()}
-            onClick={submitMaterials}
-            className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            {stepMut.isPending ? 'AI 思考中…' : '开始校准'}
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setMaterials(SAMPLE_MATERIAL)}
+              className="rounded-badge border border-dashed border-paper-goldSoft px-3.5 py-1.5 text-caption text-paper-primary transition hover:bg-paper-tint"
+            >
+              用示例：王姐的抖音主页
+            </button>
+            <div className="ml-auto flex gap-2.5">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={skipMaterials}
+                className="rounded-card border border-paper-lineStrong px-5 py-2.5 text-body text-paper-inkSoft transition hover:border-paper-primary hover:text-paper-primary disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                没有素材，直接聊
+              </button>
+              <button
+                type="button"
+                disabled={pending || !materials.trim()}
+                onClick={submitMaterials}
+                className="rounded-panel bg-paper-primary px-6 py-2.5 text-body text-white transition hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {stepMut.isPending ? 'AI 思考中…' : '开始校准'}
+              </button>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* 多轮问答 */}
+      {/* 第 2 步：确认人设 + 问答 */}
       {showQA && (
-        <section className="rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-          <h2 className="mb-4 font-serif text-lg font-bold text-paper-ink">
-            {phase === 'await_feedback' ? '确认人设' : '访谈问答'}
-          </h2>
+        <section className="rounded-block border border-paper-line bg-paper-card p-[26px_28px]">
+          <div className="mb-3.5 text-meta font-bold tracking-wide text-paper-primary">
+            第 2 步 · 确认并补充 · 约 8 分钟
+          </div>
 
           {turns.length > 0 && (
-            <ul className="mb-4 flex flex-col gap-3">
+            <div className="mb-[18px] flex flex-col gap-3">
               {turns.map((t, i) => (
-                <li
-                  key={i}
-                  className={`rounded-lg px-3.5 py-2.5 text-sm ${
-                    t.role === 'ai'
-                      ? 'border border-paper-line bg-[#f7f2e7] text-paper-ink'
-                      : 'border border-[#ecd4ae] bg-[#fdf3e4] text-paper-ink'
-                  }`}
-                >
-                  <span className="mr-2 text-[11px] font-bold text-paper-muted">
-                    {t.role === 'ai' ? 'AI' : '我'}
-                  </span>
-                  <span className="whitespace-pre-wrap break-words">{t.text}</span>
-                </li>
+                <div key={i}>
+                  <div
+                    className={`max-w-[94%] rounded-[10px_10px_10px_2px] px-4 py-3.5 text-body leading-relaxed ${
+                      t.role === 'ai'
+                        ? 'bg-paper-tint text-paper-ink'
+                        : 'ml-auto bg-paper-ink text-paper-shadeDeep'
+                    }`}
+                  >
+                    {t.text}
+                  </div>
+                  {/* await_feedback 阶段：最新 AI 气泡下挂确认/否认胶囊 */}
+                  {t.role === 'ai' && phase === 'await_feedback' && i === turns.length - 1 && (
+                    <div className="mt-2.5 flex gap-2 self-end">
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => submitReply('基本对')}
+                        className="rounded-badge border border-paper-primary bg-paper-tint px-4 py-2 text-copy text-paper-primary transition hover:bg-paper-tintDeep disabled:opacity-45"
+                      >
+                        基本对
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('calib-answer')?.focus()}
+                        className="rounded-badge border border-paper-lineStrong px-4 py-2 text-copy text-paper-inkSoft transition hover:border-paper-primary hover:text-paper-primary"
+                      >
+                        不太对，我来说
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
 
           {stepMut.isPending && (
-            <p className="mb-3 text-[13px] text-paper-muted">AI 思考中…（约 30-60s）</p>
+            <p className="mb-3 text-copy text-paper-muted">AI 思考中…（约 30-60s）</p>
           )}
 
-          {/* 回答输入区：文字 + 按住录音 */}
           <textarea
+            id="calib-answer"
             rows={3}
-            placeholder={asrPending ? '识别中…' : '输入回答（可手打，或按住下方按钮录音）'}
+            placeholder={asrPending ? '识别中…' : '打字或语音都行，大白话即可…'}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={asrPending}
-            className="mb-3 w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary disabled:bg-[#f4f1e9]"
+            className="mb-3 w-full rounded-[10px_10px_3px_12px] border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-ink outline-none focus:border-paper-primary disabled:bg-paper-base"
           />
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={pending || asrPending || !input.trim()}
-              onClick={submitReply}
-              className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
+              onClick={() => submitReply()}
+              className="rounded-panel bg-paper-primary px-4 py-2 text-body font-bold text-white transition hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
             >
               提交回答
             </button>
@@ -274,46 +326,86 @@ export default function Calibrate() {
               onMouseUp={stopRecording}
               onTouchStart={startRecording}
               onTouchEnd={stopRecording}
-              className={`rounded-lg border px-4 py-2 text-[13px] font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+              className={`rounded-panel border px-4 py-2 text-body font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${
                 recording
-                  ? 'border-[#b0492f] bg-[#b0492f] text-white'
-                  : 'border-[#d8c9b2] bg-paper-card text-paper-primary hover:bg-[#f7f2e7]'
+                  ? 'border-paper-danger bg-paper-danger text-white'
+                  : 'border-paper-lineStrong bg-paper-card text-paper-primary hover:bg-paper-tint'
               }`}
             >
               {recording ? '录音中…松开识别' : asrPending ? '识别中…' : '按住录音'}
             </button>
           </div>
-          <p className="mt-2 text-[11.5px] text-paper-muted">
+          <p className="mt-2 text-caption text-paper-muted">
             语音回答先转出文字回显，可编辑后再提交；识别失败可改用文字输入，不阻断访谈。
           </p>
+
+          <div className="mt-4 flex items-center justify-between border-t border-paper-tintDeep pt-4">
+            <p className="text-meta text-paper-mutedLight">
+              正式版会连续问 5–8 个问题（人群、案例、口头禅…），原型演示只走一问
+            </p>
+            <button
+              type="button"
+              disabled={pending || asrPending || !input.trim()}
+              onClick={() => submitReply()}
+              className="rounded-panel bg-paper-primary px-6 py-2.5 text-body text-white transition hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              生成定位档案 →
+            </button>
+          </div>
         </section>
       )}
 
-      {/* 完成：档案草稿 + 确认生效 */}
+      {/* 第 3 步：档案确认 */}
       {phase === 'done' && draft && (
-        <section className="rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-          <h2 className="mb-3 font-serif text-lg font-bold text-paper-ink">定位档案草稿</h2>
-          <p className="mb-4 text-[13px] text-paper-muted">
-            归纳完成，确认生效后写入你的定位档案 + A 层卡，后续创作将注入此档案。
-          </p>
-          <pre className="mb-5 overflow-x-auto rounded-lg border border-paper-line bg-[#fdfcf8] p-4 text-[12.5px] leading-relaxed text-paper-ink">
-            {JSON.stringify(draft, null, 2)}
-          </pre>
-          <div className="flex items-center gap-2">
+        <section className="rounded-block border border-paper-line bg-paper-card p-[26px_28px]">
+          <div className="mb-2.5 text-meta font-bold tracking-wide text-paper-primary">
+            第 3 步 · 你的定位档案
+          </div>
+          <div className="mb-4 grid grid-cols-2 gap-2.5 text-body">
+            {CARDS.map((c) => {
+              const text = asText(content[c.key]);
+              return (
+                <div
+                  key={c.key}
+                  className="rounded-card border border-paper-tintDeep bg-paper-sunken px-3.5 py-3"
+                >
+                  <div className="mb-1 text-hint font-bold text-paper-primary">{c.title}</div>
+                  <div className="leading-normal">
+                    {text || <span className="text-paper-mutedLight">档案里没有这一项</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 试试效果对比块（Task 4 接线前 sampleData 恒 null → 不渲染） */}
+          {shouldShowSampleBlock(sampleData) && (
+            <div className="mb-[18px] rounded-card border-l-[3px] border-paper-primary bg-paper-tint px-4 py-3 text-caption leading-relaxed">
+              试试效果：同一个选题「{sampleData!.topic}」——
+              <br />
+              <span className="text-paper-muted">无档案版开头：「{sampleData!.without}」</span>
+              <br />
+              <span className="font-bold text-paper-primary">
+                有档案版开头：「{sampleData!.with}」
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setPhase('ask')}
+              className="rounded-card border border-paper-lineStrong px-5 py-2.5 text-body text-paper-inkSoft transition hover:border-paper-primary hover:text-paper-primary"
+            >
+              再补充几句
+            </button>
             <button
               type="button"
               disabled={pending}
               onClick={() => confirmMut.mutate()}
-              className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
+              className="rounded-panel bg-paper-primary px-6 py-2.5 text-body text-white transition hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {confirmMut.isPending ? '生效中…' : '确认生效'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPhase('ask')}
-              className="rounded-lg border border-[#d8c9b2] bg-paper-card px-4 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-            >
-              再改改（继续访谈）
+              {confirmMut.isPending ? '生效中…' : '确认档案，开始创作'}
             </button>
           </div>
         </section>

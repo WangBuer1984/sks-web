@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getActiveProfile, type ActiveProfileView } from '../api/profile';
+import { asText } from '../lib/profileText';
 
 /**
  * 账号定位 `/positioning`——对齐原型「账号定位」段
@@ -20,19 +21,6 @@ const CARDS: { title: string; key: string }[] = [
   { title: '差异化', key: '差异化' },
   { title: '转化路径', key: '变现' },
 ];
-
-/** 把档案里任意形状的值渲染成一行文本——LLM 可能给字符串、数组或对象。 */
-function asText(v: unknown): string {
-  if (v == null) return '';
-  if (typeof v === 'string') return v;
-  if (Array.isArray(v)) return v.map(asText).filter(Boolean).join(' · ');
-  if (typeof v === 'object') {
-    return Object.entries(v as Record<string, unknown>)
-      .map(([k, val]) => `${k}：${asText(val)}`)
-      .join('；');
-  }
-  return String(v);
-}
 
 /** 支柱条形色。原型四条依次是强调棕/金/绿/蓝。 */
 const PILLAR_BAR = ['bg-paper-primary', 'bg-paper-gold', 'bg-paper-success', 'bg-paper-info'];
