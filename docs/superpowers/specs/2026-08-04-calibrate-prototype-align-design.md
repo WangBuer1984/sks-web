@@ -89,7 +89,12 @@
 - 标题：`先给我一点「你」的素材`（`text-[18px] font-bold`）
 - 说明：13.5px `text-paper-inkSoft`，原文照原型。
 - textarea：`bg-paper-sunken border-paper-lineStrong rounded-card text-body`，placeholder「粘贴主页链接或一段你写过的文案…」
-- 「用示例：王姐的抖音主页」虚线胶囊（`border-dashed border-paper-goldSoft text-paper-primary rounded-badge`）→ onClick 把示例文案塞进 textarea。
+- 「用示例：王姐的抖音主页」虚线胶囊（`border-dashed border-paper-goldSoft text-paper-primary rounded-badge`）→ onClick 把固定示例文案塞进 textarea。前端常量 `SAMPLE_MATERIAL`（对齐原型人设口吻）：
+  ```
+  我叫王姐，在佛山做了12年全屋定制工厂。自家厂房自家工人，不外包。
+  专治装修怕被坑的业主——报价单每一项给你拆清楚，哪家贵在哪、哪家便宜在哪，
+  敢把真实价格摆出来。不诋毁同行，但不说假话。
+  ```
 - 「没有素材，直接聊」次按钮（`border-paper-lineStrong text-paper-inkSoft hover:border-paper-primary hover:text-paper-primary`）→ `submitMaterials` 允许 materials 为空：`stepMut({ materials: null })`。
 - 主按钮「开始校准」（`bg-paper-primary text-white hover:bg-paper-primaryHover`）→ `submitMaterials`。
 
@@ -116,6 +121,11 @@
   | 差异化 | `差异化` |
   | 表达红线 | `红线` |
 
+  ⚠️ **draft 是嵌套结构，不是扁平键**：现网 `/step` done 时返回 `{ profile: { 人设, 人群, 差异化, 变现, 红线, 支柱配比 }, a_cards: [...] }`（见 sks-ai `test_interview.py` `assert "profile" in pd`）。前端取值前先剥一层：
+  ```ts
+  const content = ((draft?.profile ?? draft) as Record<string, unknown>) ?? {};
+  // 之后 content['人设'] / content['人群'] ... 按键读
+  ```
   渲染复用 `Positioning.tsx` 的 `asText()`（字符串/数组/对象统一降级）。
 - **「试试效果」对比块**（见 §6）：`bg-paper-tint border-l-[3px] border-paper-primary rounded-card px-4 py-3 text-caption`：
   - `同一个选题「{topic}」——`
@@ -130,46 +140,50 @@
 - router：`app/api/interview.py`（已有 `prefix="/ai/interview"` + `verify_service_token`）。
 - 请求（pydantic）：`{ user_id: int, thread_id: str, topic: str | None }`
 - 实现：
-  1. `config = {"configurable": {"thread_id": thread_id}}`；`sv = await _graph.aget_state(config)`；`profile = sv.values.get("profile")`。无 checkpoint / 无 profile → 404 翻译为 `AI_FAILED` 或显式 `not_found`（由 sks-server 翻译）。
-  2. topic 默认固定示例选题 `报价为什么差一倍`（对齐原型 `10-校准对话.html` 的示例文案）；可被入参覆盖。
-  3. 一个 LLM prompt：给定该 profile + topic，同时产出两版开场钩子——A **不带**定位（通用口吻）、B **带**该定位档案口吻。schema `{without: str, with: str}`。
-  4. 返回 `{topic, without, with}`。
+  1. `config = {"configurable": {"thread_id": thread_id}}`；`sv = await _graph.aget_state(config)`。
+  2. **取 profile 要剥一层**（与 `fetch_result` `data.get("profile")` 同层）：`raw = sv.values.get("profile")`（这里 raw 是 `{profile: {...}, a_cards: [...]}` 整块，见 §5.5 注）；喂给 prompt 的是 `raw["profile"]`（人设/人群/… 那一层）。若 raw 为 None 或 `raw["profile"]` 缺 → 当 not found 处理。
+  3. **无 checkpoint / 无 profile**：对齐 `GET /ai/interview/result` 的做法——返回 `{found: false}`（200，非 404）。Java `AiClient` 翻译为 `PARAM_INVALID`（4042 或同档），前端当失败 → 静默隐藏对比块。不在「404 vs AI_FAILED」之间留或。
+  4. topic 默认固定示例选题 `报价为什么差一倍`（对齐原型 `10-校准对话.html` 的示例文案）；可被入参覆盖。
+  5. 一个 LLM prompt：给定该 profile + topic，同时产出两版开场钩子——A **不带**定位（通用口吻）、B **带**该定位档案口吻。schema `{without: str, with: str}`。
+  6. 返回 `{found: true, topic, without, with}`。
 - 新 prompt 构建函数放 `app/skills/interview/sample_opening.py`（新文件），复用现有 LLM client 基础设施（参考 `graph.py` 里 `_call_llm` / `script_gen` 的调用模式，实现时再对齐）。
-- 安全：产出过 safetyCheck（参考其他端点做法），blocked 则返回 `blocked=true, without=None, with=None`。
+- **安全**：访谈现况是 LLM 产出**不**过阿里云 safetyCheck。本端点与之保持一致——**不过 safetyCheck**（不引入例外）。
 
 ### 6.2 sks-server `POST /api/profile/sample-opening`
 
 - `ProfileController` 新增端点，落在 user SecurityFilterChain，`@AuthenticationPrincipal Long userId`。
 - 请求 record `SampleOpeningRequest(String sessionId, String topic)`（topic 可空）。
-- 拼 `threadId = userId + ":" + sessionId`，调 `aiClient.sampleOpening(threadId, topic)`。
-- 响应 `ApiResponse<SampleOpeningView>`，`record SampleOpeningView(String topic, String without, String with, boolean blocked)`。
+- 拼 `threadId = userId + ":" + sessionId`，调 `aiClient.sampleOpening(userId, threadId, topic)`（与 `interviewStep(userId, sessionId, ...)` 同模式，Controller 传 userId）。
+- 响应 `ApiResponse<SampleOpeningView>`，`record SampleOpeningView(String topic, String without, String with, boolean found)`。sks-ai 返回 `found=false`（无 checkpoint / 无 profile）时，Java 翻译为 `PARAM_INVALID`（前端按失败处理）。
 - 失败翻译：sks-ai 非 2xx → `AI_FAILED`（沿用 `AiClient.post()` 基座）。
 
 ### 6.3 sks-server `AiClient.sampleOpening`
 
-- typed 方法，POST `/ai/interview/sample-opening`，请求 record `SampleOpeningRequest(@JsonProperty thread_id, @JsonProperty user_id, topic)`（对齐 snake_case），响应 record `SampleOpeningResponse(@JsonIgnoreProperties(ignoreUnknown=true) topic, without, with, blocked)`。
+- typed 方法 `sampleOpening(long userId, String threadId, String topic)`，POST `/ai/interview/sample-opening`。
+- 请求 record `SampleOpeningRequest(@JsonProperty("user_id") long userId, @JsonProperty("thread_id") String threadId, String topic)`（对齐 snake_case）。
+- 响应 record `SampleOpeningResponse(@JsonIgnoreProperties(ignoreUnknown=true) boolean found, String topic, String without, String with)`。
 - 照 `scriptGen` / `interviewStep` 模式抄。
 
 ### 6.4 sks-web 接线
 
 - `api/profile.ts` 加：
   ```ts
-  export interface SampleOpeningView { topic: string; without: string | null; with: string | null; blocked?: boolean }
+  export interface SampleOpeningView { found: boolean; topic: string; without: string | null; with: string | null }
   export function sampleOpening(sessionId: string, topic?: string): Promise<SampleOpeningView>
   ```
-- Calibrate `done` 阶段：`useMutation({ mutationFn: () => sampleOpening(sessionId) })`，进 done 时触发（`useEffect` on `phase==='done'`）。成功且非 blocked → 渲染对比块；失败/blocked → 静默不渲染对比块，不阻断 confirm。
+- Calibrate `done` 阶段：`useMutation({ mutationFn: () => sampleOpening(sessionId) })`，进 done 时触发（`useEffect` on `phase==='done'`）。`found=true` 且两 hook 非空 → 渲染对比块；`found=false` / 失败 → 静默不渲染对比块，不阻断 confirm。
 
 ## 7. 错误处理
 
 - 样例开头失败：静默隐藏对比块，Step3 仍可 confirm（对比块是锦上添花，非阻塞）。
 - 访谈推进失败 / blocked：沿用现有 `error` / `banner` 渲染，令牌化样式（`bg-paper-dangerTint border-paper-dangerLine text-paper-danger`）。
-- sample-opening 无 checkpoint：sks-ai 返回 not found，sks-server 翻译，前端按失败处理（隐藏对比块）。
+- sample-opening 无 checkpoint：sks-ai 返回 `{found:false}`（200），Java 翻译为 `PARAM_INVALID`，前端按失败处理（隐藏对比块）。不在 404/AI_FAILED 之间留或。
 
 ## 8. 测试
 
-- sks-web：`Calibrate` 已有的交互流不回归（贴素材→问答→confirm）。新增 `sampleOpening` mock 用例：done 阶段触发、成功渲染对比块、失败隐藏。进度条 currentStep 在各 phase 的断言。沿用 `src/pages/workbench/homeMode.test.ts` 的 vitest 模式。
-- sks-server：`ProfileServiceTest` 照现有 `@MockBean AiClient` 模式加 `sampleOpening` 桩用例（threadId 拼接 + 响应装配 + 404 翻译）。
-- sks-ai：`app/api/interview.py` 新端点加 pytest——mock `_graph.aget_state` 返回带 profile 的 state，断言两版 hook 形状；无 checkpoint 走 not found。
+- sks-web：**现网没有 Calibrate 单测**——不假设已有交互流测。新增 vitest（沿用 `src/pages/workbench/homeMode.test.ts` 模式）：进度条 `currentStep` 在各 phase（materials/await_feedback/ask/done）的断言；`sampleOpening` mock 成功渲染对比块、mock 失败隐藏对比块；四宫格从嵌套 `draft.profile` 取值（喂 `{profile:{人设:...}}` 断言渲染、喂扁平 `draft` 兼容降级）。
+- sks-server：`ProfileServiceTest` 照现有 `@MockBean AiClient` 模式加 `sampleOpening` 桩用例（`threadId=userId:sessionId` 拼接 + `found=true` 响应装配 + `found=false` → `PARAM_INVALID` 翻译）。
+- sks-ai：`app/api/interview.py` 新端点加 pytest——mock `_graph.aget_state` 返回带 `profile` 的 state，断言两版 hook 形状 + `found=true`；无 checkpoint / 无 profile → `{found:false}`。
 
 ## 9. 契约文档
 
@@ -181,3 +195,4 @@
 - **骨架**：过（路由可达，不变）。
 - **令牌**：过——主体无 `text-2xl/sm/xs` 冒充，无裸 hex（频次 <3 的局部值例外并注明），色/字号/圆角走 `tailwind.config.js`。
 - **功能**：过——三步进度条 + 三步卡 + Step2 人设确认气泡/胶囊 + Step3 四宫格 + 试试效果对比块（接端点）齐；草稿不再 `JSON.stringify`。
+- **过线后**：更新 `prototypes/PROTOTYPE_GAP.md` 矩阵行 10（令牌 不过→过、功能 偏→过，证据/缺口列改写），「建议序」6 改为 `~~完成~~`，并补「范围外」无新增。
