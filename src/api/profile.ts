@@ -48,9 +48,12 @@ export function asrVoice(audio: Blob): Promise<string> {
   });
 }
 
-/** 校准生效：写 active 档案 + 批量建 A 层卡。访谈未完成抛 PARAM_INVALID。 */
-export function confirmProfile(sessionId: string): Promise<void> {
-  return userClient.post<void, void>('/profile/confirm', { sessionId });
+/** 校准生效：写 active 档案 + 批量建 A 层卡。turns 入库为 content 的 _interview_turns 供回放。 */
+export function confirmProfile(
+  sessionId: string,
+  turns?: { role: 'ai' | 'user'; text: string }[],
+): Promise<void> {
+  return userClient.post<void, void>('/profile/confirm', { sessionId, turns: turns ?? null });
 }
 
 /**
@@ -91,4 +94,19 @@ export function sampleOpening(sessionId: string, topic?: string): Promise<Sample
     sessionId,
     topic: topic ?? null,
   });
+}
+
+/** /api/profile/interview/history 响应（对齐 Java ProfileService.InterviewHistoryView）。 */
+export interface InterviewTurn {
+  role: 'ai' | 'user';
+  text: string;
+}
+export interface InterviewHistoryView {
+  found: boolean;
+  turns: InterviewTurn[];
+}
+
+/** 回放面板：读当前 active 档案 confirm 时入库的访谈问答。未校准/旧档案 → found=false。 */
+export function interviewHistory(): Promise<InterviewHistoryView> {
+  return userClient.get<InterviewHistoryView, InterviewHistoryView>('/profile/interview/history');
 }

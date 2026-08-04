@@ -73,7 +73,7 @@ export default function Calibrate() {
   });
 
   const confirmMut = useMutation({
-    mutationFn: () => confirmProfile(sessionId),
+    mutationFn: () => confirmProfile(sessionId, turns),
     onSuccess: () => {
       setError(null);
       navigate('/workbench');

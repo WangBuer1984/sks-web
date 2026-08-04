@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getActiveProfile, type ActiveProfileView } from '../api/profile';
+import {
+  getActiveProfile,
+  interviewHistory,
+  type ActiveProfileView,
+  type InterviewHistoryView,
+} from '../api/profile';
+import { shouldShowReplay } from './positioningMode';
 import { asText } from '../lib/profileText';
 
 /**
@@ -47,6 +53,10 @@ export default function Positioning() {
   const { data, isLoading, error } = useQuery<ActiveProfileView>({
     queryKey: ['profile'],
     queryFn: getActiveProfile,
+  });
+  const { data: history, isLoading: historyLoading } = useQuery<InterviewHistoryView>({
+    queryKey: ['profile', 'interview-history'],
+    queryFn: interviewHistory,
   });
 
   const content = data?.content ?? {};
@@ -181,15 +191,30 @@ export default function Positioning() {
           </div>
 
           <aside className="flex flex-col rounded-block border border-paper-line bg-paper-card p-5">
-            <h2 className="mb-1 font-sans text-copy font-bold">重新校准</h2>
+            <h2 className="mb-1 font-sans text-copy font-bold">建库引导对话</h2>
             <p className="mb-3.5 text-[11.5px] text-paper-muted">
-              这份档案是你聊出来的，随时可以重聊——旧版本会留档，不会丢。
+              你注册时 15 分钟聊出来的档案，随时可以重聊校准
             </p>
-            {/* 原型此处展示了一段建库引导对话回放；访谈记录留在 Python 的 checkpoint 里、
-                后端未提供历史对话读取端点，故不造假数据，只保留重新校准入口。 */}
-            <p className="flex-1 text-caption leading-normal text-paper-mutedLight">
-              校准过程中的问答目前不做回放——访谈状态存在 AI 侧的 checkpoint，后端还没有开放历史对话的读取端点。
-            </p>
+            {shouldShowReplay(history?.found ?? false, history?.turns ?? null) ? (
+              <div className="mb-3.5 flex flex-1 flex-col gap-2.5 text-caption">
+                {history!.turns.map((t, i) => (
+                  <div
+                    key={i}
+                    className={`max-w-[92%] rounded-[10px_10px_10px_2px] px-3 py-2.5 leading-relaxed ${
+                      t.role === 'ai'
+                        ? 'self-start bg-paper-tint text-paper-ink'
+                        : 'self-end rounded-[10px_10px_2px_10px] bg-paper-ink text-paper-shadeDeep'
+                    }`}
+                  >
+                    {t.text}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="flex-1 text-caption leading-normal text-paper-mutedLight">
+                {historyLoading ? '加载中…' : '校准对话暂不可回放'}
+              </p>
+            )}
             <Link
               to="/calibrate"
               className="mt-3.5 rounded-card border border-paper-primary py-2.5 text-center text-copy text-paper-primary hover:bg-paper-tint"
