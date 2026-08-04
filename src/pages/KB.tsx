@@ -3,41 +3,30 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BizError, getBizMessage } from '../api/client';
 import { type CardLayer, type CardSummary, createCard, deleteCard, listCards, updateCard } from '../api/kb';
+import { displayContent, wrapContent } from '../lib/kbText';
+import { isKbEmpty, partitionByLayer } from './kbMode';
 
 /**
- * C 端知识库管理页 {@code /kb}：A/B/C 三层 tab + 卡片列表 + 新建/编辑弹窗 + 删除引用保护。
+ * C 端知识库页 {@code /kb}：A/B/C 三层三列网格（全可见，去 tab）+ deferred 诚实占位 + 引用保护删除。
  *
- * <p>B 层卡保存时提示「已重算向量，立即生效」（§7.4）；删除时若后端返回 code=4006（CARD_IN_USE），
- * 弹二次确认展示「有 N 篇稿件引用此卡」+「仍然删除」按钮（调 force=true 软删）。
- * 沿用纸感样式（paper palette + serif 标题），token 由 userClient 拦截器自动注入。
+ * <p>对齐原型 15-知识库.html：A 层人设声音 / B 层业务事实 三列网格；缺卡提醒位 + C 层 stat
+ * 占位（规划中，无 API）；dashed 空态（A+B=0，先完成定位校准 / 直接回答问题建卡 disabled）。
+ * 保留 CardModal（A/B 新建编辑）+ 删除二次确认（code=4006 CARD_IN_USE → force 软删）。
  */
 
-const LAYER_LABELS: Record<CardLayer, string> = { A: '人物画像', B: '产品知识', C: '金句素材' };
-const LAYER_HINTS: Record<CardLayer, string> = {
+type ABLayer = 'A' | 'B';
+
+const EYEBROWS: Record<ABLayer, string> = {
+  A: 'A 层 · 人设声音（每次生成必用）',
+  B: 'B 层 · 业务事实（按选题检索）',
+};
+const LAYER_HINTS: Record<ABLayer, string> = {
   A: 'A 层：定位画像，不做语义检索。',
   B: 'B 层：产品/选题知识，保存即重算向量，立即生效。',
-  C: 'C 层：金句素材，不做语义检索。',
 };
-
-/** 把后端 JSONB content（JSON 文本）显示为可读文本；非字符串 JSON 反序列化后 pretty-print。 */
-function displayContent(raw: string): string {
-  if (!raw) return '';
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
-  } catch {
-    return raw;
-  }
-}
-
-/** 把 textarea 文本包装成合法 JSON 字符串存 JSONB（用户输入纯文本也能存）。 */
-function wrapContent(text: string): string {
-  return JSON.stringify(text);
-}
 
 export default function KB() {
   const queryClient = useQueryClient();
-  const [layer, setLayer] = useState<CardLayer>('B');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CardSummary | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CardSummary | null>(null);
@@ -45,216 +34,242 @@ export default function KB() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const { data: cards, isLoading, error } = useQuery<CardSummary[]>({
-    queryKey: ['kb-cards', layer],
-    queryFn: () => listCards(layer),
+    queryKey: ['kb-cards'],
+    queryFn: () => listCards(),
   });
-
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['kb-cards'] });
 
   const createMut = useMutation({
     mutationFn: (vars: { layer: CardLayer; cardType: string; title: string; content: string }) =>
       createCard(vars.layer, vars.cardType, vars.title, vars.content),
-    onSuccess: () => {
-      setShowModal(false);
-      setFormError(null);
-      invalidate();
-    },
+    onSuccess: () => { setShowModal(false); setFormError(null); invalidate(); },
     onError: (e: unknown) => setFormError(getBizMessage(e, '新建失败')),
   });
-
   const updateMut = useMutation({
     mutationFn: (vars: { id: number; title: string; content: string }) =>
       updateCard(vars.id, vars.title, vars.content),
-    onSuccess: () => {
-      setShowModal(false);
-      setEditing(null);
-      setFormError(null);
-      invalidate();
-    },
+    onSuccess: () => { setShowModal(false); setEditing(null); setFormError(null); invalidate(); },
     onError: (e: unknown) => setFormError(getBizMessage(e, '保存失败')),
   });
-
   const deleteMut = useMutation({
     mutationFn: (vars: { id: number; force: boolean }) => deleteCard(vars.id, vars.force),
-    onSuccess: () => {
-      setConfirmDelete(null);
-      setDeleteMsg(null);
-      invalidate();
-    },
+    onSuccess: () => { setConfirmDelete(null); setDeleteMsg(null); invalidate(); },
     onError: (e: unknown) => {
-      if (e instanceof BizError && e.code === 4006) {
-        setDeleteMsg(e.message);
-      } else {
-        setDeleteMsg(getBizMessage(e, '删除失败'));
-      }
+      if (e instanceof BizError && e.code === 4006) setDeleteMsg(e.message);
+      else setDeleteMsg(getBizMessage(e, '删除失败'));
     },
   });
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormError(null);
-    setShowModal(true);
-  };
-
-  const openEdit = (card: CardSummary) => {
-    setEditing(card);
-    setFormError(null);
-    setShowModal(true);
-  };
-
+  const openCreate = () => { setEditing(null); setFormError(null); setShowModal(true); };
+  const openEdit = (card: CardSummary) => { setEditing(card); setFormError(null); setShowModal(true); };
   const handleDelete = (card: CardSummary) => {
-    setConfirmDelete(card);
-    setDeleteMsg(null);
+    setConfirmDelete(card); setDeleteMsg(null);
     deleteMut.mutate({ id: card.id, force: false });
   };
+  const handleForceDelete = () => { if (confirmDelete) deleteMut.mutate({ id: confirmDelete.id, force: true }); };
 
-  const handleForceDelete = () => {
-    if (confirmDelete) deleteMut.mutate({ id: confirmDelete.id, force: true });
-  };
+  const { a: aCards, b: bCards } = partitionByLayer(cards ?? []);
+  const empty = isKbEmpty(aCards, bCards);
+  const total = aCards.length + bCards.length;
 
   return (
-    <main className="mx-auto min-h-full max-w-3xl px-5 py-8">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-paper-ink">知识库</h1>
-          <p className="mt-1 text-sm text-paper-muted">三层卡片 · 供 AI 创作检索引用</p>
-        </div>
-        <div className="flex items-center gap-3">
+    <main className="mx-auto min-h-full max-w-[880px] px-5 py-8">
+      {/* Header */}
+      <header className="mb-5 flex items-baseline justify-between">
+        <h1 className="font-serif text-title font-black text-paper-ink">
+          知识库
+          <span className="ml-2 font-sans text-copy font-normal text-paper-mutedLight">
+            {total} 张卡片 · 活卡率 <span className="text-paper-mutedFaint">规划中</span>
+          </span>
+        </h1>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={openCreate}
-            className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620]"
+            className="rounded-panel bg-paper-primary px-5 py-2.5 text-body text-white transition hover:bg-paper-primaryHover"
           >
             + 新建卡片
           </button>
-          <Link
-            to="/workbench"
-            className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
+          <button
+            type="button"
+            disabled
+            className="rounded-panel border border-paper-primary px-5 py-2.5 text-body text-paper-primary opacity-45 cursor-not-allowed"
           >
-            返回工作台
-          </Link>
+            + 对话补卡（规划中）
+          </button>
         </div>
       </header>
 
-      {/* A/B/C 三层 tab */}
-      <nav className="mb-5 flex gap-2">
-        {(['A', 'B', 'C'] as CardLayer[]).map((l) => (
-          <button
-            key={l}
-            type="button"
-            onClick={() => setLayer(l)}
-            className={`rounded-lg border px-4 py-2 text-[13px] font-bold transition ${
-              layer === l
-                ? 'border-paper-primary bg-paper-primary text-white'
-                : 'border-[#d8c9b2] bg-paper-card text-paper-primary hover:bg-[#f7f2e7]'
-            }`}
-          >
-            {l} 层 · {LAYER_LABELS[l]}
-          </button>
-        ))}
-      </nav>
-
-      <p className="mb-4 rounded-lg border border-paper-line bg-paper-card px-3 py-2 text-[12px] text-paper-muted">
-        {LAYER_HINTS[layer]}
-      </p>
-
-      {isLoading && <p className="py-10 text-center text-sm text-paper-muted">加载中…</p>}
+      {isLoading && <p className="py-10 text-center text-body text-paper-muted">加载中…</p>}
       {error && (
-        <p className="py-10 text-center text-sm text-[#b0492f]">加载失败：{getBizMessage(error)}</p>
+        <p className="py-10 text-center text-body text-paper-danger">加载失败：{getBizMessage(error)}</p>
       )}
 
-      {/* 卡片列表 */}
-      {cards && cards.length === 0 && (
-        <p className="py-10 text-center text-sm text-paper-muted">
-          暂无 {LAYER_LABELS[layer]}卡片，点击「新建卡片」开始。
-        </p>
-      )}
-      {cards && cards.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {cards.map((card) => (
-            <li
-              key={card.id}
-              className="rounded-2xl border border-paper-line bg-paper-card p-5 shadow-sm"
+      {/* 空态互斥：A+B=0 只渲染 dashed 空态 */}
+      {empty && !isLoading && !error && (
+        <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-11 text-center">
+          <p className="mb-2 font-serif text-[18px] font-black text-paper-ink">知识库还是空的</p>
+          <p className="mb-5 text-body leading-loose text-paper-inkSoft">
+            知识库是「稿子像你」的原料——完成定位校准会自动生成人设卡
+            <br />
+            之后 AI 每次只问你一个 30 秒的问题，卡片越攒越多
+          </p>
+          <div className="flex justify-center gap-2.5">
+            <Link
+              to="/calibrate"
+              className="rounded-panel bg-paper-primary px-6 py-3 text-body text-white transition hover:bg-paper-primaryHover"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-[#ecd4ae] bg-[#fdf3e4] px-2 py-0.5 text-[11px] font-bold text-[#a8712e]">
-                      {card.cardType || '未分类'}
-                    </span>
-                    <h3 className="truncate font-serif text-base font-bold text-paper-ink">
-                      {card.title}
-                    </h3>
-                  </div>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-paper-muted">
-                    {displayContent(card.content)}
-                  </p>
-                  <p className="mt-2 text-[11px] text-paper-muted">
-                    更新于 {new Date(card.updatedAt).toLocaleString('zh-CN')}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(card)}
-                    className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3 py-1.5 text-[12px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(card)}
-                    disabled={deleteMut.isPending}
-                    className="rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-1.5 text-[12px] font-bold text-[#b0492f] transition hover:bg-[#f5e0d8] disabled:opacity-45"
-                  >
-                    删除
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              先完成定位校准
+            </Link>
+            <button
+              type="button"
+              disabled
+              className="rounded-panel border border-paper-primary px-6 py-3 text-body text-paper-primary opacity-45 cursor-not-allowed"
+            >
+              直接回答一个问题建卡（规划中）
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* 新建/编辑弹窗 */}
+      {/* 有数据：A 网格 + B 网格 + 缺卡位 + C stat */}
+      {!empty && !isLoading && !error && (
+        <>
+          {/* A 层 */}
+          <section className="mb-[26px]">
+            <div className="mb-2.5 text-meta font-bold tracking-wide text-paper-primary">{EYEBROWS.A}</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {aCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex flex-col rounded-panel border border-paper-line bg-paper-card px-[18px] py-4 transition hover:border-paper-primary"
+                >
+                  <div className="mb-1.5 text-body font-bold text-paper-ink">{card.title}</div>
+                  <div className="flex-1 text-caption leading-snug text-paper-inkSoft line-clamp-2">
+                    {displayContent(card.content)}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(card)}
+                      className="rounded-chip border border-paper-lineStrong px-3 py-1 text-meta text-paper-inkSoft transition hover:border-paper-primary hover:text-paper-primary"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(card)}
+                      disabled={deleteMut.isPending}
+                      className="rounded-chip border border-paper-lineStrong px-3 py-1 text-meta text-paper-inkSoft transition hover:border-paper-danger hover:text-paper-danger disabled:opacity-45"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* B 层 */}
+          <section className="mb-[26px]">
+            <div className="mb-2.5 text-meta font-bold tracking-wide text-paper-primary">{EYEBROWS.B}</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {bCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex flex-col rounded-panel border border-paper-line bg-paper-card px-[18px] py-4 transition hover:border-paper-primary"
+                >
+                  <div className="mb-1 text-hint font-bold text-paper-primary">
+                    {card.cardType || '未分类'}
+                  </div>
+                  <div className="mb-1 text-body font-bold text-paper-ink">{card.title}</div>
+                  <div className="flex-1 text-meta leading-normal text-paper-muted line-clamp-2">
+                    {displayContent(card.content)}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(card)}
+                      className="rounded-chip border border-paper-lineStrong px-3 py-1 text-meta text-paper-inkSoft transition hover:border-paper-primary hover:text-paper-primary"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(card)}
+                      disabled={deleteMut.isPending}
+                      className="rounded-chip border border-paper-lineStrong px-3 py-1 text-meta text-paper-inkSoft transition hover:border-paper-danger hover:text-paper-danger disabled:opacity-45"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 缺卡提醒位（disabled 规划中，B 与 C 之间） */}
+          <div className="mb-[26px] flex items-center gap-3.5 rounded-panel border border-paper-dangerLine bg-paper-dangerTint px-[18px] py-3.5">
+            <div className="flex-1 text-copy leading-relaxed text-paper-primaryDeep">
+              <strong>缺卡提醒：</strong>规划中
+            </div>
+            <button
+              type="button"
+              disabled
+              className="rounded-chip bg-paper-danger px-4 py-2 text-copy text-white opacity-45 cursor-not-allowed"
+            >
+              语音回答
+            </button>
+          </div>
+
+          {/* C 层 stat 占位（disabled 规划中，移除 CRUD） */}
+          <section>
+            <div className="mb-2.5 text-meta font-bold tracking-wide text-paper-primary">
+              C 层 · 内容资产（自动沉淀）
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {['历史稿件', '改稿记录', '表现数据'].map((t) => (
+                <div
+                  key={t}
+                  className="rounded-panel border border-paper-line bg-paper-sunken px-[18px] py-4 opacity-60"
+                >
+                  <div className="mb-1 text-body font-bold text-paper-ink">{t}</div>
+                  <div className="text-meta text-paper-muted">规划中</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* 新建/编辑弹窗（A/B） */}
       {showModal && (
         <CardModal
-          layer={layer}
           editing={editing}
           pending={createMut.isPending || updateMut.isPending}
           error={formError}
-          onClose={() => {
-            setShowModal(false);
-            setEditing(null);
-            setFormError(null);
-          }}
-          onSubmit={(cardType, title, content) => {
-            if (editing) {
-              updateMut.mutate({ id: editing.id, title, content });
-            } else {
-              createMut.mutate({ layer, cardType, title, content });
-            }
+          onClose={() => { setShowModal(false); setEditing(null); setFormError(null); }}
+          onSubmit={(layer, cardType, title, content) => {
+            if (editing) updateMut.mutate({ id: editing.id, title, content });
+            else createMut.mutate({ layer, cardType, title, content });
           }}
         />
       )}
 
-      {/* 删除二次确认（有引用时） */}
+      {/* 删除二次确认（引用保护 4006） */}
       {confirmDelete && deleteMsg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-paper-line bg-paper-card p-6 shadow-lg">
-            <h3 className="mb-2 font-serif text-lg font-bold text-paper-ink">删除确认</h3>
-            <p className="mb-4 text-sm leading-relaxed text-[#b0492f]">{deleteMsg}</p>
-            <p className="mb-5 text-[12px] text-paper-muted">
+          <div className="w-full max-w-sm rounded-block border border-paper-line bg-paper-card p-6 shadow-modal">
+            <h3 className="mb-2 font-serif text-[18px] font-bold text-paper-ink">删除确认</h3>
+            <p className="mb-4 text-copy leading-relaxed text-paper-danger">{deleteMsg}</p>
+            <p className="mb-5 text-meta text-paper-muted">
               强制删除后，引用此卡的稿件将无法追溯其来源。是否继续？
             </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setConfirmDelete(null);
-                  setDeleteMsg(null);
-                }}
-                className="rounded-lg border border-[#d8c9b2] bg-paper-card px-4 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
+                onClick={() => { setConfirmDelete(null); setDeleteMsg(null); }}
+                className="rounded-card border border-paper-lineStrong bg-paper-card px-4 py-2 text-copy text-paper-primary transition hover:bg-paper-tint"
               >
                 取消
               </button>
@@ -262,7 +277,7 @@ export default function KB() {
                 type="button"
                 onClick={handleForceDelete}
                 disabled={deleteMut.isPending}
-                className="rounded-lg bg-[#b0492f] px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#8a3a25] disabled:opacity-45"
+                className="rounded-card bg-paper-danger px-4 py-2 text-copy text-white transition hover:bg-paper-dangerHover disabled:opacity-45"
               >
                 {deleteMut.isPending ? '删除中…' : '仍然删除'}
               </button>
@@ -274,22 +289,21 @@ export default function KB() {
   );
 }
 
-/** 新建/编辑弹窗。B 层保存后显示「已重算向量」提示。 */
+/** 新建/编辑弹窗。新建 A|B 二选一（默认 B）；编辑沿用卡自身 layer（只读，不切 C）。B 层提示重算向量。 */
 function CardModal({
-  layer,
   editing,
   pending,
   error,
   onClose,
   onSubmit,
 }: {
-  layer: CardLayer;
   editing: CardSummary | null;
   pending: boolean;
   error: string | null;
   onClose: () => void;
-  onSubmit: (cardType: string, title: string, content: string) => void;
+  onSubmit: (layer: ABLayer, cardType: string, title: string, content: string) => void;
 }) {
+  const [layer, setLayer] = useState<ABLayer>(editing?.layer === 'A' ? 'A' : 'B');
   const [cardType, setCardType] = useState(editing?.cardType ?? '');
   const [title, setTitle] = useState(editing?.title ?? '');
   const [content, setContent] = useState(editing ? displayContent(editing.content) : '');
@@ -299,56 +313,80 @@ function CardModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-lg rounded-2xl border border-paper-line bg-paper-card p-6 shadow-lg">
-        <h3 className="mb-4 font-serif text-lg font-bold text-paper-ink">
-          {editing ? '编辑卡片' : `新建 ${LAYER_LABELS[layer]}卡片`}
+      <div className="w-full max-w-lg rounded-block border border-paper-line bg-paper-card p-6 shadow-modal">
+        <h3 className="mb-4 font-serif text-[18px] font-bold text-paper-ink">
+          {editing ? '编辑卡片' : '新建卡片'}
         </h3>
 
         {error && (
-          <div
-            role="alert"
-            className="mb-4 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]"
-          >
+          <div role="alert" className="mb-4 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger">
             {error}
           </div>
         )}
 
+        {/* 层选择：编辑只读，新建 A|B 二选一（默认 B） */}
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-semibold text-paper-muted">卡片类型</label>
+          <label className="mb-1.5 block text-hint font-semibold text-paper-muted">层</label>
+          {editing ? (
+            <div className="rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-inkSoft">
+              {layer} 层
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {(['A', 'B'] as ABLayer[]).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLayer(l)}
+                  className={`rounded-card border px-4 py-2 text-copy ${
+                    layer === l
+                      ? 'border-paper-primary bg-paper-primary text-white'
+                      : 'border-paper-lineStrong bg-paper-card text-paper-primary hover:bg-paper-tint'
+                  }`}
+                >
+                  {l} 层
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-1.5 block text-hint font-semibold text-paper-muted">卡片类型</label>
           <input
             type="text"
             placeholder="如：产品 / 人物 / 金句"
             value={cardType}
             onChange={(e) => setCardType(e.target.value)}
-            className="w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
+            className="w-full rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-ink outline-none focus:border-paper-primary"
           />
         </div>
 
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-semibold text-paper-muted">标题</label>
+          <label className="mb-1.5 block text-hint font-semibold text-paper-muted">标题</label>
           <input
             type="text"
             placeholder="卡片标题（100 字内）"
             maxLength={100}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
+            className="w-full rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-ink outline-none focus:border-paper-primary"
           />
         </div>
 
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-semibold text-paper-muted">内容</label>
+          <label className="mb-1.5 block text-hint font-semibold text-paper-muted">内容</label>
           <textarea
             rows={5}
             placeholder="卡片内容（纯文本，保存时自动包装为 JSON）"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
+            className="w-full rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2.5 text-body text-paper-ink outline-none focus:border-paper-primary"
           />
         </div>
 
         {isBLayer && (
-          <p className="mb-4 rounded-lg border border-[#ecd4ae] bg-[#fdf3e4] px-3 py-2 text-[12px] text-[#a8712e]">
+          <p className="mb-4 rounded-card border border-paper-goldPale bg-paper-tint px-3 py-2 text-meta text-paper-primary">
             {LAYER_HINTS.B}
           </p>
         )}
@@ -357,15 +395,15 @@ function CardModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#d8c9b2] bg-paper-card px-4 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
+            className="rounded-card border border-paper-lineStrong bg-paper-card px-4 py-2 text-copy text-paper-primary transition hover:bg-paper-tint"
           >
             取消
           </button>
           <button
             type="button"
             disabled={!canSubmit || pending}
-            onClick={() => onSubmit(cardType.trim() || '未分类', title.trim(), wrapContent(content))}
-            className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
+            onClick={() => onSubmit(layer, cardType.trim() || '未分类', title.trim(), wrapContent(content))}
+            className="rounded-card bg-paper-primary px-4 py-2 text-copy text-white transition hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
           >
             {pending ? '保存中…' : '保存'}
           </button>
