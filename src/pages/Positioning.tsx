@@ -57,6 +57,7 @@ export default function Positioning() {
   const { data: history, isLoading: historyLoading } = useQuery<InterviewHistoryView>({
     queryKey: ['profile', 'interview-history'],
     queryFn: interviewHistory,
+    enabled: data?.calibrated === true, // 未校准不发（避免多余请求）
   });
 
   const content = data?.content ?? {};
