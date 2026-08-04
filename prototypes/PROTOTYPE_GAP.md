@@ -28,7 +28,7 @@
 | 8 | 工作台 | `isHome` | `Workbench.tsx` `/workbench` | 过 | 过 | 过 | 双态 homeNew/homeNormal；指标由 cards/scripts 聚合；今日选题取 open 前 3 + 空态；知识空白条无 API 未做（接受，见 backlog） | — |
 | 9 | 个人中心 | `isProfile` | `Profile.tsx` `/profile` | 过 | 过 | 过 | `text-title`/`paper-*`；完善度 + 双栏 + 换绑 | — |
 | 10 | 校准对话 | `isCalib` | `Calibrate.tsx` `/calibrate` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/hint + paper.*，无 text-2xl/sm 冒充、无裸 hex）。功能：三步进度条 + 三步卡 + Step2 人设确认气泡/基本对·不太对胶囊 + Step3 四宫格档案（剥 draft.profile 嵌套层）+ 试试效果对比块（接 /api/profile/sample-opening，失败静默隐藏）齐；草稿不再 JSON.stringify | — |
-| 11 | 账号定位 | `isPos` | `Positioning.tsx` `/positioning` | 过 | 过 | 偏 | 令牌过。功能：空态三步+档案/支柱有；右侧「建库对话回放」缺（代码注明无历史对话 API） | 8 |
+| 11 | 账号定位 | `isPos` | `Positioning.tsx` `/positioning` | 过 | 过 | 过 | 令牌过。功能：空态三步+档案/支柱有；右侧「建库引导对话回放」接 /api/profile/interview/history（confirm 时 turns 入库 _interview_turns，不打 AI；未校准/旧档案降级占位） | — |
 | 12 | 选题库 | `isTopics` | `Topics.tsx` `/topics` | 过 | 过 | 过 | 空态双 CTA + 列表「生成文案」→`/create?topic=` | — |
 | 13 | 文案创作 | `isCreate` | `Create.tsx` `/create`（拆 `create/` 子组件） | 过 | 过 | 过 | 自由 textarea+时长芯片(真传后端控篇幅)+三平台 Tab(切换重生)+逐句编辑(保留真 API)+查重黄条(dedupWarnScriptId)+采纳/换个角度/复制全文+引用侧栏+历史稿件；内联下划线引用无 API 未做（接受） | — |
 | 14 | 对标拆解 | `isBench` | `Analyze.tsx` `/analyze` | 过 | 不过 | 偏 | 令牌：`text-2xl`/`text-sm`。功能：拆账号/拆视频 API+轮询+TOP20 列表+三层 `FieldBlock` 有；缺原型①「画像对比」三列 grid（对标 vs 你）及编号卡片化 ②③④ 布局 | **3** |
@@ -52,7 +52,7 @@
 5. **发布复盘** — 标题与表格布局 + 令牌化
 6. ~~**校准对话** — 三步进度与档案卡 UI + 令牌化~~ ✅ 完成（三步进度/三步卡/四宫格 + 试试效果对比块接 sample-opening 端点；令牌过线）
 7. **侧边栏** — 「新账号视角」演示开关（产品仍要才做）
-8. **账号定位** — 对话回放（依赖后端历史 API；无 API 则 gap 保持「偏」）
+8. ~~**账号定位** — 对话回放（依赖后端历史 API；无 API 则 gap 保持「偏」）~~ ✅ 完成（回放走 confirm 入库的 _interview_turns，不经 AI；aside 文案+气泡对齐原型）
 
 已过线（落地页五段、主区域、个人中心、选题库）：**维持**，不占主序；发现回归再开单。
 
