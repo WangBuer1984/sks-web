@@ -144,10 +144,10 @@ export default function Review() {
 
   const feedbackMut = useMutation({
     mutationFn: (vars: { id: number; reason: string }) => feedbackScript(vars.id, vars.reason),
-    onSuccess: () => {
+    onSuccess: (_r, vars) => {
       setError(null);
       setBanner('反哺已提交');
-      setFeedbackInputs((p) => ({ ...p, [0]: '' }));
+      setFeedbackInputs((p) => ({ ...p, [vars.id]: '' }));
       void qc.invalidateQueries({ queryKey: ['topics'] });
       refresh();
     },
