@@ -33,7 +33,7 @@
 | 13 | 文案创作 | `isCreate` | `Create.tsx` `/create`（拆 `create/` 子组件） | 过 | 过 | 过 | 自由 textarea+时长芯片(真传后端控篇幅)+三平台 Tab(切换重生)+逐句编辑(保留真 API)+查重黄条(dedupWarnScriptId)+采纳/换个角度/复制全文+引用侧栏+历史稿件；内联下划线引用无 API 未做（接受） | — |
 | 14 | 对标拆解 | `isBench` | `Analyze.tsx` `/analyze` | 过 | 不过 | 偏 | 令牌：`text-2xl`/`text-sm`。功能：拆账号/拆视频 API+轮询+TOP20 列表+三层 `FieldBlock` 有；缺原型①「画像对比」三列 grid（对标 vs 你）及编号卡片化 ②③④ 布局 | **3** |
 | 15 | 知识库 | `isKb` | `KB.tsx` `/kb` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/meta/hint + paper.*，max-w-[880px]，无 text-2xl/sm/xs 冒充、无裸 hex）。功能：去 tab 改 A/B 三层三列网格全可见 + 引用保护删除 + CardModal A/B；对话补卡/缺卡提醒/活卡率/C 层 stat deferred disabled 占位「规划中」（无 API）；C 层 CRUD 移除（方向 C=auto-沉淀） | — |
-| 16 | 历史稿件 | `isHistory` | `Review.tsx` `/review` | 过 | 不过 | 偏 | UI 标题现为「复盘」应为「发布复盘」。令牌：`text-2xl/sm` + 裸 hex。功能：采用→登记→填数→归因/周卡有；布局非原型表头网格+行内动作 | **5** |
+| 16 | 历史稿件 | `isHistory` | `Review.tsx` `/review` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/meta/hint + paper.*，max-w-[980px]，无 text-2xl/sm 冒充、无裸 hex）。功能：9 列表格（选题 JOIN topic.title/平台/状态/播放/点赞/评论/分享/收藏/动作）+ track 登记自动抓真五码（抖音+视频号）判态 hot/plain/flop + hot 副作用；砍手填 /play；tracking 失败可改链重试；周卡留顶令牌化 | — |
 
 ## 范围外
 
@@ -49,7 +49,7 @@
 2. ~~**文案创作** — 令牌化 + 对齐原型选题区/平台态/查重等缺失块（按后端是否已有字段裁）~~ ✅ 完成（拆 `create/` 子组件；时长跨仓真传；三平台 Tab+查重 dedupWarnScriptId+逐句+采纳/换个角度/复制；内联下划线引用无 API 延期）
 3. **对标拆解** — 结果区改原型①对比表 + 编号块；去掉纯 FieldBlock 堆叠感
 4. ~~**知识库** — 令牌化 + 分层网格 / 补卡提醒（能接 API 的先接）~~ ✅ 完成（去 tab 改三层三列网格 + 令牌化；补卡/缺卡/活卡率/C stat 无 API deferred 占位；C 层 CRUD 移除）
-5. **发布复盘** — 标题与表格布局 + 令牌化
+5. ~~**发布复盘** — 标题与表格布局 + 令牌化~~ ✅ 完成（9 列表格 + 真五码 + track 自动判态 + 选题 JOIN title；砍 /play；令牌化）
 6. ~~**校准对话** — 三步进度与档案卡 UI + 令牌化~~ ✅ 完成（三步进度/三步卡/四宫格 + 试试效果对比块接 sample-opening 端点；令牌过线）
 7. **侧边栏** — 「新账号视角」演示开关（产品仍要才做）
 8. ~~**账号定位** — 对话回放（依赖后端历史 API；无 API 则 gap 保持「偏」）~~ ✅ 完成（回放走 confirm 入库的 _interview_turns，不经 AI；aside 文案+气泡对齐原型）
