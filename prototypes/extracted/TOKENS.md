@@ -2,7 +2,7 @@
 
 由 `node scripts/prototype-tokens.mjs` 生成，数据源是 `extracted/full.html` 的 body inline 样式。
 
-样式声明总数 **3230** 条，来自 **730** 处 `style="..."`。
+样式声明总数 **3236** 条，来自 **733** 处 `style="..."`。
 原型无任何 class 选择器，令牌全部由此反推。**出现 ≥3 次的值才建议进 tailwind.config**，
 只出现 1 次的多为局部微调，照搬会把令牌表撑烂。
 
@@ -16,7 +16,7 @@
 | `#ffffff` | 91 | `paper.card` |
 | `#8a8578` | 83 | `paper.muted` |
 | `#e2dccd` | 61 | `paper.line` |
-| `#6b6558` | 48 | `paper.inkSoft` |
+| `#6b6558` | 51 | `paper.inkSoft` |
 | `#23231f` | 44 | `paper.ink` |
 | `#d8d2c4` | 44 | `paper.lineStrong` |
 | `#f7f3ea` | 39 | `paper.tint` |
@@ -27,7 +27,7 @@
 | `#b0492f` | 16 | `paper.danger` |
 | `#a09a8a` | 14 | `paper.mutedLight` |
 | `#c9b997` | 11 | `paper.goldSoft` |
-| `#3a382f` | 9 |  |
+| `#3a382f` | 9 | `paper.coalHover` |
 | `#faf0ec` | 9 | `paper.dangerTint` |
 | `#4a8c5c` | 8 | `paper.success` |
 | `#f2efe6` | 8 | `paper.shade` |
@@ -43,7 +43,7 @@
 | `rgba(0,0,0,0.25)` | 4 |  |
 | `rgba(35,35,31,0.45)` | 4 |  |
 | `#2f5c3b` | 3 | `paper.successDeep` |
-| `#8f3a25` | 3 |  |
+| `#8f3a25` | 3 | `paper.dangerHover` |
 | `#b5ae9a` | 3 | `paper.mutedPale` |
 | `#edf5ef` | 3 | `paper.successTint` |
 | `#b3c5d6` | 2 |  |
@@ -70,7 +70,7 @@
 | `12px` | 77 |
 | `13.5px` | 64 |
 | `13px` | 58 |
-| `12.5px` | 54 |
+| `12.5px` | 57 |
 | `11px` | 42 |
 | `14px` | 34 |
 | `15px` | 15 |
