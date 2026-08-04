@@ -28,7 +28,7 @@ export interface ScriptDetail {
   updatedAt: string;
 }
 
-/** 稿件列表项（轻量，不含 hook/body/cta）。 */
+/** 稿件列表项（轻量，不含 hook/body/cta）。canonical：复盘看板 + 创作页共用。 */
 export interface ScriptSummary {
   id: number;
   topicId: number;
@@ -36,6 +36,12 @@ export interface ScriptSummary {
   reviewState: string;
   createdAt: string;
   updatedAt: string;
+  topicTitle?: string | null;
+  playCount?: number | null;
+  likeCount?: number | null;
+  commentCount?: number | null;
+  shareCount?: number | null;
+  collectCount?: number | null;
 }
 
 /** 三段之一：{sentences:[{idx,text}]}。 */
