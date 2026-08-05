@@ -42,6 +42,7 @@ export interface ScriptSummary {
   commentCount?: number | null;
   shareCount?: number | null;
   collectCount?: number | null;
+  publishUrl?: string | null;
 }
 
 /** 三段之一：{sentences:[{idx,text}]}。 */

@@ -315,7 +315,7 @@ export default function Review() {
                       <input
                         type="url"
                         placeholder="改链接重试"
-                        value={trackInputs[s.id] ?? ''}
+                        value={trackInputs[s.id] ?? s.publishUrl ?? ''}
                         onChange={(e) =>
                           setTrackInputs((p) => ({ ...p, [s.id]: e.target.value }))
                         }
@@ -324,9 +324,9 @@ export default function Review() {
                       <button
                         type="button"
                         onClick={() =>
-                          trackMut.mutate({ id: s.id, url: (trackInputs[s.id] ?? '').trim() })
+                          trackMut.mutate({ id: s.id, url: (trackInputs[s.id] ?? s.publishUrl ?? '').trim() })
                         }
-                        disabled={trackMut.isPending}
+                        disabled={trackMut.isPending || !(trackInputs[s.id] ?? s.publishUrl ?? '').trim()}
                         className="rounded-chip border border-paper-danger px-2.5 py-1 text-paper-danger hover:bg-paper-dangerTint disabled:opacity-45"
                       >
                         重试
