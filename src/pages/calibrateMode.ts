@@ -23,6 +23,20 @@ export function shouldShowSampleBlock(s: SampleState | null): boolean {
 }
 
 /**
+ * 是否采纳本次 sample-opening 响应。
+ *
+ * <p>进 done 会触发请求；离开 done（再补充）cleanup abort + bump latestId。
+ * 慢响应回来时若 reqId 已不是最新或已 abort → 丢弃，防盖掉更新结果 / 重复 LLM 竞态。
+ */
+export function shouldApplySampleResponse(
+  reqId: number,
+  latestId: number,
+  aborted: boolean,
+): boolean {
+  return !aborted && reqId === latestId;
+}
+
+/**
  * confirm 时存哪个 turns：done 快照优先，无快照用 live。
  *
  * <p>防「再补充几句」幽灵 turn：done 后「再补充」setPhase('ask') + 乐观追加 user turn，

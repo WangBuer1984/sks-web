@@ -10,7 +10,14 @@ import {
   type InterviewStepView,
 } from '../api/profile';
 import { asText, extractProfileContent } from '../lib/profileText';
-import { currentStep, shouldShowSampleBlock, storeTurns, type Phase, type SampleState } from './calibrateMode';
+import {
+  currentStep,
+  shouldApplySampleResponse,
+  shouldShowSampleBlock,
+  storeTurns,
+  type Phase,
+  type SampleState,
+} from './calibrateMode';
 
 const SAMPLE_MATERIAL = `我叫王姐，在佛山做了12年全屋定制工厂。自家厂房自家工人，不外包。
 专治装修怕被坑的业主——报价单每一项给你拆清楚，哪家贵在哪、哪家便宜在哪，
@@ -41,7 +48,7 @@ export default function Calibrate() {
   const [banner, setBanner] = useState<string>('');
   const [asrPending, setAsrPending] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [sampleData, setSampleData] = useState<SampleState | null>(null); // Task 4 接线前恒 null
+  const [sampleData, setSampleData] = useState<SampleState | null>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   // turns 的同步镜像 ref（供 onSuccess 即时读 + done 快照），doneTurnsRef 首次进 done 时快照一次。
@@ -49,6 +56,9 @@ export default function Calibrate() {
   // confirm 存 doneTurnsRef 快照（不含补充后加的 turn）。
   const turnsRef = useRef<Turn[]>([]);
   const doneTurnsRef = useRef<Turn[] | null>(null);
+  // sample-opening 竞态：reqId + AbortController；成功后 settled 跳过「再补充→再 done」重复打 LLM。
+  const sampleReqIdRef = useRef(0);
+  const sampleSettledRef = useRef(false);
 
   const stepMut = useMutation({
     mutationFn: (vars: { reply?: string; materials?: string }) =>
@@ -90,19 +100,29 @@ export default function Calibrate() {
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
   });
 
-  const sampleMut = useMutation({
-    mutationFn: () => sampleOpening(sessionId),
-    onSuccess: (resp) => setSampleData(resp),
-    onError: () => setSampleData(null), // 静默失败：隐藏对比块，不阻断 confirm
-  });
-
-  // 进入 done 阶段触发样例开头（失败静默）
+  // 进入 done 触发样例开头（失败静默）。离开 done → abort + invalidate；已 settled 不重复请求。
   useEffect(() => {
-    if (phase === 'done') {
-      sampleMut.mutate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+    if (phase !== 'done') return;
+    if (sampleSettledRef.current) return;
+
+    const reqId = ++sampleReqIdRef.current;
+    const ac = new AbortController();
+    sampleOpening(sessionId, undefined, ac.signal)
+      .then((resp) => {
+        if (!shouldApplySampleResponse(reqId, sampleReqIdRef.current, ac.signal.aborted)) return;
+        setSampleData(resp);
+        if (shouldShowSampleBlock(resp)) sampleSettledRef.current = true;
+      })
+      .catch(() => {
+        if (!shouldApplySampleResponse(reqId, sampleReqIdRef.current, ac.signal.aborted)) return;
+        setSampleData(null); // 静默失败：隐藏对比块，不阻断 confirm
+      });
+
+    return () => {
+      ac.abort();
+      sampleReqIdRef.current++; // invalidate in-flight（慢响应不得盖结果）
+    };
+  }, [phase, sessionId]);
 
   const submitMaterials = () => {
     if (!materials.trim()) {
@@ -113,6 +133,8 @@ export default function Calibrate() {
     turnsRef.current = [];
     setTurns([]);
     doneTurnsRef.current = null;
+    sampleSettledRef.current = false;
+    setSampleData(null);
     setPhase('ask');
     stepMut.mutate({ materials: materials.trim() });
   };
@@ -121,6 +143,8 @@ export default function Calibrate() {
     turnsRef.current = [];
     setTurns([]);
     doneTurnsRef.current = null;
+    sampleSettledRef.current = false;
+    setSampleData(null);
     setPhase('ask');
     stepMut.mutate({ materials: null });
   };
@@ -407,7 +431,7 @@ export default function Calibrate() {
             })}
           </div>
 
-          {/* 试试效果对比块（Task 4 接线前 sampleData 恒 null → 不渲染） */}
+          {/* 试试效果对比块（失败/竞态丢弃 → sampleData null → 不渲染） */}
           {shouldShowSampleBlock(sampleData) && (
             <div className="mb-[18px] rounded-card border-l-[3px] border-paper-primary bg-paper-tint px-4 py-3 text-caption leading-relaxed">
               试试效果：同一个选题「{sampleData!.topic}」——

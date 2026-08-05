@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { asText, extractProfileContent } from '../lib/profileText';
-import { currentStep, shouldShowSampleBlock, storeTurns, type SampleState } from './calibrateMode';
+import {
+  currentStep,
+  shouldApplySampleResponse,
+  shouldShowSampleBlock,
+  storeTurns,
+  type SampleState,
+} from './calibrateMode';
 
 describe('currentStep', () => {
   it('materials → 1', () => expect(currentStep('materials')).toBe(1));
@@ -49,4 +55,12 @@ describe('storeTurns', () => {
     expect(storeTurns(['a', 'b'], ['a', 'b', 'ghost'])).toEqual(['a', 'b']));
   it('done null → 用 live', () => expect(storeTurns(null, ['a', 'b'])).toEqual(['a', 'b']));
   it('done 空数组 → 用空快照（不 fallback live）', () => expect(storeTurns([], ['a'])).toEqual([]));
+});
+
+describe('shouldApplySampleResponse', () => {
+  it('reqId===latest 且未 abort → true', () =>
+    expect(shouldApplySampleResponse(3, 3, false)).toBe(true));
+  it('reqId 过期 → false', () => expect(shouldApplySampleResponse(2, 3, false)).toBe(false));
+  it('aborted → false（即使 id 匹配）', () =>
+    expect(shouldApplySampleResponse(3, 3, true)).toBe(false));
 });
