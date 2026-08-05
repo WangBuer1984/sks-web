@@ -10,7 +10,7 @@ import {
   type InterviewStepView,
 } from '../api/profile';
 import { asText, extractProfileContent } from '../lib/profileText';
-import { currentStep, type Phase, type SampleState, shouldShowSampleBlock } from './calibrateMode';
+import { currentStep, shouldShowSampleBlock, storeTurns, type Phase, type SampleState } from './calibrateMode';
 
 const SAMPLE_MATERIAL = `我叫王姐，在佛山做了12年全屋定制工厂。自家厂房自家工人，不外包。
 专治装修怕被坑的业主——报价单每一项给你拆清楚，哪家贵在哪、哪家便宜在哪，
@@ -44,6 +44,11 @@ export default function Calibrate() {
   const [sampleData, setSampleData] = useState<SampleState | null>(null); // Task 4 接线前恒 null
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  // turns 的同步镜像 ref（供 onSuccess 即时读 + done 快照），doneTurnsRef 首次进 done 时快照一次。
+  // 防「再补充几句」幽灵 turn：/step 幂等忽略 done 后的 reply，但乐观追加的 user turn 会污染 _interview_turns 回放；
+  // confirm 存 doneTurnsRef 快照（不含补充后加的 turn）。
+  const turnsRef = useRef<Turn[]>([]);
+  const doneTurnsRef = useRef<Turn[] | null>(null);
 
   const stepMut = useMutation({
     mutationFn: (vars: { reply?: string; materials?: string }) =>
@@ -56,11 +61,15 @@ export default function Calibrate() {
         return;
       }
       if (resp.question) {
-        setTurns((t) => [...t, { role: 'ai', text: resp.question as string }]);
+        turnsRef.current = [...turnsRef.current, { role: 'ai', text: resp.question as string }];
+        setTurns(turnsRef.current);
       }
       if (resp.done) {
         setDraft(resp.profileDraft);
         setPhase('done');
+        if (doneTurnsRef.current === null) {
+          doneTurnsRef.current = turnsRef.current; // 首次进 done 快照（含本轮 AI 问，不含后续补充幽灵 turn）
+        }
       } else if (resp.stage === 'await_feedback') {
         setPhase('await_feedback');
       } else if (resp.stage === 'ask') {
@@ -73,7 +82,7 @@ export default function Calibrate() {
   });
 
   const confirmMut = useMutation({
-    mutationFn: () => confirmProfile(sessionId, turns),
+    mutationFn: () => confirmProfile(sessionId, storeTurns(doneTurnsRef.current, turnsRef.current)),
     onSuccess: () => {
       setError(null);
       navigate('/workbench');
@@ -101,13 +110,17 @@ export default function Calibrate() {
       setError('请先粘贴素材（主页说明 / 过往文案 / 朋友圈长文）');
       return;
     }
+    turnsRef.current = [];
     setTurns([]);
+    doneTurnsRef.current = null;
     setPhase('ask');
     stepMut.mutate({ materials: materials.trim() });
   };
 
   const skipMaterials = () => {
+    turnsRef.current = [];
     setTurns([]);
+    doneTurnsRef.current = null;
     setPhase('ask');
     stepMut.mutate({ materials: null });
   };
@@ -118,7 +131,8 @@ export default function Calibrate() {
       setError('请输入回答');
       return;
     }
-    setTurns((t) => [...t, { role: 'user', text }]);
+    turnsRef.current = [...turnsRef.current, { role: 'user', text }];
+    setTurns(turnsRef.current);
     setInput('');
     setPhase('ask');
     stepMut.mutate({ reply: text });

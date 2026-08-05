@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { asText, extractProfileContent } from '../lib/profileText';
-import { currentStep, shouldShowSampleBlock, type SampleState } from './calibrateMode';
+import { currentStep, shouldShowSampleBlock, storeTurns, type SampleState } from './calibrateMode';
 
 describe('currentStep', () => {
   it('materials → 1', () => expect(currentStep('materials')).toBe(1));
@@ -42,4 +42,11 @@ describe('shouldShowSampleBlock', () => {
   it('缺 with → false', () =>
     expect(shouldShowSampleBlock(ok({ found: true, without: 'a', with: null }))).toBe(false));
   it('null → false', () => expect(shouldShowSampleBlock(null)).toBe(false));
+});
+
+describe('storeTurns', () => {
+  it('done 快照非空 → 用快照（不含幽灵 turn）', () =>
+    expect(storeTurns(['a', 'b'], ['a', 'b', 'ghost'])).toEqual(['a', 'b']));
+  it('done null → 用 live', () => expect(storeTurns(null, ['a', 'b'])).toEqual(['a', 'b']));
+  it('done 空数组 → 用空快照（不 fallback live）', () => expect(storeTurns([], ['a'])).toEqual([]));
 });

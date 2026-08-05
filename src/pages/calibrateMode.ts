@@ -21,3 +21,15 @@ export function currentStep(phase: Phase): 1 | 2 | 3 {
 export function shouldShowSampleBlock(s: SampleState | null): boolean {
   return !!(s && s.found && s.without && s.with);
 }
+
+/**
+ * confirm 时存哪个 turns：done 快照优先，无快照用 live。
+ *
+ * <p>防「再补充几句」幽灵 turn：done 后「再补充」setPhase('ask') + 乐观追加 user turn，
+ * 但 sks-ai /step 幂等忽略 done 后的 reply（不 reopen）→ 该 user turn 未被消费。
+ * 若 confirm 存 live turns，回放 _interview_turns 会多出未消费用户句。首次进 done 时
+ * 快照（不含补充后加的 turn），confirm 存快照即可。
+ */
+export function storeTurns<T>(done: T[] | null, live: T[]): T[] {
+  return done ?? live;
+}
