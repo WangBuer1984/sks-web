@@ -22,7 +22,7 @@ export { listScripts } from './script';
 /** track 端点响应：判态后的复盘态 + 抓回的互动指标。 */
 export interface TrackResponse {
   reviewState: string;
-  playCount: number;
+  playCount: number | null;
   likeCount: number;
   commentCount: number;
   shareCount: number;
