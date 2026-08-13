@@ -42,3 +42,8 @@ export function createTopic(
 ): Promise<number> {
   return userClient.post<number, number>('/topics', { title, rationale, source });
 }
+
+/** 立刻为当前用户跑一轮热点打分（最多 3 条，需 B 层知识库卡匹配）。返回新入库条数。 */
+export function refreshHotTopics(): Promise<number> {
+  return userClient.post<number, number>('/topics/refresh-hot', {});
+}

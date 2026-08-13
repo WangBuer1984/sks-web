@@ -29,9 +29,9 @@
 | 9 | 个人中心 | `isProfile` | `Profile.tsx` `/profile` | 过 | 过 | 过 | `text-title`/`paper-*`；完善度 + 双栏 + 换绑 | — |
 | 10 | 校准对话 | `isCalib` | `Calibrate.tsx` `/calibrate` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/hint + paper.*，无 text-2xl/sm 冒充、无裸 hex）。功能：三步进度条 + 三步卡 + Step2 人设确认气泡/基本对·不太对胶囊 + Step3 四宫格档案（剥 draft.profile 嵌套层）+ 试试效果对比块（接 /api/profile/sample-opening，失败静默隐藏）齐；草稿不再 JSON.stringify | — |
 | 11 | 账号定位 | `isPos` | `Positioning.tsx` `/positioning` | 过 | 过 | 过 | 令牌过。功能：空态三步+档案/支柱有；右侧「建库引导对话回放」接 /api/profile/interview/history（confirm 时 turns 入库 _interview_turns，不打 AI；未校准/旧档案降级占位） | — |
-| 12 | 选题库 | `isTopics` | `Topics.tsx` `/topics` | 过 | 过 | 过 | 空态双 CTA + 列表「生成文案」→`/create?topic=` | — |
+| 12 | 选题库 | `isTopics` | `Topics.tsx` `/topics` | 过 | 过 | 过 | 待拍列表+短副行；拆账号终态自动入库；「拉取今日热点」→`POST /topics/refresh-hot`（需 B 卡匹配）；空态 CTA | — |
 | 13 | 文案创作 | `isCreate` | `Create.tsx` `/create`（拆 `create/` 子组件） | 过 | 过 | 过 | 自由 textarea+时长芯片(真传后端控篇幅)+三平台 Tab(切换重生)+逐句编辑(保留真 API)+查重黄条(dedupWarnScriptId)+采纳/换个角度/复制全文+引用侧栏+历史稿件；内联下划线引用无 API 未做（接受） | — |
-| 14 | 对标拆解 | `isBench` | `Analyze.tsx` `/analyze` | 过 | 不过 | 偏 | 令牌：`text-2xl`/`text-sm`。功能：拆账号/拆视频 API+轮询+TOP20 列表+三层 `FieldBlock` 有；缺原型①「画像对比」三列 grid（对标 vs 你）及编号卡片化 ②③④ 布局 | **3** |
+| 14 | 对标拆解 | `isBench` | `Analyze.tsx` `/analyze`（拆 `analyze/`） | 过 | 过 | 过 | 两 Tab；拆视频同框 URL/文案分流；空态/pulse+进度条；①画像对比（API 画像+`getActiveProfile`）②TOP 表头网格+展开/深拆只读/仿写→`createTopic`→`/create?topic=` ③规律条或原文 ④迁移卡+存选题；无假演示结果 | — |
 | 15 | 知识库 | `isKb` | `KB.tsx` `/kb` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/meta/hint + paper.*，max-w-[880px]，无 text-2xl/sm/xs 冒充、无裸 hex）。功能：去 tab 改 A/B 三层三列网格全可见 + 引用保护删除 + CardModal A/B；对话补卡/缺卡提醒/活卡率/C 层 stat deferred disabled 占位「规划中」（无 API）；C 层 CRUD 移除（方向 C=auto-沉淀） | — |
 | 16 | 历史稿件 | `isHistory` | `Review.tsx` `/review` | 过 | 过 | 过 | 令牌过线（text-title/body/copy/meta/hint + paper.*，max-w-[980px]，无 text-2xl/sm 冒充、无裸 hex）。功能：9 列表格（选题 JOIN topic.title/平台/状态/播放/点赞/评论/分享/收藏/动作）+ track 登记自动抓真五码（抖音+视频号）判态 hot/plain/flop + hot 副作用；砍手填 /play；tracking 失败可改链重试；周卡留顶令牌化 | — |
 
@@ -47,7 +47,7 @@
 
 1. ~~**工作台** — 补 `homeNew` / `homeNormal` 双态 + 令牌化（登录后第一屏）~~ ✅ 完成（双态 + 令牌过线；知识空白条无 API 延期）
 2. ~~**文案创作** — 令牌化 + 对齐原型选题区/平台态/查重等缺失块（按后端是否已有字段裁）~~ ✅ 完成（拆 `create/` 子组件；时长跨仓真传；三平台 Tab+查重 dedupWarnScriptId+逐句+采纳/换个角度/复制；内联下划线引用无 API 延期）
-3. **对标拆解** — 结果区改原型①对比表 + 编号块；去掉纯 FieldBlock 堆叠感
+3. ~~**对标拆解** — 结果区改原型①对比表 + 编号块；去掉纯 FieldBlock 堆叠感~~ ✅ 完成（两 Tab + `analyze/` 子组件；深拆只读/仿写跳转；无假演示结果）
 4. ~~**知识库** — 令牌化 + 分层网格 / 补卡提醒（能接 API 的先接）~~ ✅ 完成（去 tab 改三层三列网格 + 令牌化；补卡/缺卡/活卡率/C stat 无 API deferred 占位；C 层 CRUD 移除）
 5. ~~**发布复盘** — 标题与表格布局 + 令牌化~~ ✅ 完成（9 列表格 + 真五码 + track 自动判态 + 选题 JOIN title；砍 /play；令牌化）
 6. ~~**校准对话** — 三步进度与档案卡 UI + 令牌化~~ ✅ 完成（三步进度/三步卡/四宫格 + 试试效果对比块接 sample-opening 端点；令牌过线）
