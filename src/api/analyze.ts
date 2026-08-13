@@ -24,15 +24,23 @@ export interface TaskAccepted {
   taskId: number;
 }
 
-/** 拆账号 TOP20 明细行。structure 为 JSON 文本（structure/why_hot/framework/diff_hint）。 */
+/** 拆账号 TOP10 明细行。structure 为 JSON 文本（structure/why_hot/framework/diff_hint）。 */
 export interface BenchmarkVideoView {
   id: number;
   title: string;
   playCount: number | null;
-  favCount: number | null;
+  favCount: number | null; // 收藏（= collectCount）
   transcript: string | null;
   structure: string | null;
   createdAt: string;
+  description?: string | null;
+  tags?: string | null; // JSON 数组字符串
+  publishedAt?: string | null;
+  likeCount?: number | null;
+  commentCount?: number | null;
+  shareCount?: number | null;
+  collectCount?: number | null;
+  durationSec?: number | null;
 }
 
 /** 拆账号三层 result（解析自 analyze_task.result JSONB）。 */
@@ -40,7 +48,19 @@ export interface AccountResult {
   account_profile?: string;
   patterns?: string;
   migration_advice?: string;
-  videos?: { title: string; play_count: number; fav_count: number }[];
+  videos?: {
+    title: string;
+    play_count?: number;
+    like_count?: number;
+    comment_count?: number;
+    share_count?: number;
+    collect_count?: number;
+    fav_count?: number;
+    description?: string;
+    tags?: string[];
+    published_at?: number | null;
+    duration_sec?: number | null;
+  }[];
 }
 
 /** 任务详情（对齐 AnalyzeController.TaskDetail）。result 为 JSON 文本。 */

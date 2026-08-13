@@ -18,7 +18,7 @@ const STEPS = [
     to: '/analyze',
     step: '第 2 步 · 约 5 分钟',
     title: '拆一个对标账号',
-    desc: 'TOP20 爆款全拆解，选题库立刻有货',
+    desc: 'TOP10 爆款全拆解，选题库立刻有货',
     emphasize: false,
   },
   {

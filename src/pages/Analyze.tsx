@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import {
@@ -8,40 +7,39 @@ import {
   analyzeVideoText,
   getAnalyzeTask,
   getCosts,
-  parseAccountResult,
   parseStructure,
-  type Costs,
   type TaskDetail,
   type VideoTextResponse,
 } from '../api/analyze';
 import { fetchMe, type MeResponse } from '../api/auth';
+import { useAnalyzeTaskStore } from '../store/analyzeTask';
+import AccountResult from './analyze/AccountResult';
+import VideoResult from './analyze/VideoResult';
+import { looksLikeUrl } from './analyze/helpers';
 
 /**
- * C 端拆解页 {@code /analyze}（§4.3 拆视频 / 拆账号）。
+ * C 端对标拆解 `/analyze`——对齐原型 `sections/14-对标拆解.html`（两 Tab：拆账号 / 拆视频）。
  *
- * <p>三种入口：
- * <ol>
- *   <li>拆视频·粘文案（同步）：贴文案 → 结构化拆解，扣 1，一次返回（无流式，等待动画掩盖 30-60s）。
- *   <li>拆视频·粘链接（异步）：贴链接 → 扣 1 → 返回 taskId，进度条轮询 → 四字段结构。
- *   <li>拆账号（异步）：贴账号链接 → precheck → 扣 10 条 → 返回 taskId，
- *       进度条轮询 → TOP20 清单 + 三层归纳。对齐原型「可先去别处稍后回来看结果」。
- * </ol>
- *
- * <p>逐条「深拆/仿写」按钮为 V1.1（benchmark_video 行已为其预留）。纸感样式（paper palette）。
+ * <p>拆视频：同一 textarea，URL→link 异步，否则→text 同步。拆账号：异步轮询。
+ * 结果区见 {@link AccountResult} / {@link VideoResult}。不硬编码演示结果。
  */
-type Mode = 'videoText' | 'videoLink' | 'account';
+type Tab = 'account' | 'video';
 
 const POLL_INTERVAL = 3000;
 
+const ACCOUNT_SAMPLE_URL = 'https://www.douyin.com/user/';
+const VIDEO_SAMPLE_TEXT =
+  '师傅最怕你检查这四处——看完验收比监理还专业。第一处……评论区扣「验收」领完整清单。';
+
 export default function Analyze() {
-  const [mode, setMode] = useState<Mode>('videoText');
+  const [tab, setTab] = useState<Tab>('account');
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<VideoTextResponse | null>(null);
-  const [taskId, setTaskId] = useState<number | null>(null);
-  const pollRef = useRef<boolean>(false);
+  // taskId 走 Zustand 持久化 store（localStorage），切走/刷新回来可恢复上次任务。
+  const taskId = useAnalyzeTaskStore((s) => s.taskId);
+  const pollRef = useRef(false);
 
-  // 同步：拆视频·粘文案（扣 1，一次返回）
   const textMut = useMutation({
     mutationFn: (transcript: string) => analyzeVideoText(transcript),
     onSuccess: (r) => {
@@ -54,7 +52,6 @@ export default function Analyze() {
     },
   });
 
-  // 异步受理：拆视频·粘链接 / 拆账号
   const startMut = useMutation({
     mutationFn: async (vars: { url: string; kind: 'videoLink' | 'account' }) => {
       return vars.kind === 'videoLink'
@@ -64,27 +61,24 @@ export default function Analyze() {
     onSuccess: (r) => {
       setError(null);
       setSyncResult(null);
-      setTaskId(r.taskId);
+      useAnalyzeTaskStore.getState().setTaskId(r.taskId);
       pollRef.current = true;
     },
     onError: (e: unknown) => {
-      setTaskId(null);
+      useAnalyzeTaskStore.getState().clear();
       setError(getBizMessage(e, '受理失败，请稍后重试'));
     },
   });
 
-  // 各模式扣费（后端传，不写死）+ 当前余额（余额不足判定）
   const { data: costs } = useQuery({ queryKey: ['analyze-costs'], queryFn: getCosts });
   const { data: me } = useQuery<MeResponse>({ queryKey: ['me'], queryFn: fetchMe, staleTime: 30_000 });
 
-  // 轮询任务详情
-  const { data: task } = useQuery<TaskDetail>({
+  const { data: task, error: taskErr } = useQuery<TaskDetail>({
     queryKey: ['analyzeTask', taskId],
     queryFn: () => getAnalyzeTask(taskId as number),
     enabled: taskId !== null,
     refetchInterval: (query) => {
       const d = query.state.data;
-      // 终态停止轮询
       if (d && (d.status === 'done' || d.status === 'partial' || d.status === 'failed')) {
         return false;
       }
@@ -92,16 +86,57 @@ export default function Analyze() {
     },
   });
 
-  // 终态时停止轮询标志
+  // 恢复 fetch 彻底失败（任务被删/换号后旧 taskId 404、且从未拿到数据）→ 清掉，
+  // 回到 idle；中途 500 有旧数据（!task 假）不清，保进度。
   useEffect(() => {
-    if (task && (task.status === 'done' || task.status === 'partial' || task.status === 'failed')) {
-      pollRef.current = false;
+    if (taskErr && !task) {
+      useAnalyzeTaskStore.getState().clear();
     }
-  }, [task]);
+  }, [taskErr, task]);
+
+  // 恢复时自动切到任务所属 tab：默认 account tab 配 video 任务不渲染结果。
+  // 仅 task.id 变化时同步，避免轮询/手切 tab 时 yank。
+  useEffect(() => {
+    if (task) {
+      setTab(task.taskType === 'video' ? 'video' : 'account');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
+
+  // 假进度 creep：提交后到首条 item 完成（real progress=0）期间，前端先假走，
+  // 免得 0% 空窗让用户以为没启动。real>0（首条 item 完成≈10%）即交班真实值。
+  // ceiling=8 < 首步 10，故 real 接管时不会回退。
+  const realProgress = task?.progress ?? 0;
+  const showFake = startMut.isPending || (taskId !== null && realProgress === 0);
+  const [fakeProgress, setFakeProgress] = useState(0);
+  useEffect(() => {
+    if (!showFake) {
+      setFakeProgress(0);
+      return;
+    }
+    // 提交立即跳 2%（「立马动」），之后每 2s +1 封顶 8。
+    setFakeProgress(2);
+    const iv = setInterval(
+      () => setFakeProgress((f) => (f >= 8 ? f : f + 1)),
+      2000,
+    );
+    return () => clearInterval(iv);
+  }, [showFake]);
+  const displayProgress = realProgress > 0 ? realProgress : fakeProgress;
 
   const pending = textMut.isPending || startMut.isPending;
-  const asyncRunning =
-    taskId !== null && task && !['done', 'partial', 'failed'].includes(task.status);
+  const accountCost = costs?.account ?? 10;
+  const videoCost = costs?.videoText ?? costs?.videoLink ?? 1;
+  const balance = me?.balance ?? 0;
+  const insufficient = tab === 'account' && balance < accountCost;
+
+  const switchTab = (next: Tab) => {
+    setTab(next);
+    setInput('');
+    setSyncResult(null);
+    useAnalyzeTaskStore.getState().clear();
+    setError(null);
+  };
 
   const submit = () => {
     const text = input.trim();
@@ -110,356 +145,284 @@ export default function Analyze() {
       return;
     }
     setSyncResult(null);
-    setTaskId(null);
+    useAnalyzeTaskStore.getState().clear();
     setError(null);
-    if (mode === 'videoText') {
-      textMut.mutate(text);
-    } else if (mode === 'videoLink') {
+    if (tab === 'account') {
+      startMut.mutate({ url: text, kind: 'account' });
+      return;
+    }
+    if (looksLikeUrl(text)) {
       startMut.mutate({ url: text, kind: 'videoLink' });
     } else {
-      startMut.mutate({ url: text, kind: 'account' });
+      textMut.mutate(text);
     }
   };
 
-  const placeholder =
-    mode === 'videoText'
-      ? '粘贴视频完整文案…'
-      : mode === 'videoLink'
-        ? '粘贴单条视频链接（抖音或视频号分享链）…'
-        : '抖音：账号主页链接。视频号：该号任意一条分享链接（weixin.qq.com/sph/…）。';
+  const showAccountIdle =
+    tab === 'account' && !pending && !taskId && !task && !error;
+  const showVideoIdle =
+    tab === 'video' && !pending && !syncResult && !taskId && !task && !error;
 
-  const accountCost = costs?.account ?? 10;
-  const balance = me?.balance ?? 0;
-  const insufficient = mode === 'account' && balance < accountCost;
-  const chargeHint =
-    mode === 'videoText' || mode === 'videoLink'
-      ? `扣 ${costs?.videoText ?? 1} 条 / 次`
-      : insufficient
-        ? `扣 ${accountCost} 条 / 次 · 额度不够`
-        : `扣 ${accountCost} 条 / 次`;
+  // taskFetching：taskId 在但 task 尚未拿到（POST 返回后到首次轮询 / 切回恢复的 gap）。
+  // 这段用假进度条占位，免空白；以前用「恢复中」文案块，但新提交也命中它、文案错。
+  const taskFetching = taskId !== null && !task && !taskErr;
+
+  const asyncRunning =
+    task != null && (task.status === 'queued' || task.status === 'running');
+
+  const accountLoading = tab === 'account' && (pending || taskFetching || asyncRunning);
+  const videoLoading =
+    tab === 'video' && (pending || taskFetching || (asyncRunning && task?.taskType === 'video'));
 
   return (
-    <main className="mx-auto min-h-full max-w-4xl px-5 py-8">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-paper-ink">拆解</h1>
-          <p className="mt-1 text-sm text-paper-muted">
-            拆视频（粘文案 / 粘链接）·拆账号 · {chargeHint}
-          </p>
-        </div>
-        <Link
-          to="/workbench"
-          className="rounded-lg border border-[#d8c9b2] bg-paper-card px-3.5 py-2 text-[13px] font-bold text-paper-primary transition hover:bg-[#f7f2e7]"
-        >
-          返回工作台
-        </Link>
-      </header>
+    <div className="mx-auto max-w-[1040px]">
+      <h1 className="mb-1 font-serif text-title font-black text-paper-ink">对标拆解</h1>
+      <p className="mb-4 text-lead text-paper-muted">
+        拆账号看「它为什么值得抄、抄什么」，拆视频看「这条为什么火」
+      </p>
 
-      {error && (
+      {error ? (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]"
+          className="mb-4 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger"
         >
           {error}
         </div>
-      )}
+      ) : null}
 
-      {/* 模式切换 */}
-      <section className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex gap-2">
         {(
           [
-            ['videoText', '拆视频·粘文案'],
-            ['videoLink', '拆视频·粘链接'],
             ['account', '拆账号'],
-          ] as [Mode, string][]
-        ).map(([m, label]) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => {
-              setMode(m);
-              setSyncResult(null);
-              setTaskId(null);
-              setError(null);
-            }}
-            className={`rounded-lg border px-3.5 py-2 text-[13px] font-bold transition ${
-              mode === m
-                ? 'border-paper-primary bg-paper-primary text-white'
-                : 'border-[#d8c9b2] bg-paper-card text-paper-primary hover:bg-[#f7f2e7]'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </section>
+            ['video', '拆视频'],
+          ] as [Tab, string][]
+        ).map(([id, label]) => {
+          const on = tab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => switchTab(id)}
+              className={`rounded-card px-[22px] py-[9px] text-body transition ${
+                on
+                  ? 'border border-paper-primary bg-paper-primary font-bold text-white'
+                  : 'border border-paper-lineStrong bg-paper-card font-normal text-paper-ink hover:border-paper-primary'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* 输入区 */}
-      <section className="mb-5 rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-        <textarea
-          rows={mode === 'videoText' ? 8 : 3}
-          placeholder={placeholder}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-[#d8d2c4] bg-[#fdfcf8] px-3.5 py-2.5 text-sm text-paper-ink outline-none focus:border-paper-primary"
-        />
-        <button
-          type="button"
-          disabled={pending || !input.trim() || insufficient}
-          onClick={submit}
-          className="rounded-lg bg-paper-primary px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[#6e4620] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {pending
-            ? 'AI 思考中…'
-            : mode === 'videoText'
-              ? '开始拆解'
-              : '提交拆解'}
-        </button>
-        {mode !== 'videoText' && (
-          <p className="mt-2 text-[11.5px] text-paper-muted">
-            异步任务受理后可先去别处稍后回来看结果——进度条会持续更新。
-          </p>
-        )}
-        {mode === 'account' && (
-          <p className="mt-2 text-[11.5px] text-paper-muted">
-            抖音请粘贴主页链接；视频号请粘贴该账号下任意一条分享链接（weixin.qq.com/sph/…）。
-          </p>
-        )}
-      </section>
-
-      {/* 同步结果：拆视频·粘文案 */}
-      {syncResult && (
-        <section className="mb-5 rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-          <h2 className="mb-4 font-serif text-lg font-bold text-paper-ink">结构化拆解</h2>
-          <FourFieldView
-            structure={syncResult.structure}
-            whyHot={syncResult.whyHot}
-            framework={syncResult.framework}
-            diffHint={syncResult.diffHint}
-          />
-        </section>
-      )}
-
-      {/* 异步任务：进度条 + 结果 */}
-      {task && (
-        <section className="rounded-2xl border border-paper-line bg-paper-card p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-serif text-lg font-bold text-paper-ink">
-              {task.taskType === 'account' ? '拆账号结果' : '拆视频结果'}
-            </h2>
-            <span
-              className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusBadge(task.status)}`}
+      {tab === 'account' ? (
+        <section className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-6 py-[22px]">
+          <div className="flex gap-2.5">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="粘贴对标账号主页链接，如 douyin.com/user/…"
+              className="min-w-0 flex-1 rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-3 text-lead text-paper-ink outline-none focus:border-paper-primary"
+            />
+            <button
+              type="button"
+              disabled={pending || !input.trim() || insufficient}
+              onClick={submit}
+              className="shrink-0 whitespace-nowrap rounded-card bg-paper-primary px-7 py-[11px] text-lead font-medium text-white hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {statusLabel(task.status)}
+              {pending ? '受理中…' : '开始拆解'}
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+            <span className="text-meta text-paper-muted">试试示例：</span>
+            <button
+              type="button"
+              onClick={() => setInput(ACCOUNT_SAMPLE_URL)}
+              className="rounded-badge border border-dashed border-paper-goldSoft px-3.5 py-[5px] text-caption text-paper-primary hover:bg-paper-tint"
+            >
+              装修避坑老张 · 抖音 86w 粉
+            </button>
+            <span className="ml-auto text-meta text-paper-mutedLight">
+              {insufficient
+                ? `消耗 ${accountCost} 条文案额度 · 额度不够`
+                : `消耗 ${accountCost} 条文案额度 · 抓取播放 TOP10 逐条拆解`}
             </span>
           </div>
-
-          {/* 进度条 */}
-          {(task.status === 'running' || task.status === 'queued') && (
-            <div className="mb-5">
-              <div className="mb-1.5 flex items-center justify-between text-[12px] text-paper-muted">
-                <span>{task.status === 'queued' ? '排队受理中…' : '拆解进行中…'}</span>
-                <span>{task.progress}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-[#efe8d6]">
-                <div
-                  className="h-full rounded-full bg-paper-primary transition-all"
-                  style={{ width: `${task.progress}%` }}
-                />
-              </div>
-              <p className="mt-2 text-[11.5px] text-paper-muted">
-                可先去别处稍后回来看结果——逐条转写 + 结构化较慢。
-              </p>
-            </div>
-          )}
-
-          {/* 失败 */}
-          {task.status === 'failed' && (
-            <p className="mb-3 rounded-lg border border-[#e4b9ab] bg-[#faf0ec] px-3 py-2 text-[13px] text-[#b0492f]">
-              拆解失败{task.error ? `：${task.error}` : ''}。已自动退款。可改用「拆视频（粘链接/粘文案）」逐条拆解。
-            </p>
-          )}
-
-          {/* 拆视频·粘链接 结果（done，四字段在 result JSONB） */}
-          {task.status === 'done' && task.taskType === 'video' && task.result && (
-            <VideoLinkResultView resultJson={task.result} />
-          )}
-
-          {/* 拆账号 结果（done / partial，TOP20 + 三层归纳） */}
-          {(task.status === 'done' || task.status === 'partial') &&
-            task.taskType === 'account' && (
-              <>
-                <AccountSummaryView resultJson={task.result} />
-                {task.videos.length > 0 && (
-                  <div className="mt-5">
-                    <h3 className="mb-3 text-sm font-bold text-paper-ink">TOP 视频清单</h3>
-                    <ul className="flex flex-col gap-3">
-                      {task.videos.map((v) => (
-                        <BenchmarkVideoRow key={v.id} v={v} />
-                      ))}
-                    </ul>
-                    <p className="mt-3 text-[11.5px] text-paper-muted">
-                      逐条「深拆/仿写」将在 V1.1 开放。
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
+          <p className="mt-2 text-hint text-paper-muted">
+            抖音请粘贴主页链接；视频号请粘贴该账号下任意一条分享链接（weixin.qq.com/sph/…）。示例 chip
+            仅填入链接模板，请换成真实主页后再提交。
+          </p>
+        </section>
+      ) : (
+        <section className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-6 py-[22px]">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="粘贴爆款视频链接或完整文案…"
+            rows={3}
+            className="w-full resize-none rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-3 text-lead leading-normal text-paper-ink outline-none focus:border-paper-primary"
+          />
+          <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
+            <span className="text-meta text-paper-muted">试试示例：</span>
+            <button
+              type="button"
+              onClick={() => setInput(VIDEO_SAMPLE_TEXT)}
+              className="rounded-badge border border-dashed border-paper-goldSoft px-3.5 py-[5px] text-caption text-paper-primary hover:bg-paper-tint"
+            >
+              「装修避坑老张」验收爆款 · 文案示例
+            </button>
+            <button
+              type="button"
+              disabled={pending || !input.trim()}
+              onClick={submit}
+              className="ml-auto rounded-card bg-paper-primary px-7 py-[11px] text-lead font-medium text-white hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {pending ? 'AI 思考中…' : '开始拆解'}
+            </button>
+          </div>
+          <p className="mt-2 text-hint text-paper-muted">
+            识别为链接时走异步拆解（扣 {videoCost} 条）；粘贴文案则同步拆解（扣{' '}
+            {costs?.videoText ?? 1} 条）。可先去别处稍后回来看结果。
+          </p>
         </section>
       )}
-    </main>
-  );
-}
 
-/** 拆视频四字段结构化视图（sync 与 link done 共用）。 */
-function FourFieldView({
-  structure,
-  whyHot,
-  framework,
-  diffHint,
-}: {
-  structure: string;
-  whyHot: string;
-  framework: string;
-  diffHint: string;
-}) {
-  return (
-    <dl className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <FieldBlock label="文案结构" value={structure} />
-      <FieldBlock label="爆火原因" value={whyHot} />
-      <FieldBlock label="可复用框架" value={framework} />
-      <FieldBlock label="差异化提示" value={diffHint} />
-    </dl>
-  );
-}
+      {/* Loading：进度条 + 原型 pulse 文案。进度用 displayProgress：real=0 时假走，免 0% 空窗。 */}
+      {accountLoading ? (
+        <LoadingBlock
+          pulse={
+            startMut.isPending
+              ? `受理中：创建拆解任务… · ${displayProgress}%`
+              : !task
+                ? `正在加载任务状态… · ${displayProgress}%`
+                : task?.status === 'queued'
+                  ? `排队受理中：即将抓取 TOP10… · ${displayProgress}%`
+                  : `已创建拆解任务：抓取 TOP10 → 逐条转写 → 归纳规律与迁移建议（约 5 分钟，可先去别处稍后回来） · ${displayProgress}%`
+          }
+          progress={displayProgress}
+          showBar
+        />
+      ) : null}
 
-function FieldBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-paper-line bg-[#fdfcf8] px-3.5 py-3">
-      <dt className="mb-1 text-[11.5px] font-bold text-paper-muted">{label}</dt>
-      <dd className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-paper-ink">
-        {value || <span className="text-paper-muted">—</span>}
-      </dd>
+      {videoLoading ? (
+        <LoadingBlock
+          pulse={
+            textMut.isPending
+              ? '拆解中：拆结构、归因爆点（贴文案约 1 分钟）…'
+              : startMut.isPending
+                ? `受理中：创建拆解任务… · ${displayProgress}%`
+                : !task
+                  ? `正在加载任务状态… · ${displayProgress}%`
+                  : task?.status === 'queued'
+                    ? `排队受理中… · ${displayProgress}%`
+                    : `已创建拆解任务：下载音频 → 转写文案 → 拆结构、归因爆点（贴链接约 1 分钟，可先去别处稍后回来看结果） · ${displayProgress}%`
+          }
+          progress={displayProgress}
+          showBar={!textMut.isPending}
+        />
+      ) : null}
+
+      {/* 空态 */}
+      {showAccountIdle ? (
+        <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body leading-relaxed text-paper-mutedLight">
+          输入账号链接，AI 将抓取其播放量 TOP10 视频
+          <br />
+          逐条转写并留存完整文案与结构 → 归纳爆款规律 → 对照你的定位给出迁移建议（全程约 5
+          分钟）
+        </div>
+      ) : null}
+
+      {showVideoIdle ? (
+        <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body leading-relaxed text-paper-mutedLight">
+          粘贴单条爆款链接或完整口播文案
+          <br />
+          AI 拆结构时间轴、爆点归因与可复用框架，并可一键跳转仿写
+        </div>
+      ) : null}
+
+      {/* 同步视频结果 */}
+      {tab === 'video' && syncResult && !videoLoading ? (
+        <VideoResult
+          structure={syncResult.structure}
+          whyHot={syncResult.whyHot}
+          framework={syncResult.framework}
+          diffHint={syncResult.diffHint}
+          imitateTitle={syncResult.framework?.slice(0, 40)}
+        />
+      ) : null}
+
+      {/* 异步任务终态 / 失败 */}
+      {task && !asyncRunning && tabMatchesTask(tab, task.taskType) ? (
+        <div className="mt-1">
+          {task.status === 'failed' ? (
+            <p className="mb-3 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger">
+              拆解失败{task.error ? `：${task.error}` : ''}。已自动退款。可改用拆视频（粘链接 /
+              粘文案）逐条拆解。
+            </p>
+          ) : null}
+
+          {task.status === 'done' && task.taskType === 'video' && task.result ? (
+            <VideoLinkDone resultJson={task.result} />
+          ) : null}
+
+          {(task.status === 'done' || task.status === 'partial') &&
+          task.taskType === 'account' ? (
+            <AccountResult resultJson={task.result} videos={task.videos} />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-/** 拆视频·粘链接 done：从 result JSONB 解析四字段。 */
-function VideoLinkResultView({ resultJson }: { resultJson: string }) {
+function tabMatchesTask(tab: Tab, taskType: string): boolean {
+  if (tab === 'account') return taskType === 'account';
+  return taskType === 'video';
+}
+
+function VideoLinkDone({ resultJson }: { resultJson: string }) {
   const r = parseStructure(resultJson);
   if (!r) {
-    return <p className="text-[13px] text-paper-muted">结果解析失败。</p>;
+    return <p className="text-copy text-paper-muted">结果解析失败。</p>;
   }
   return (
-    <FourFieldView
+    <VideoResult
       structure={r.structure ?? ''}
       whyHot={r.why_hot ?? ''}
       framework={r.framework ?? ''}
       diffHint={r.diff_hint ?? ''}
+      imitateTitle={r.framework?.slice(0, 40)}
     />
   );
 }
 
-/** 拆账号三层归纳视图（account_profile / patterns / migration_advice）。 */
-function AccountSummaryView({ resultJson }: { resultJson: string | null }) {
-  const r = parseAccountResult(resultJson);
-  if (!r) {
-    return (
-      <p className="mb-3 text-[13px] text-paper-muted">
-        归纳结果暂未生成（部分失败时可能只有明细）。
-      </p>
-    );
-  }
-  return (
-    <dl className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-      <FieldBlock label="账号画像" value={r.account_profile ?? ''} />
-      <FieldBlock label="规律归纳" value={r.patterns ?? ''} />
-      <FieldBlock label="迁移建议" value={r.migration_advice ?? ''} />
-    </dl>
-  );
-}
-
-/** TOP20 单行：标题 / 播放 / 完整文案 / 结构标注。 */
-function BenchmarkVideoRow({
-  v,
+function LoadingBlock({
+  pulse,
+  progress,
+  showBar,
 }: {
-  v: {
-    id: number;
-    title: string;
-    playCount: number | null;
-    favCount: number | null;
-    transcript: string | null;
-    structure: string | null;
-  };
+  pulse: string;
+  progress?: number;
+  showBar: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const struct = parseStructure(v.structure);
   return (
-    <li className="rounded-lg border border-paper-line bg-[#fdfcf8] px-3.5 py-3">
-      <button
-        type="button"
-        onClick={() => setExpanded((x) => !x)}
-        className="flex w-full items-center justify-between gap-3 text-left"
-      >
-        <span className="text-[13.5px] font-bold text-paper-ink">{v.title || '（无标题）'}</span>
-        <span className="shrink-0 text-[11.5px] text-paper-muted">
-          播放 {fmtCount(v.playCount)} · 收藏 {fmtCount(v.favCount)}
-        </span>
-      </button>
-      {expanded && (
-        <div className="mt-3">
-          {v.transcript && (
-            <p className="mb-3 whitespace-pre-wrap break-words rounded bg-[#f7f2e7] px-3 py-2 text-[12.5px] leading-relaxed text-paper-ink">
-              {v.transcript}
-            </p>
-          )}
-          {struct && (
-            <FourFieldView
-              structure={struct.structure ?? ''}
-              whyHot={struct.why_hot ?? ''}
-              framework={struct.framework ?? ''}
-              diffHint={struct.diff_hint ?? ''}
+    <div className="rounded-block border border-paper-line bg-paper-card px-[30px] py-[30px] text-center">
+      <div className="animate-pulse text-lead text-paper-primary">{pulse}</div>
+      {showBar && progress != null ? (
+        <div className="mx-auto mt-4 max-w-md">
+          <div className="mb-1.5 flex justify-between text-meta text-paper-muted">
+            <span>进度</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-badge bg-paper-shade">
+            <div
+              className="h-full rounded-badge bg-paper-primary transition-all"
+              style={{ width: `${progress}%` }}
             />
-          )}
+          </div>
         </div>
-      )}
-    </li>
+      ) : null}
+    </div>
   );
-}
-
-function fmtCount(n: number | null): string {
-  if (n == null) return '—';
-  if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
-  return String(n);
-}
-
-function statusBadge(status: string): string {
-  switch (status) {
-    case 'done':
-      return 'border-[#ecd4ae] bg-[#fdf3e4] text-[#a8712e]';
-    case 'partial':
-      return 'border-[#e4b9ab] bg-[#faf0ec] text-[#b0492f]';
-    case 'failed':
-      return 'border-[#e4b9ab] bg-[#faf0ec] text-[#b0492f]';
-    case 'running':
-      return 'border-[#d8c9b2] bg-[#f7f2e7] text-paper-primary';
-    default:
-      return 'border-paper-line bg-paper-card text-paper-muted';
-  }
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'queued':
-      return '排队中';
-    case 'running':
-      return '拆解中';
-    case 'done':
-      return '完成';
-    case 'partial':
-      return '部分完成';
-    case 'failed':
-      return '失败';
-    default:
-      return status;
-  }
 }

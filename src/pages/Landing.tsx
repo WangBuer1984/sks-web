@@ -21,7 +21,7 @@ const STAGES = [
   {
     no: '02',
     title: '每天知道拍什么',
-    desc: '热点监控 + 对标账号 TOP20 拆解 + 高频客户问答，三路选题按你的内容支柱配比推荐。',
+    desc: '热点监控 + 对标账号 TOP10 拆解 + 高频客户问答，三路选题按你的内容支柱配比推荐。',
   },
   {
     no: '03',
@@ -50,7 +50,7 @@ const TECH = [
   {
     tags: ['AGENT', 'SKILL'],
     title: '智能体 Skill 工作流',
-    desc: '定位访谈、TOP20 账号拆解、爆款归因封装成持续更新的 Skill，新玩法上线即可用，无需等版本更新。',
+    desc: '定位访谈、TOP10 账号拆解、爆款归因封装成持续更新的 Skill，新玩法上线即可用，无需等版本更新。',
   },
 ];
 
@@ -58,7 +58,7 @@ const TECH = [
 const PLANS = [
   { label: '体验', price: '免费', note: '首充送 10 条', featured: false },
   { label: '150 条文案', price: '¥129', note: '约 ¥0.86/条', featured: true },
-  { label: '拆账号', price: '10 条额度', note: 'TOP20 视频全拆解', featured: false },
+  { label: '拆账号', price: '10 条额度', note: 'TOP10 视频全拆解', featured: false },
 ];
 
 export default function Landing() {
