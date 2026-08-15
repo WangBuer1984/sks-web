@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * 视频文案全文区块——拆视频结果区与明细详情态共用（spec D10）。
@@ -18,11 +18,18 @@ export default function TranscriptBlock({ text }: { text: string }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       /* 无剪贴板权限：静默降级，用户仍可手动选中复制 */
     }
   };
+
+  // copied 置真后 2s 自动复位；用 effect 持有 timer、卸载时清掉，
+  // 避免 setTimeout 在组件卸载后仍触发 setState。
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
 
   return (
     <div className="rounded-block border border-paper-line bg-paper-card px-6 py-5">

@@ -143,4 +143,10 @@ describe('videoDetailIdFromParam', () => {
     expect(videoDetailIdFromParam('-3')).toBeNull();
     expect(videoDetailIdFromParam('1.5')).toBeNull();
   });
+
+  it('前导零 / 超安全整数 / 正号 → 边界', () => {
+    expect(videoDetailIdFromParam('05')).toBe(5); // 前导零：Number('05')=5，合规正整数
+    expect(videoDetailIdFromParam('9007199254740992')).toBeNull(); // MAX_SAFE_INTEGER+1
+    expect(videoDetailIdFromParam('+5')).toBeNull(); // 正号：正则 ^\d+$ 拒
+  });
 });
