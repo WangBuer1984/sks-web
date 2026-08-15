@@ -40,20 +40,19 @@ export default function VideoResult({
     return (first || '对标拆解选题').slice(0, 80);
   };
 
-  const imitateMut = useMutation({
-    mutationFn: async () => {
-      // 仿写带完整上下文，创作页可感知框架/差异
-      const rationale = [framework, whyHot, diffHint]
-        .filter(Boolean)
-        .join('\n')
-        .slice(0, 500);
-      return createTopic(topicTitle(), rationale, 'benchmark');
-    },
-    onSuccess: (id) => {
-      void queryClient.invalidateQueries({ queryKey: ['topics'] });
-      navigate(`/create?topic=${id}`);
-    },
-  });
+  /** 仿写：带完整上下文（框架/爆点/差异）跳 `/create`，**预填框架到输入框、不自动生成**。
+   *
+   * 用户在创作页编辑后点「生成口播稿」时，Create 页用编辑后文字建选题（title），
+   * 把这里的 rationale（framework+whyHot+diffHint）喂大模型——保留 benchmark 上下文。
+   * 不在此 createTopic：避免落地即建孤儿选题；选题由用户真正点生成时才建。
+   * （「存入选题库」是另一个按钮 saveMut，独立于此。） */
+  const imitate = () => {
+    const presetTopic = (framework || imitateTitle || '').trim();
+    const rationale = [framework, whyHot, diffHint].filter(Boolean).join('\n').slice(0, 500);
+    navigate('/create', {
+      state: { presetTopic, presetRationale: rationale, presetSource: 'benchmark' },
+    });
+  };
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -123,17 +122,11 @@ export default function VideoResult({
 
         <button
           type="button"
-          disabled={imitateMut.isPending}
-          onClick={() => imitateMut.mutate()}
-          className="rounded-card bg-paper-primary px-5 py-3 text-center text-lead font-medium text-white transition hover:bg-paper-primaryHover disabled:opacity-45"
+          onClick={imitate}
+          className="rounded-card bg-paper-primary px-5 py-3 text-center text-lead font-medium text-white transition hover:bg-paper-primaryHover"
         >
-          {imitateMut.isPending ? '准备中…' : '用这个框架仿写 →'}
+          用这个框架仿写 →
         </button>
-        {imitateMut.isError ? (
-          <p className="text-meta text-paper-danger">
-            {getBizMessage(imitateMut.error, '创建选题失败')}
-          </p>
-        ) : null}
         <button
           type="button"
           disabled={saveMut.isPending || savedTopicId != null}

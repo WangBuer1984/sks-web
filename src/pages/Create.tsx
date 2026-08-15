@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import { type CardSummary, listCards } from '../api/kb';
@@ -35,6 +35,11 @@ export default function Create() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const presetTopicId = params.get('topic');
+  // 仿写深链（拆视频「用这个框架仿写」）经 router state 携带：预填框架到输入框、**不自动生成**。
+  // 与 `?topic=` 深链（选题库「生成文案」→ 复用已有选题直接生成）互斥：仿写用 state、无 query。
+  const preset = useLocation().state as
+    | { presetTopic?: string; presetRationale?: string; presetSource?: string }
+    | null;
 
   const { data: history } = useQuery<ScriptSummary[]>({
     queryKey: ['scripts', 'draft'],
@@ -50,7 +55,8 @@ export default function Create() {
   });
 
   const [genError, setGenError] = useState<string | null>(null);
-  const [topic, setTopic] = useState('');
+  // 仿写预填：初始值取 router state 的 framework；无 state（自由进入/`?topic=` 深链）则为空。
+  const [topic, setTopic] = useState(preset?.presetTopic ?? '');
   const [duration, setDuration] = useState<Duration>('45');
   const [platform, setPlatform] = useState<Platform>('douyin');
   const [stage, setStage] = useState(-1);
@@ -84,6 +90,11 @@ export default function Create() {
 
   // ?topic=<id> 深链：复用已有选题直接生成（不 createTopic）。ref 防 StrictMode 双调。
   const presetFiredRef = useRef(false);
+  // 仿写携带的 benchmark 上下文：首次点「生成口播稿」时作 rationale 喂大模型
+  // （framework+whyHot+diffHint），编辑后文字作 title。source='benchmark'。
+  // 复用即消费；regenerate 走 script.topicId 不再碰这里。
+  const presetRationaleRef = useRef(preset?.presetRationale ?? '');
+  const presetSourceRef = useRef(preset?.presetSource);
   useEffect(() => {
     if (presetFiredRef.current) return;
     if (!presetTopicId) return;
@@ -104,7 +115,7 @@ export default function Create() {
     setGenError(null);
     setSubmitting(true);
     try {
-      const topicId = await createTopic(t, '');
+      const topicId = await createTopic(t, presetRationaleRef.current, presetSourceRef.current);
       genMut.mutate({ topicId, platform, duration });
     } catch (e: unknown) {
       setGenError(getBizMessage(e, '创建选题失败'));
