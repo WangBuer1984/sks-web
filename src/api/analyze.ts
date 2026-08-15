@@ -75,6 +75,8 @@ export interface TaskDetail {
   updatedAt: string;
   createdAt: string;
   videos: BenchmarkVideoView[];
+  /** 入参 url（从 analyze_task.input 解析的干净归一化地址）。切走再切回回填输入框用。 */
+  url: string | null;
 }
 
 /** 拆视频（粘文案）——同步，扣 1。 */

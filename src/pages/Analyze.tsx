@@ -103,6 +103,14 @@ export default function Analyze() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id]);
 
+  // 切走再切回恢复：页面重挂载后 input 被重置为空，用 task 的干净 url 回填，
+  // 让用户看到正在拆解的地址。仅 task.id 变化时触发——轮询不重复覆盖用户手改，
+  // 新提交时 input 非空故跳过（保留用户刚粘的文案）。
+  useEffect(() => {
+    if (task?.url && !input) setInput(task.url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
+
   // 假进度 creep：提交后到首条 item 完成（real progress=0）期间，前端先假走，
   // 免得 0% 空窗让用户以为没启动。real>0（首条 item 完成≈10%）即交班真实值。
   // ceiling=8 < 首步 10，故 real 接管时不会回退。
@@ -237,7 +245,7 @@ export default function Analyze() {
             />
             <button
               type="button"
-              disabled={pending || !input.trim() || insufficient}
+              disabled={pending || !input.trim() || insufficient || asyncRunning}
               onClick={submit}
               className="shrink-0 whitespace-nowrap rounded-card bg-paper-primary px-7 py-[11px] text-lead font-medium text-white hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
             >
@@ -283,7 +291,7 @@ export default function Analyze() {
             </button>
             <button
               type="button"
-              disabled={pending || !input.trim()}
+              disabled={pending || !input.trim() || asyncRunning}
               onClick={submit}
               className="ml-auto rounded-card bg-paper-primary px-7 py-[11px] text-lead font-medium text-white hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
             >
