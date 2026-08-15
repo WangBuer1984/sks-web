@@ -103,13 +103,16 @@ export default function Analyze() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id]);
 
-  // 切走再切回恢复：页面重挂载后 input 被重置为空，用 task 的干净 url 回填，
-  // 让用户看到正在拆解的地址。仅 task.id 变化时触发——轮询不重复覆盖用户手改，
-  // 新提交时 input 非空故跳过（保留用户刚粘的文案）。
+  // 切走再切回 / tab 切回恢复：input 被重置为空后，用 task 的干净 url 回填，
+  // 让用户看到正在拆解的地址。task.id 变化（新任务/恢复）或 tab 切回任务所属 tab
+  // 时触发；轮询（task.id 不变）不重复覆盖用户手改；切到非任务所属 tab 不回填
+  // （免得把 video 地址塞进 account 输入框）。
   useEffect(() => {
-    if (task?.url && !input) setInput(task.url);
+    if (task?.url && !input && tabMatchesTask(tab, task.taskType)) {
+      setInput(task.url);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id]);
+  }, [task?.id, tab]);
 
   // 假进度 creep：提交后到首条 item 完成（real progress=0）期间，前端先假走，
   // 免得 0% 空窗让用户以为没启动。real>0（首条 item 完成≈10%）即交班真实值。
@@ -139,10 +142,11 @@ export default function Analyze() {
   const insufficient = tab === 'account' && balance < accountCost;
 
   const switchTab = (next: Tab) => {
+    // 切 tab 只重置输入区，不清 taskId：进行中/已完成的任务保留，
+    // 切回原 tab 仍可恢复进度与地址（见下方 url-restore / tab-restore）。
     setTab(next);
     setInput('');
     setSyncResult(null);
-    useAnalyzeTaskStore.getState().clear();
     setError(null);
   };
 
@@ -176,11 +180,6 @@ export default function Analyze() {
     }
   };
 
-  const showAccountIdle =
-    tab === 'account' && !pending && !taskId && !task && !error;
-  const showVideoIdle =
-    tab === 'video' && !pending && !syncResult && !taskId && !task && !error;
-
   // taskFetching：taskId 在但 task 尚未拿到（POST 返回后到首次轮询 / 切回恢复的 gap）。
   // 这段用假进度条占位，免空白；以前用「恢复中」文案块，但新提交也命中它、文案错。
   const taskFetching = taskId !== null && !task && !taskErr;
@@ -188,7 +187,25 @@ export default function Analyze() {
   const asyncRunning =
     task != null && (task.status === 'queued' || task.status === 'running');
 
-  const accountLoading = tab === 'account' && (pending || taskFetching || asyncRunning);
+  // 空态按任务类型判定：另一类型的进行中/已完成任务不抑制本 tab 的空态，
+  // 用户可在该 tab 输入新建（提交时 submit 会清掉旧 taskId）。
+  const showAccountIdle =
+    tab === 'account' &&
+    !pending &&
+    !taskFetching &&
+    !(task && task.taskType === 'account') &&
+    !error;
+  const showVideoIdle =
+    tab === 'video' &&
+    !pending &&
+    !syncResult &&
+    !taskFetching &&
+    !(task && task.taskType === 'video') &&
+    !error;
+
+  const accountLoading =
+    tab === 'account' &&
+    (pending || taskFetching || (asyncRunning && task?.taskType === 'account'));
   const videoLoading =
     tab === 'video' && (pending || taskFetching || (asyncRunning && task?.taskType === 'video'));
 
