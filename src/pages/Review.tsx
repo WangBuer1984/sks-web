@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
+import { validateLinkInput } from './analyze/helpers';
 import {
   adoptScript,
   attributeScript,
@@ -84,6 +85,7 @@ const COLS = 'grid grid-cols-[1fr_72px_64px_52px_52px_52px_52px_52px_140px] gap-
 export default function Review() {
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const errRef = useRef<HTMLDivElement>(null);
   const [banner, setBanner] = useState('');
   const [trackInputs, setTrackInputs] = useState<Record<number, string>>({});
   const [feedbackInputs, setFeedbackInputs] = useState<Record<number, string>>({});
@@ -114,6 +116,16 @@ export default function Review() {
     },
     onError: (e: unknown) => setError(getBizMessage(e, '采用失败')),
   });
+
+  const validateAndScroll = (raw: string): { url: string } | null => {
+    const v = validateLinkInput(raw);
+    if (!v.ok) {
+      setError(v.message);
+      errRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return null;
+    }
+    return { url: v.url };
+  };
 
   const trackMut = useMutation({
     mutationFn: (vars: { id: number; url: string }) => trackScript(vars.id, vars.url),
@@ -178,6 +190,7 @@ export default function Review() {
       )}
       {error && (
         <div
+          ref={errRef}
           role="alert"
           className="mb-4 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger"
         >
@@ -299,9 +312,10 @@ export default function Review() {
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          trackMut.mutate({ id: s.id, url: (trackInputs[s.id] ?? '').trim() })
-                        }
+                        onClick={() => {
+                          const v = validateAndScroll((trackInputs[s.id] ?? '').trim());
+                          if (v) trackMut.mutate({ id: s.id, url: v.url });
+                        }}
                         disabled={trackMut.isPending || !(trackInputs[s.id] ?? '').trim()}
                         className="rounded-chip bg-paper-primary px-2.5 py-1 text-white hover:bg-paper-primaryHover disabled:opacity-45"
                       >
@@ -323,9 +337,10 @@ export default function Review() {
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          trackMut.mutate({ id: s.id, url: (trackInputs[s.id] ?? s.publishUrl ?? '').trim() })
-                        }
+                        onClick={() => {
+                          const v = validateAndScroll((trackInputs[s.id] ?? s.publishUrl ?? '').trim());
+                          if (v) trackMut.mutate({ id: s.id, url: v.url });
+                        }}
                         disabled={trackMut.isPending || !(trackInputs[s.id] ?? s.publishUrl ?? '').trim()}
                         className="rounded-chip border border-paper-danger px-2.5 py-1 text-paper-danger hover:bg-paper-dangerTint disabled:opacity-45"
                       >
