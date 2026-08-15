@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import {
@@ -6,6 +7,7 @@ import {
   analyzeVideoLink,
   analyzeVideoText,
   getAnalyzeTask,
+  getBenchmarkVideo,
   getCosts,
   parseStructure,
   type TaskDetail,
@@ -15,7 +17,8 @@ import { fetchMe, type MeResponse } from '../api/auth';
 import { useAnalyzeTaskStore } from '../store/analyzeTask';
 import AccountResult from './analyze/AccountResult';
 import VideoResult from './analyze/VideoResult';
-import { routeVideoInput, validateLinkInput } from './analyze/helpers';
+import VideoDetail from './analyze/VideoDetail';
+import { routeVideoInput, validateLinkInput, videoDetailIdFromParam } from './analyze/helpers';
 
 /**
  * C 端对标拆解 `/analyze`——对齐原型 `sections/14-对标拆解.html`（两 Tab：拆账号 / 拆视频）。
@@ -32,6 +35,8 @@ const VIDEO_SAMPLE_TEXT =
   '师傅最怕你检查这四处——看完验收比监理还专业。第一处……评论区扣「验收」领完整清单。';
 
 export default function Analyze() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const detailId = videoDetailIdFromParam(searchParams.get('video'));
   const [tab, setTab] = useState<Tab>('account');
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -102,22 +107,48 @@ export default function Analyze() {
   // 恢复时自动切到任务所属 tab：默认 account tab 配 video 任务不渲染结果。
   // 仅 task.id 变化时同步，避免轮询/手切 tab 时 yank。
   useEffect(() => {
+    if (detailId != null) return; // 详情态自己管 tab，不被上次任务类型覆盖
     if (task) {
       setTab(task.taskType === 'video' ? 'video' : 'account');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id]);
+  }, [task?.id, detailId]);
 
   // 切走再切回 / tab 切回恢复：input 被重置为空后，用 task 的干净 url 回填，
   // 让用户看到正在拆解的地址。task.id 变化（新任务/恢复）或 tab 切回任务所属 tab
   // 时触发；轮询（task.id 不变）不重复覆盖用户手改；切到非任务所属 tab 不回填
   // （免得把 video 地址塞进 account 输入框）。
   useEffect(() => {
+    if (detailId != null) return; // 详情态用 videoUrl 预填，不用上次任务的 url
     if (task?.url && !input && tabMatchesTask(tab, task.taskType)) {
       setInput(task.url);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id, tab]);
+  }, [task?.id, tab, detailId]);
+
+  // 详情态（`?video=<id>`）：免费读已落库的明细，不建任务、不扣费。
+  const { data: detail, isLoading: detailLoading, isError: detailError } = useQuery({
+    queryKey: ['benchmarkVideo', detailId],
+    queryFn: () => getBenchmarkVideo(detailId as number),
+    enabled: detailId != null,
+    retry: false,
+  });
+
+  // 详情态挂在拆视频 tab 下：query 在场就强制切过去。
+  useEffect(() => {
+    if (detailId != null) {
+      setTab('video');
+    }
+  }, [detailId]);
+
+  // 输入框预填该条链接（spec D8）：视频号拿不到作品链接 → 留空，结果区照常。
+  // 依赖 videoUrl 而非整个 detail：用户随后手改输入框不会被下一次 render 覆写。
+  useEffect(() => {
+    if (detailId != null) {
+      setInput(detail?.videoUrl ?? '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailId, detail?.videoUrl]);
 
   // 假进度 creep：提交后到首条 item 完成（real progress=0）期间，前端先假走，
   // 免得 0% 空窗让用户以为没启动。real>0（首条 item 完成≈10%）即交班真实值。
@@ -147,6 +178,11 @@ export default function Analyze() {
   const insufficient = tab === 'account' && balance < accountCost;
 
   const switchTab = (next: Tab) => {
+    if (detailId != null) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('video');
+      setSearchParams(next, { replace: true });
+    }
     // 切 tab 只重置输入区，不清 taskId：进行中/已完成的任务保留，
     // 切回原 tab 仍可恢复进度与地址（见下方 url-restore / tab-restore）。
     setTab(next);
@@ -164,6 +200,11 @@ export default function Analyze() {
     }
     setSyncResult(null);
     setSyncTranscript(null);
+    if (detailId != null) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('video');
+      setSearchParams(next, { replace: true });
+    }
     useAnalyzeTaskStore.getState().clear();
     setError(null);
     if (tab === 'account') {
@@ -197,12 +238,14 @@ export default function Analyze() {
   // 空态按任务类型判定：另一类型的进行中/已完成任务不抑制本 tab 的空态，
   // 用户可在该 tab 输入新建（提交时 submit 会清掉旧 taskId）。
   const showAccountIdle =
+    detailId == null &&
     tab === 'account' &&
     !pending &&
     !taskFetching &&
     !(task && task.taskType === 'account') &&
     !error;
   const showVideoIdle =
+    detailId == null &&
     tab === 'video' &&
     !pending &&
     !syncResult &&
@@ -211,9 +254,11 @@ export default function Analyze() {
     !error;
 
   const accountLoading =
+    detailId == null &&
     tab === 'account' &&
     (pending || taskFetching || (asyncRunning && task?.taskType === 'account'));
   const videoLoading =
+    detailId == null &&
     tab === 'video' && (pending || taskFetching || (asyncRunning && task?.taskType === 'video'));
 
   return (
@@ -383,7 +428,7 @@ export default function Analyze() {
       ) : null}
 
       {/* 同步视频结果 */}
-      {tab === 'video' && syncResult && !videoLoading ? (
+      {detailId == null && tab === 'video' && syncResult && !videoLoading ? (
         <VideoResult
           structure={syncResult.structure}
           whyHot={syncResult.whyHot}
@@ -395,7 +440,7 @@ export default function Analyze() {
       ) : null}
 
       {/* 异步任务终态 / 失败 */}
-      {task && !asyncRunning && tabMatchesTask(tab, task.taskType) ? (
+      {detailId == null && task && !asyncRunning && tabMatchesTask(tab, task.taskType) ? (
         <div className="mt-1">
           {task.status === 'failed' ? (
             <p className="mb-3 rounded-card border border-paper-dangerLine bg-paper-dangerTint px-3 py-2 text-copy text-paper-danger">
@@ -413,6 +458,20 @@ export default function Analyze() {
             <AccountResult resultJson={task.result} videos={task.videos} />
           ) : null}
         </div>
+      ) : null}
+
+      {detailId != null ? (
+        detailLoading ? (
+          <div className="rounded-block border border-paper-line bg-paper-card px-[30px] py-[30px] text-center">
+            <div className="animate-pulse text-lead text-paper-primary">正在加载视频文案…</div>
+          </div>
+        ) : detailError || !detail ? (
+          <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body text-paper-muted">
+            该视频记录不存在或已删除
+          </div>
+        ) : (
+          <VideoDetail data={detail} />
+        )
       ) : null}
     </div>
   );
