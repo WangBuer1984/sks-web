@@ -15,7 +15,7 @@ import { fetchMe, type MeResponse } from '../api/auth';
 import { useAnalyzeTaskStore } from '../store/analyzeTask';
 import AccountResult from './analyze/AccountResult';
 import VideoResult from './analyze/VideoResult';
-import { looksLikeUrl, routeVideoInput, validateLinkInput } from './analyze/helpers';
+import { routeVideoInput, validateLinkInput } from './analyze/helpers';
 
 /**
  * C 端对标拆解 `/analyze`——对齐原型 `sections/14-对标拆解.html`（两 Tab：拆账号 / 拆视频）。

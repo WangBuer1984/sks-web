@@ -146,7 +146,7 @@ export default function Calibrate() {
     sampleSettledRef.current = false;
     setSampleData(null);
     setPhase('ask');
-    stepMut.mutate({ materials: null });
+    stepMut.mutate({ materials: undefined });
   };
 
   const submitReply = (reply?: string) => {

@@ -27,7 +27,7 @@ export interface ScriptViewProps {
 
 export default function ScriptView({
   script,
-  bCards,
+  bCards: _bCards,
   platform,
   onPlatform,
   onAdopt,
