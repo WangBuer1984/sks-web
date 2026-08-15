@@ -37,7 +37,9 @@ const VIDEO_SAMPLE_TEXT =
 export default function Analyze() {
   const [searchParams, setSearchParams] = useSearchParams();
   const detailId = videoDetailIdFromParam(searchParams.get('video'));
-  const [tab, setTab] = useState<Tab>('account');
+  // 详情态入场直接落拆视频 tab：初值即从 detailId 推导，
+  // 免得首帧先画 account tab、effect 再纠正的一闪。
+  const [tab, setTab] = useState<Tab>(detailId != null ? 'video' : 'account');
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<VideoTextResponse | null>(null);
@@ -106,13 +108,15 @@ export default function Analyze() {
 
   // 恢复时自动切到任务所属 tab：默认 account tab 配 video 任务不渲染结果。
   // 仅 task.id 变化时同步，避免轮询/手切 tab 时 yank。
+  // detailId 有意不进依赖：离开详情（清 ?video=）伴随的是用户手切 tab，
+  // 若因 detailId 变化重跑，会把 tab 立刻拽回任务所属 tab，用户得点两次。
   useEffect(() => {
     if (detailId != null) return; // 详情态自己管 tab，不被上次任务类型覆盖
     if (task) {
       setTab(task.taskType === 'video' ? 'video' : 'account');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id, detailId]);
+  }, [task?.id]);
 
   // 切走再切回 / tab 切回恢复：input 被重置为空后，用 task 的干净 url 回填，
   // 让用户看到正在拆解的地址。task.id 变化（新任务/恢复）或 tab 切回任务所属 tab
@@ -179,9 +183,9 @@ export default function Analyze() {
 
   const switchTab = (next: Tab) => {
     if (detailId != null) {
-      const next = new URLSearchParams(searchParams);
-      next.delete('video');
-      setSearchParams(next, { replace: true });
+      const params = new URLSearchParams(searchParams);
+      params.delete('video');
+      setSearchParams(params, { replace: true });
     }
     // 切 tab 只重置输入区，不清 taskId：进行中/已完成的任务保留，
     // 切回原 tab 仍可恢复进度与地址（见下方 url-restore / tab-restore）。
@@ -201,9 +205,9 @@ export default function Analyze() {
     setSyncResult(null);
     setSyncTranscript(null);
     if (detailId != null) {
-      const next = new URLSearchParams(searchParams);
-      next.delete('video');
-      setSearchParams(next, { replace: true });
+      const params = new URLSearchParams(searchParams);
+      params.delete('video');
+      setSearchParams(params, { replace: true });
     }
     useAnalyzeTaskStore.getState().clear();
     setError(null);
