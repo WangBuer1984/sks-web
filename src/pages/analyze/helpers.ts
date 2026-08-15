@@ -1,4 +1,79 @@
 /**
+ * 平台判定:最终权威是 sks-ai app/datasource/tikhub.py _platform_of(host 级,
+ * 只认 douyin / wechat_channels)。本文件白名单是它的子集(支持集)+ 超集(识别集含
+ * 小红书,仅用于分类报错、绝不放行)。改这里前先看 _platform_of。
+ */
+
+export type PlatformId = 'douyin' | 'wechat_channels' | 'xiaohongshu';
+export type ExtractedUrl = { url: string; platform: PlatformId };
+
+/** 识别集 host(判定「这是链接不是文案」+ 提取;含小红书,多出的仅用于分类报错)。 */
+export const IDENTIFY_HOSTS = [
+  'douyin.com', 'iesdouyin.com', 'v.douyin.com', 'www.douyin.com',
+  'weixin.qq.com', 'channels.weixin.qq.com', 'mp.weixin.qq.com',
+  'xiaohongshu.com', 'www.xiaohongshu.com', 'xhslink.com',
+];
+
+/** 支持集(放行拆解)——必须是 _platform_of 返回域 {douyin, wechat_channels} 的子集。 */
+export const SUPPORTED_PLATFORMS = new Set<PlatformId>(['douyin', 'wechat_channels']);
+
+// URL-safe ASCII(RFC 3986 unreserved + reserved,不含空格/CJK),遇中文/全角即断
+const URL_CHARS = String.raw`[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]`;
+const SCHEME_RE = new RegExp(`https?://${URL_CHARS}+`, 'gi');
+const SCHEMELESS_RE = new RegExp(
+  `\\b(?:${IDENTIFY_HOSTS.map((h) => h.replace(/\./g, '\\.')).join('|')})/${URL_CHARS}+`,
+  'gi',
+);
+
+/** 从脏分享文本提取第一个识别集平台 URL;没有返回 null。 */
+export function extractShareUrl(text: string): ExtractedUrl | null {
+  if (!text || !text.trim()) return null;
+  SCHEME_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = SCHEME_RE.exec(text)) != null) {
+    const e = classify(stripTrailingPunct(m[0]), false);
+    if (e) return e;
+  }
+  SCHEMELESS_RE.lastIndex = 0;
+  while ((m = SCHEMELESS_RE.exec(text)) != null) {
+    const e = classify(stripTrailingPunct(m[0]), true);
+    if (e) return e;
+  }
+  return null;
+}
+
+function classify(token: string, schemeless: boolean): ExtractedUrl | null {
+  // 畸形百分号转义(如 %zz)→ 跳过继续找,与 Java 侧 URI 等价(new URL 不抛,故显式判)
+  if (/%(?![0-9A-Fa-f]{2})/i.test(token)) return null;
+  const url = schemeless ? 'https://' + token : token;
+  let host: string;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return null; // 畸形候选跳过
+  }
+  if (!host) return null;
+  host = host.toLowerCase();
+  if (host.endsWith('douyin.com') || host.endsWith('iesdouyin.com')) return { url, platform: 'douyin' };
+  if (host.endsWith('weixin.qq.com')) return { url, platform: 'wechat_channels' };
+  if (host.endsWith('xiaohongshu.com') || host.endsWith('xhslink.com')) return { url, platform: 'xiaohongshu' };
+  return null;
+}
+
+/** 裁尾部 ASCII 标点(.,;:)]}>),不动 path(抖音短链 302 对尾斜杠敏感)。 */
+function stripTrailingPunct(token: string): string {
+  let end = token.length;
+  while (end > 0) {
+    const c = token.charCodeAt(end - 1);
+    // . , ; : ) ] } >
+    if (c === 46 || c === 44 || c === 59 || c === 58 || c === 41 || c === 93 || c === 125 || c === 62) {
+      end--;
+    } else break;
+  }
+  return token.slice(0, end);
+}
+
+/**
  * 对标拆解页纯函数：URL 判定、计数格式化、结果文本启发式拆分。
  * 无假数据——只整理 API / 档案里已有的字符串。
  */
