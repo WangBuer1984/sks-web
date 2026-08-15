@@ -36,18 +36,22 @@ export default function Analyze() {
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<VideoTextResponse | null>(null);
+  // 粘文案流的原文：result 里没有（后端同步流不回传 transcript），用提交时的入参留一份。
+  const [syncTranscript, setSyncTranscript] = useState<string | null>(null);
   // taskId 走 Zustand 持久化 store（localStorage），切走/刷新回来可恢复上次任务。
   const taskId = useAnalyzeTaskStore((s) => s.taskId);
   const pollRef = useRef(false);
 
   const textMut = useMutation({
     mutationFn: (transcript: string) => analyzeVideoText(transcript),
-    onSuccess: (r) => {
+    onSuccess: (r, transcript) => {
       setError(null);
       setSyncResult(r);
+      setSyncTranscript(transcript);
     },
     onError: (e: unknown) => {
       setSyncResult(null);
+      setSyncTranscript(null);
       setError(getBizMessage(e, '拆解失败，请稍后重试'));
     },
   });
@@ -61,6 +65,7 @@ export default function Analyze() {
     onSuccess: (r) => {
       setError(null);
       setSyncResult(null);
+      setSyncTranscript(null);
       useAnalyzeTaskStore.getState().setTaskId(r.taskId);
       pollRef.current = true;
     },
@@ -147,6 +152,7 @@ export default function Analyze() {
     setTab(next);
     setInput('');
     setSyncResult(null);
+    setSyncTranscript(null);
     setError(null);
   };
 
@@ -157,6 +163,7 @@ export default function Analyze() {
       return;
     }
     setSyncResult(null);
+    setSyncTranscript(null);
     useAnalyzeTaskStore.getState().clear();
     setError(null);
     if (tab === 'account') {
@@ -383,6 +390,7 @@ export default function Analyze() {
           framework={syncResult.framework}
           diffHint={syncResult.diffHint}
           imitateTitle={syncResult.framework?.slice(0, 40)}
+          transcript={syncTranscript}
         />
       ) : null}
 
@@ -427,6 +435,7 @@ function VideoLinkDone({ resultJson }: { resultJson: string }) {
       framework={r.framework ?? ''}
       diffHint={r.diff_hint ?? ''}
       imitateTitle={r.framework?.slice(0, 40)}
+      transcript={r.transcript ?? null}
     />
   );
 }

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../../api/client';
 import { createTopic } from '../../api/topic';
 import { structureTimeline } from './helpers';
+import TranscriptBlock from './TranscriptBlock';
 
 /**
  * 拆视频结果：左栏结构时间轴 + 框架/差异；右栏爆点 / 知识库提示 / 仿写入口。
@@ -15,6 +16,8 @@ export default function VideoResult({
   framework,
   diffHint,
   imitateTitle,
+  transcript,
+  existingTopicId,
 }: {
   structure: string;
   whyHot: string;
@@ -22,10 +25,18 @@ export default function VideoResult({
   diffHint: string;
   /** 仿写：建选题后跳 `/create?topic=`；缺省用框架首句 */
   imitateTitle?: string;
+  /** 转写全文：链接流读 result.transcript，粘文案流用用户输入原文；无则不渲染该区块。 */
+  transcript?: string | null;
+  /**
+   * 已关联的选题 id（详情态从 `BenchmarkVideoDetail.topicId` 传入）。
+   * 非空 → 「存入选题库」直接是已存入终态：该条随拆账号早已汇入选题库，再存会建一条
+   * 标题对不上的重复选题（spec D11）。
+   */
+  existingTopicId?: number | null;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [savedTopicId, setSavedTopicId] = useState<number | null>(null);
+  const [savedTopicId, setSavedTopicId] = useState<number | null>(existingTopicId ?? null);
   const steps = structureTimeline(structure);
   const whyLines = whyHot
     .split(/\n+|(?<=[。；])/)
@@ -66,8 +77,9 @@ export default function VideoResult({
   });
 
   return (
-    <div className="grid animate-slideup grid-cols-1 gap-[18px] lg:grid-cols-[1fr_300px]">
-      <div className="flex flex-col gap-3.5">
+    <div className="flex animate-slideup flex-col gap-4">
+      <div className="grid grid-cols-1 items-start gap-[18px] lg:grid-cols-[1fr_300px]">
+        <div className="flex flex-col gap-3.5">
         <div className="rounded-block border border-paper-line bg-paper-card px-6 py-5">
           <h3 className="mb-3.5 text-copy font-bold text-paper-ink">结构拆解</h3>
           <div className="flex flex-col gap-2.5 text-body">
@@ -97,7 +109,7 @@ export default function VideoResult({
         </div>
       </div>
 
-      <aside className="flex flex-col gap-3">
+      <aside className="flex flex-col gap-3 lg:sticky lg:top-2">
         <div className="rounded-panel border border-paper-line bg-paper-card px-[18px] py-4">
           <div className="mb-1.5 text-hint font-bold text-paper-primary">爆点归因</div>
           <div className="flex flex-col gap-2 text-caption leading-normal text-paper-inkSoft">
@@ -158,6 +170,9 @@ export default function VideoResult({
           </button>
         ) : null}
       </aside>
+      </div>
+
+      {transcript?.trim() ? <TranscriptBlock text={transcript} /> : null}
     </div>
   );
 }
