@@ -19,6 +19,8 @@ export interface Topic {
   rationale: string | null;
   pillar: string | null;
   status: string;
+  /** 关联的拆账号明细 id：仅 benchmark 来源且标题对得上时有值——据它显示「看文案」入口。 */
+  benchmarkVideoId: number | null;
   createdAt: string;
 }
 

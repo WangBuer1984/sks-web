@@ -250,3 +250,15 @@ export function structureTimeline(structure: string): { label: string; tone: 'ho
   }
   return [{ label: '结构', tone: 'plain', text: t }];
 }
+
+/**
+ * 解析 `/analyze?video=<id>` 的 query 值。
+ *
+ * 只接受正整数串——非法值视同「无参数」，回到正常输入态而不是拿脏 id 去打接口。
+ */
+export function videoDetailIdFromParam(raw: string | null | undefined): number | null {
+  const t = (raw ?? '').trim();
+  if (!/^\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}

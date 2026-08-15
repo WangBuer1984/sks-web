@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { extractShareUrl, routeVideoInput, validateLinkInput } from './helpers';
+import {
+  extractShareUrl,
+  routeVideoInput,
+  validateLinkInput,
+  videoDetailIdFromParam,
+} from './helpers';
 
 describe('extractShareUrl', () => {
   it('从抖音脏分享文案提取真实短链', () => {
@@ -117,5 +122,25 @@ describe('validateLinkInput', () => {
     const v = validateLinkInput('纯文案没有链接');
     expect(v.ok).toBe(false);
     if (!v.ok) expect(v.message).toContain('未识别');
+  });
+});
+
+describe('videoDetailIdFromParam', () => {
+  it('正整数串 → number', () => {
+    expect(videoDetailIdFromParam('42')).toBe(42);
+  });
+
+  it('缺省 / 空串 → null（正常输入态）', () => {
+    expect(videoDetailIdFromParam(null)).toBeNull();
+    expect(videoDetailIdFromParam('')).toBeNull();
+    expect(videoDetailIdFromParam('   ')).toBeNull();
+  });
+
+  it('非数字 / 0 / 负数 / 小数 → null（不去请求非法 id）', () => {
+    expect(videoDetailIdFromParam('abc')).toBeNull();
+    expect(videoDetailIdFromParam('12abc')).toBeNull();
+    expect(videoDetailIdFromParam('0')).toBeNull();
+    expect(videoDetailIdFromParam('-3')).toBeNull();
+    expect(videoDetailIdFromParam('1.5')).toBeNull();
   });
 });

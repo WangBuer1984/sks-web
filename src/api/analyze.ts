@@ -43,6 +43,33 @@ export interface BenchmarkVideoView {
   durationSec?: number | null;
 }
 
+/**
+ * 单条明细详情（`GET /api/analyze/videos/{id}`，对齐 Java `BenchmarkVideoDetail`）。
+ *
+ * 拆视频页详情态数据源：读拆账号时已落库的转写全文 + 四字段结构化，**免费不重跑**。
+ * `videoUrl` 为 `null` 表示无法构造原视频链接（视频号，或 V9 之前写入的旧行）。
+ */
+export interface BenchmarkVideoDetail {
+  id: number;
+  title: string | null;
+  author: string | null;
+  videoUrl: string | null;
+  transcript: string | null;
+  structure: string | null; // 四字段 JSON 文本
+  description: string | null;
+  tags: string | null; // JSON 数组字符串
+  publishedAt: string | null;
+  durationSec: number | null;
+  playCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+  shareCount: number | null;
+  collectCount: number | null;
+  /** 已随拆账号汇入选题库时为该选题 id（详情态据此显示「已存入选题库」终态），否则 null。 */
+  topicId: number | null;
+  createdAt: string;
+}
+
 /** 拆账号三层 result（解析自 analyze_task.result JSONB）。 */
 export interface AccountResult {
   account_profile?: string;
@@ -111,6 +138,11 @@ export function getAnalyzeTask(id: number): Promise<TaskDetail> {
   return userClient.get<TaskDetail, TaskDetail>(`/analyze/tasks/${id}`);
 }
 
+/** 明细详情（详情态；跨用户 / 不存在 → 后端 PARAM_INVALID）。 */
+export function getBenchmarkVideo(id: number): Promise<BenchmarkVideoDetail> {
+  return userClient.get<BenchmarkVideoDetail, BenchmarkVideoDetail>(`/analyze/videos/${id}`);
+}
+
 /** 安全解析 result JSON 文本为三层对象；非法 / 空 → null。 */
 export function parseAccountResult(json: string | null | undefined): AccountResult | null {
   if (!json) return null;
@@ -121,12 +153,13 @@ export function parseAccountResult(json: string | null | undefined): AccountResu
   }
 }
 
-/** 安全解析 benchmark_video.structure JSON 文本为四字段对象。 */
+/** 安全解析四字段 JSON 文本。`transcript` 仅链接流 result 有（拆账号明细的 structure 没有）。 */
 export function parseStructure(json: string | null | undefined): {
   structure?: string;
   why_hot?: string;
   framework?: string;
   diff_hint?: string;
+  transcript?: string;
 } | null {
   if (!json) return null;
   try {
@@ -135,6 +168,7 @@ export function parseStructure(json: string | null | undefined): {
       why_hot?: string;
       framework?: string;
       diff_hint?: string;
+      transcript?: string;
     };
   } catch {
     return null;
