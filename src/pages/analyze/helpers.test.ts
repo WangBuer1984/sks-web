@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractShareUrl } from './helpers';
+import { extractShareUrl, routeVideoInput, validateLinkInput } from './helpers';
 
 describe('extractShareUrl', () => {
   it('从抖音脏分享文案提取真实短链', () => {
@@ -74,5 +74,48 @@ describe('extractShareUrl', () => {
     expect(extractShareUrl('')).toBeNull();
     expect(extractShareUrl('   ')).toBeNull();
     expect(extractShareUrl(null as unknown as string)).toBeNull();
+  });
+});
+
+describe('routeVideoInput', () => {
+  it('带完整域名的脏文案路由到 videoLink 而非 text（锁误路由回归）', () => {
+    const r = routeVideoInput('看这个 https://www.douyin.com/video/7xxx 再说');
+    expect(r.kind).toBe('videoLink');
+    if (r.kind === 'videoLink') expect(r.url).toBe('https://www.douyin.com/video/7xxx');
+  });
+
+  it('小红书脏文案硬拒报错，不退回 text（锁刻意收窄）', () => {
+    const r = routeVideoInput('一个 https://www.xiaohongshu.com/explore/abc 分享');
+    expect(r.kind).toBe('error');
+    if (r.kind === 'error') expect(r.message).toContain('小红书');
+  });
+
+  it('纯文案无链接路由到 text', () => {
+    expect(routeVideoInput('师傅最怕你检查这四处——看完验收比监理还专业').kind).toBe('text');
+  });
+
+  it('干净抖音短链路由到 videoLink 用清洗后 URL', () => {
+    const r = routeVideoInput('https://v.douyin.com/abc/');
+    expect(r.kind).toBe('videoLink');
+  });
+});
+
+describe('validateLinkInput', () => {
+  it('抖音脏文案提取成功', () => {
+    const v = validateLinkInput('长按复制 https://v.douyin.com/abc/ 1@0.com');
+    expect(v.ok).toBe(true);
+    if (v.ok) expect(v.url).toBe('https://v.douyin.com/abc/');
+  });
+
+  it('小红书 → 不支持错误（非放行）', () => {
+    const v = validateLinkInput('https://www.xiaohongshu.com/explore/abc');
+    expect(v.ok).toBe(false);
+    if (!v.ok) expect(v.message).toContain('小红书');
+  });
+
+  it('无链接 → 未识别错误', () => {
+    const v = validateLinkInput('纯文案没有链接');
+    expect(v.ok).toBe(false);
+    if (!v.ok) expect(v.message).toContain('未识别');
   });
 });

@@ -194,6 +194,30 @@ export function parsePatternBars(patterns: string): PatternBar[] {
   }));
 }
 
+export type VideoRoute =
+  | { kind: 'videoLink'; url: string }
+  | { kind: 'text'; text: string }
+  | { kind: 'error'; message: string };
+
+export type LinkValidation = { ok: true; url: string } | { ok: false; message: string };
+
+/** 拆视频 tab 路由：提取优先。命中支持集→videoLink；识别但不支持→硬拒；否则 looksLikeUrl→videoLink；纯文案→text。 */
+export function routeVideoInput(text: string): VideoRoute {
+  const ex = extractShareUrl(text);
+  if (ex && SUPPORTED_PLATFORMS.has(ex.platform)) return { kind: 'videoLink', url: ex.url };
+  if (ex) return { kind: 'error', message: '目前仅支持抖音、视频号，小红书暂不支持' };
+  if (looksLikeUrl(text)) return { kind: 'videoLink', url: text };
+  return { kind: 'text', text };
+}
+
+/** 拆账号 / 复盘登记 入口校验：提取 + 支持集过滤。 */
+export function validateLinkInput(text: string): LinkValidation {
+  const ex = extractShareUrl(text);
+  if (!ex) return { ok: false, message: '未识别到支持的平台链接，请直接粘贴抖音或视频号分享文案' };
+  if (!SUPPORTED_PLATFORMS.has(ex.platform)) return { ok: false, message: '目前仅支持抖音、视频号，小红书暂不支持' };
+  return { ok: true, url: ex.url };
+}
+
 /** 结构长文拆成钩子/正文/CTA 三段（启发式），供左侧时间轴。 */
 export function structureTimeline(structure: string): { label: string; tone: 'hook' | 'body' | 'cta' | 'plain'; text: string }[] {
   const t = structure.trim();
