@@ -15,7 +15,7 @@ import { fetchMe, type MeResponse } from '../api/auth';
 import { useAnalyzeTaskStore } from '../store/analyzeTask';
 import AccountResult from './analyze/AccountResult';
 import VideoResult from './analyze/VideoResult';
-import { looksLikeUrl } from './analyze/helpers';
+import { looksLikeUrl, routeVideoInput, validateLinkInput } from './analyze/helpers';
 
 /**
  * C 端对标拆解 `/analyze`——对齐原型 `sections/14-对标拆解.html`（两 Tab：拆账号 / 拆视频）。
@@ -148,13 +148,23 @@ export default function Analyze() {
     useAnalyzeTaskStore.getState().clear();
     setError(null);
     if (tab === 'account') {
-      startMut.mutate({ url: text, kind: 'account' });
+      const v = validateLinkInput(text);
+      if (!v.ok) {
+        setError(v.message);
+        return;
+      }
+      startMut.mutate({ url: v.url, kind: 'account' });
       return;
     }
-    if (looksLikeUrl(text)) {
-      startMut.mutate({ url: text, kind: 'videoLink' });
+    const route = routeVideoInput(text);
+    if (route.kind === 'error') {
+      setError(route.message);
+      return;
+    }
+    if (route.kind === 'videoLink') {
+      startMut.mutate({ url: route.url, kind: 'videoLink' });
     } else {
-      textMut.mutate(text);
+      textMut.mutate(route.text);
     }
   };
 
@@ -222,7 +232,7 @@ export default function Analyze() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="粘贴对标账号主页链接，如 douyin.com/user/…"
+              placeholder="粘贴抖音/视频号账号主页或分享文案，系统自动提取链接"
               className="min-w-0 flex-1 rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-3 text-lead text-paper-ink outline-none focus:border-paper-primary"
             />
             <button
@@ -250,8 +260,7 @@ export default function Analyze() {
             </span>
           </div>
           <p className="mt-2 text-hint text-paper-muted">
-            抖音请粘贴主页链接；视频号请粘贴该账号下任意一条分享链接（weixin.qq.com/sph/…）。示例 chip
-            仅填入链接模板，请换成真实主页后再提交。
+            可直接粘贴完整分享文案，系统自动提取链接。目前仅支持抖音、视频号。
           </p>
         </section>
       ) : (
@@ -259,7 +268,7 @@ export default function Analyze() {
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="粘贴爆款视频链接或完整文案…"
+            placeholder="粘贴抖音/视频号分享文案（自动提取链接），或直接粘口播文案（不限平台）"
             rows={3}
             className="w-full resize-none rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-3 text-lead leading-normal text-paper-ink outline-none focus:border-paper-primary"
           />
