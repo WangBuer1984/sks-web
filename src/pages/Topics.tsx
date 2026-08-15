@@ -164,6 +164,15 @@ export default function Topics() {
                     ))}
                   </div>
                 </div>
+                {t.benchmarkVideoId != null ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/analyze?video=${t.benchmarkVideoId}`)}
+                    className="shrink-0 whitespace-nowrap rounded-chip border border-paper-lineStrong px-3.5 py-[7px] text-copy text-paper-inkSoft hover:border-paper-primary hover:text-paper-primary"
+                  >
+                    看文案
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => navigate(`/create?topic=${t.id}`)}
@@ -178,7 +187,7 @@ export default function Topics() {
       )}
 
       <p className="mt-3.5 rounded-panel border border-dashed border-paper-goldSoft bg-paper-tint px-[18px] py-3.5 text-caption leading-normal text-paper-primary">
-        拆账号完成后 TOP 视频会自动汇入（标题 + 播放/收藏）；拆视频可点「存入选题库」；发布复盘续集也会写入这里。
+        拆账号完成后 TOP 视频会自动汇入（标题 + 播放/收藏），可点「看文案」回看该条的完整文案与拆解；拆视频可点「存入选题库」；发布复盘续集也会写入这里。
       </p>
     </div>
   );

@@ -22,7 +22,7 @@ const PREVIEW_COUNT = 5;
 
 /**
  * 拆账号结果四块：①画像对比 ②TOP 表 ③规律 ④迁移。
- * 深拆 = 只读展开该条 structure；仿写 = createTopic → `/create?topic=`。
+ * 深拆 = 跳 `/analyze?video=<明细id>` 详情态看文案全文 + 结构化；仿写 = createTopic → `/create?topic=`。
  * TOP 视频选题由后端 getTask/poller 自动入库，④ 区引导去选题库即可。
  */
 export default function AccountResult({
@@ -42,8 +42,7 @@ export default function AccountResult({
   });
 
   const [expandedAll, setExpandedAll] = useState(false);
-  const [deepId, setDeepId] = useState<number | null>(null);
-
+  
   // 后端已在轮询 getTask 时 sync benchmark 选题——刷新列表缓存
   useEffect(() => {
     if (videos.length > 0) {
@@ -179,7 +178,6 @@ export default function AccountResult({
                 struct?.structure?.slice(0, 36) ||
                 struct?.framework?.slice(0, 36) ||
                 '—';
-              const open = deepId === v.id;
               const rank = idx + 1;
               const collect = v.collectCount ?? v.favCount;
               const tagList = parseTags(v.tags);
@@ -215,10 +213,10 @@ export default function AccountResult({
                     <div className="flex gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setDeepId(open ? null : v.id)}
+                        onClick={() => navigate(`/analyze?video=${v.id}`)}
                         className="whitespace-nowrap rounded-chip border border-paper-lineStrong px-2.5 py-1 text-meta text-paper-inkSoft hover:border-paper-primary hover:text-paper-primary"
                       >
-                        {open ? '收起' : '深拆'}
+                        深拆
                       </button>
                       <button
                         type="button"
@@ -230,31 +228,6 @@ export default function AccountResult({
                       </button>
                     </div>
                   </div>
-                  {open ? (
-                    <div className="space-y-3 bg-paper-sunken px-6 pb-4">
-                      {v.description ? (
-                        <p className="whitespace-pre-wrap break-words text-caption leading-normal text-paper-inkSoft">
-                          <span className="font-bold text-paper-muted">描述 · </span>
-                          {v.description}
-                        </p>
-                      ) : null}
-                      {v.transcript ? (
-                        <p className="whitespace-pre-wrap break-words rounded-card bg-paper-tint px-3 py-2 text-caption leading-normal text-paper-ink">
-                          {v.transcript}
-                        </p>
-                      ) : null}
-                      {struct ? (
-                        <dl className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                          <MiniField label="文案结构" value={struct.structure ?? ''} />
-                          <MiniField label="爆火原因" value={struct.why_hot ?? ''} />
-                          <MiniField label="可复用框架" value={struct.framework ?? ''} />
-                          <MiniField label="差异化提示" value={struct.diff_hint ?? ''} />
-                        </dl>
-                      ) : (
-                        <p className="text-caption text-paper-muted">该条暂无结构化拆解。</p>
-                      )}
-                    </div>
-                  ) : null}
                 </li>
               );
             })}
@@ -353,16 +326,6 @@ function FragmentRow({
   );
 }
 
-function MiniField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-card border border-paper-line bg-paper-card px-3.5 py-3">
-      <dt className="mb-1 text-hint font-bold text-paper-muted">{label}</dt>
-      <dd className="whitespace-pre-wrap break-words text-copy leading-normal text-paper-ink">
-        {value || <span className="text-paper-muted">—</span>}
-      </dd>
-    </div>
-  );
-}
 
 function barColor(i: number): string {
   if (i === 0) return 'bg-paper-primary';
