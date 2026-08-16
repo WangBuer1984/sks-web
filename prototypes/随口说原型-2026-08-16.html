@@ -1277,7 +1277,7 @@ function renderCreate(s) {
     const vOn = active === 'video' ? ' on' : '';
     return `<div class="create-tabs">
       <a class="${dOn}" onclick="STATE._activeTab='douyin';render()">抖音</a>
-      <a class="${vOn}" onclick="STATE._activeTab='video';render()">视频号</a>
+      <a class="${vOn}" onclick="STATE._activeTab='video';if(STATE.state==='只有抖音版')setState('两版都在');else render()">视频号</a>
     </div>`;
   }
 
@@ -1415,7 +1415,7 @@ function renderCreate(s) {
         + platformTabs(activeTab)
         + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
         + `<div class="create-actions">
-          <button class="btn ghost">换个角度</button>
+          <button class="btn ghost" onclick="setState('生成中')">换个角度</button>
           <button class="btn ghost">复制全文</button>
         </div>`;
       break;
