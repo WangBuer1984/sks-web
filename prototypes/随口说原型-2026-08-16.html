@@ -92,6 +92,31 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .tier-chip .tier-name{font-size:14px;margin-bottom:4px;color:var(--charcoal)}
 .tier-chip .tier-price{font-family:var(--serif);font-size:20px;color:var(--ink)}
 .tier-chip.highlight{border-color:var(--ink);background:var(--card);box-shadow:0 2px 12px rgba(138,90,43,.1)}
+
+/* ===== 工作台 ===== */
+.wb-greeting{font-family:var(--serif);font-size:24px;color:var(--ink);margin-bottom:24px}
+.wb-numbers{display:flex;gap:20px;margin-bottom:24px}
+.wb-num-card{flex:1;text-align:center}
+.wb-num-card .num{font-family:var(--serif);font-size:28px;color:var(--ink)}
+.wb-num-card .label{font-size:13px;color:var(--text-muted)}
+.wb-section{margin-bottom:24px}
+.wb-section-title{font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.wb-empty{color:var(--text-muted);font-size:14px;padding:20px 0;text-align:center}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px}
+.badge-draft{background:rgba(107,90,69,.12);color:var(--text-muted)}
+.badge-published{background:rgba(90,122,74,.12);color:var(--ok)}
+.badge-viral{background:rgba(156,61,61,.1);color:var(--danger)}
+.wb-today-list{list-style:none;padding:0}
+.wb-today-list li{padding:10px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.wb-today-list li:last-child{border-bottom:none}
+.wb-today-type{font-size:12px;color:var(--ink-soft);white-space:nowrap;min-width:32px}
+.wb-today-title{font-size:14px;color:var(--charcoal)}
+.wb-today-source{font-size:12px;color:var(--text-muted);margin-left:auto}
+.wb-content-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.wb-content-row:last-child{border-bottom:none}
+.wb-content-title{font-size:14px;color:var(--charcoal);flex:1}
+.wb-content-platform{font-size:12px;color:var(--text-muted)}
+.wb-review-link{font-size:12px;color:var(--ink-soft);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 </style>
 </head>
 <body>
@@ -131,7 +156,23 @@ const DEMO = {
     { q:'便宜的会不会偷工减料？', a:'材料牌号、公差我全写在合同里，到货可复检。' }
   ],
   // 充值档位（充值对话框用，与落地页价格三卡不是同一套 SKU）
-  tiers: [['50 条','¥49'],['150 条','¥129'],['拆账号 1 次','10 条']]
+  tiers: [['50 条','¥49'],['150 条','¥129'],['拆账号 1 次','10 条']],
+  // 工作台切片
+  numbers: { kb:24, topics:9, adopted:3 },
+  todays: [
+    {type:'FAQ', title:'设备为什么便宜三成', from:'定位高频问答'},
+    {type:'对标', title:'某同行 TOP1：开工前先报材料牌号', from:'拆账号存下'},
+    {type:'续集', title:'爆款《便宜三成》续集：到货怎么复检', from:'复盘续集'}
+  ],
+  recentContent: [
+    {title:'便宜三成不是偷工减料', platform:'抖音', status:'已发布'},
+    {title:'合同里写公差这件事', platform:'视频号', status:'未发布'},
+    {title:'工厂老板的一天', platform:'抖音', status:'爆款'}
+  ],
+  pendingReview: [
+    {title:'材料牌号怎么写进合同', platform:'抖音', link:'v.douyin.com/abc1'},
+    {title:'到货复检三步', platform:'视频号', link:'channels/xyz2'}
+  ]
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -151,7 +192,7 @@ function sidebarHTML(s){
   </nav><div style="margin-top:auto;padding:14px 18px;border-top:1px solid #4a3b33">
     <div class="card" style="background:rgba(255,255,255,.04);color:var(--sidebar-ink);padding:12px">
       <div>剩余 <b>${s.stage==='exhausted'?0:86}</b> 条</div><div style="font-size:12px;opacity:.7">本月 150 条</div>
-      <button class="btn ghost" style="margin-top:8px;width:100%" onclick="setPage('recharge')">充值</button>
+      <button class="btn ghost" style="margin-top:8px;width:100%" onclick="STATE._rechargeFrom=STATE.page;setPage('recharge')">充值</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer" onclick="setPage('account-profile')">
       <span style="width:28px;height:28px;border-radius:50%;background:var(--ink-soft)"></span>
@@ -207,20 +248,51 @@ function startCountdown(){
   }, 1000);
 }
 
-function setPage(p) { clearCountdown(); STATE.page = p; STATE.state = (REGISTRY[p]?.states || ['default'])[0]; render(); }
-function setState(st) { clearCountdown(); STATE.state = st; render(); }
-function setStage(sg) { STATE.stage = sg; render(); }
+// 将 stage 映射到工作台默认态
+function wbDefaultForStage(stage){
+  switch(stage){
+    case 'new': return '刚开通引导';
+    case 'calibrated': return '已校准空库';
+    case 'exhausted': return '额度用尽';
+    default: return '使用中';
+  }
+}
+
+function setPage(p) {
+  clearCountdown();
+  STATE.page = p;
+  STATE._explicitState = false;
+  if (p === 'workbench') {
+    STATE.state = wbDefaultForStage(STATE.stage);
+  } else {
+    STATE.state = (REGISTRY[p]?.states || ['default'])[0];
+  }
+  render();
+}
+function setState(st) {
+  clearCountdown();
+  STATE.state = st;
+  STATE._explicitState = true;
+  render();
+}
+function setStage(sg) {
+  STATE.stage = sg;
+  if (STATE.page === 'workbench' && !STATE._explicitState) {
+    STATE.state = wbDefaultForStage(sg);
+  }
+  render();
+}
 
 // ===== 对话框辅助 =====
-function modal(html){
-  return `<div class="modal-overlay" onclick="closeModalIfBg(event)">
+function modal(html, returnTo){
+  const ret = returnTo || 'landing';
+  return `<div class="modal-overlay" onclick="if(event.target===this)setPage('${ret}')">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="setPage('landing')">&times;</button>
+      <button class="modal-close" onclick="setPage('${ret}')">&times;</button>
       ${html}
     </div>
   </div>`;
 }
-function closeModalIfBg(e){ if(e.target === e.currentTarget) setPage('landing'); }
 
 // ===== 落地页（五段） =====
 function renderLanding(s){
@@ -344,12 +416,13 @@ function renderLogin(s){
     default:
       body = `<div class="modal-title">登录</div><p style="text-align:center;color:var(--text-muted)">未知状态</p>`;
   }
-  return landingHTML + modal(body);
+  return landingHTML + modal(body, 'landing');
 }
 
 // ===== 充值对话框 =====
 function renderRecharge(s){
   const landingHTML = renderLanding(s);
+  const returnTo = STATE._rechargeFrom || 'landing';
   const tiersHTML = DEMO.tiers.map((t,i) => {
     const hl = i === 1 ? ' highlight' : ''; // ¥129 高亮
     return `<div class="tier-chip${hl}"><div class="tier-name">${t[0]}</div><div class="tier-price">${t[1]}</div></div>`;
@@ -359,14 +432,158 @@ function renderRecharge(s){
     <p style="text-align:center;font-size:14px;color:var(--charcoal);margin-bottom:16px">备注你的手机尾号 <b style="color:var(--ink)">***6789</b></p>
     <div style="width:150px;height:150px;background:var(--line);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;color:var(--text-muted)">微信二维码占位</div>
     <div class="tier-chips">${tiersHTML}</div>
-    <button class="btn btn-block" style="margin-top:16px" onclick="setPage('landing')">知道了</button>`;
-  return landingHTML + modal(body);
+    <button class="btn btn-block" style="margin-top:16px" onclick="setPage('${returnTo}')">知道了</button>`;
+  return landingHTML + modal(body, returnTo);
+}
+
+// ===== 问候语 =====
+function greeting(){
+  const h = new Date().getHours();
+  const name = DEMO.account.nickname;
+  if (h < 12) return '早上好，' + name;
+  if (h < 18) return '下午好，' + name;
+  return '晚上好，' + name;
+}
+
+// ===== 工作台共享组件 =====
+function wbNumbers(nums){
+  return `<div class="wb-numbers">
+    <div class="card wb-num-card"><div class="num">${nums.kb}</div><div class="label">知识库内容</div></div>
+    <div class="card wb-num-card"><div class="num">${nums.topics}</div><div class="label">待用选题</div></div>
+    <div class="card wb-num-card"><div class="num">${nums.adopted}</div><div class="label">本周已采用</div></div>
+  </div>`;
+}
+
+function wbTodays(todays){
+  if (!todays || todays.length === 0) {
+    return `<div class="wb-section">
+      <div class="wb-section-title">今天可以拍</div>
+      <div class="wb-empty">还没有可以拍的</div>
+    </div>`;
+  }
+  const items = todays.map(t =>
+    `<li><span class="wb-today-type">${t.type}</span><span class="wb-today-title">${t.title}</span><span class="wb-today-source">${t.from}</span></li>`
+  ).join('');
+  return `<div class="wb-section">
+    <div class="wb-section-title">今天可以拍</div>
+    <ul class="wb-today-list">${items}</ul>
+  </div>`;
+}
+
+function wbRecentContent(list){
+  if (!list || list.length === 0) {
+    return `<div class="wb-section">
+      <div class="wb-section-title">最近内容</div>
+      <div class="wb-empty">还没有</div>
+    </div>`;
+  }
+  const statusClass = {
+    '未发布':'badge-draft',
+    '已发布':'badge-published',
+    '爆款':'badge-viral'
+  };
+  const rows = list.map(c => {
+    const cls = statusClass[c.status] || 'badge-draft';
+    return `<div class="wb-content-row">
+      <span class="wb-content-title">${c.title}</span>
+      <span class="wb-content-platform">${c.platform}</span>
+      <span class="badge ${cls}">${c.status}</span>
+    </div>`;
+  }).join('');
+  return `<div class="wb-section">
+    <div class="wb-section-title">最近内容</div>
+    ${rows}
+  </div>`;
+}
+
+function wbPendingReview(list){
+  if (!list || list.length === 0) {
+    return `<div class="wb-section">
+      <div class="wb-section-title">待复盘</div>
+      <div class="wb-empty">还没有</div>
+    </div>`;
+  }
+  const rows = list.map(r =>
+    `<div class="wb-content-row">
+      <span class="wb-content-title">${r.title}</span>
+      <span class="wb-content-platform">${r.platform}</span>
+      <span class="wb-review-link">${r.link}</span>
+    </div>`
+  ).join('');
+  return `<div class="wb-section">
+    <div class="wb-section-title">待复盘</div>
+    ${rows}
+  </div>`;
+}
+
+// ===== 工作台（六态） =====
+function renderWorkbench(s){
+  switch(s.state){
+    case '刚开通引导':
+      return `<div class="wb-greeting">${greeting()}</div>
+        <p style="color:var(--text-muted);margin-bottom:32px">三步开始你的口播</p>
+        <div style="display:flex;gap:24px;margin-bottom:32px">
+          <div class="card" style="flex:1;max-width:280px">
+            <div style="font-family:var(--serif);font-size:28px;color:var(--ink-soft);margin-bottom:8px;line-height:1">1</div>
+            <h3 style="font-size:16px;margin-bottom:8px">校准定位</h3>
+            <p style="font-size:14px;color:var(--text-muted);line-height:1.6">贴主页或作品链接，AI 帮你梳理人设、口吻、红线</p>
+          </div>
+          <div class="card" style="flex:1;max-width:280px">
+            <div style="font-family:var(--serif);font-size:28px;color:var(--ink-soft);margin-bottom:8px;line-height:1">2</div>
+            <h3 style="font-size:16px;margin-bottom:8px">拆一条对标或确认 FAQ</h3>
+            <p style="font-size:14px;color:var(--text-muted);line-height:1.6">找一个同行账号看看，或者确认你的客户高频问答</p>
+          </div>
+          <div class="card" style="flex:1;max-width:280px">
+            <div style="font-family:var(--serif);font-size:28px;color:var(--ink-soft);margin-bottom:8px;line-height:1">3</div>
+            <h3 style="font-size:16px;margin-bottom:8px">去写第一篇</h3>
+            <p style="font-size:14px;color:var(--text-muted);line-height:1.6">一句话选题，扣 1 条，出两个平台版本</p>
+          </div>
+        </div>
+        <button class="btn" style="padding:10px 32px;font-size:16px" onclick="setPage('calibrate')">开始校准</button>`;
+
+    case '已校准空库':
+      return `<div class="wb-greeting">${greeting()}</div>
+        ${wbNumbers({kb:0, topics:0, adopted:0})}
+        ${wbTodays([])}
+        ${wbRecentContent([])}
+        ${wbPendingReview([])}`;
+
+    case '使用中':
+      return `<div class="wb-greeting">${greeting()}</div>
+        ${wbNumbers(DEMO.numbers)}
+        ${wbTodays(DEMO.todays)}
+        ${wbRecentContent(DEMO.recentContent)}
+        ${wbPendingReview(DEMO.pendingReview)}`;
+
+    case '加载':
+      return `<div style="padding:60px 0;text-align:center">
+        <div class="pulse" style="max-width:300px;margin:0 auto 16px"><i></i></div>
+        <p style="color:var(--text-muted)">正在拉工作台…</p>
+      </div>`;
+
+    case '失败':
+      return `<div style="padding:60px 0;text-align:center">
+        <p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">没拉到工作台</p>
+        <button class="btn" onclick="setState('使用中')">重试</button>
+      </div>`;
+
+    case '额度用尽':
+      return `<div class="wb-greeting">${greeting()}</div>
+        ${wbNumbers(DEMO.numbers)}
+        <div style="text-align:center;margin:24px 0">
+          <button class="btn" style="padding:10px 24px;font-size:15px" onclick="setPage('create');STATE.state='额度不够';render()">去写一篇</button>
+        </div>`;
+
+    default:
+      return fallback(s);
+  }
 }
 
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
 register('recharge', ['默认说明'], renderRecharge);
+register('workbench', ['刚开通引导','已校准空库','使用中','加载','失败','额度用尽'], renderWorkbench);
 render();
 </script>
 </body>
