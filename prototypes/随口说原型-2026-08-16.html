@@ -8,6 +8,7 @@
   --paper:#f4f1e9; --ink:#8a5a2b; --ink-soft:#b07d4e;
   --charcoal:#2a2421; --sidebar:#3a2f29; --sidebar-ink:#e9ddc9;
   --line:#d9cfb8; --card:#fbf8f1; --danger:#9c3d3d; --ok:#5a7a4a; --text-muted:#6b5a45;
+  --white:#fff;
   --serif:"Noto Serif SC","Songti SC",serif;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
   --r-card:12px; --maxw:1040px;
@@ -117,6 +118,32 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .wb-content-title{font-size:14px;color:var(--charcoal);flex:1}
 .wb-content-platform{font-size:12px;color:var(--text-muted)}
 .wb-review-link{font-size:12px;color:var(--ink-soft);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+
+/* ===== 校准向导 ===== */
+.wizard{max-width:680px;margin:60px auto;padding:0 24px}
+.wizard-steps{display:flex;margin-bottom:32px;position:relative}
+.wizard-steps::before{content:'';position:absolute;top:16px;left:0;right:0;height:2px;background:var(--line);z-index:0}
+.wizard-step-dot{flex:1;text-align:center;position:relative;z-index:1}
+.wizard-step-dot .dot{width:32px;height:32px;border-radius:50%;background:var(--line);margin:0 auto 8px;line-height:32px;font-size:14px;color:var(--text-muted);transition:all .3s}
+.wizard-step-dot.active .dot{background:var(--ink);color:var(--white)}
+.wizard-step-dot.done .dot{background:var(--ok);color:var(--white)}
+.wizard-step-dot .label{font-size:13px;color:var(--text-muted)}
+.wizard-step-dot.active .label{color:var(--ink)}
+.wizard-step-dot.done .label{color:var(--ok)}
+.wizard-body{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:32px}
+.wizard-footer{display:flex;justify-content:space-between;margin-top:24px;gap:12px}
+.profile-fields{display:flex;flex-direction:column}
+.profile-field-row{display:flex;padding:10px 0;border-bottom:1px solid var(--line)}
+.profile-field-row .pf-key{width:120px;flex-shrink:0;font-size:13px;color:var(--text-muted)}
+.profile-field-row .pf-val{font-size:14px;color:var(--charcoal);flex:1}
+.faq-check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.faq-check-item input[type=checkbox]{margin-top:3px;accent-color:var(--ink);flex-shrink:0}
+.faq-check-item .faq-body{flex:1}
+.faq-check-item .faq-q{font-size:14px;color:var(--charcoal);font-weight:500}
+.faq-check-item .faq-a{font-size:13px;color:var(--text-muted);margin-top:4px}
+.wizard-center{text-align:center;padding:40px 0}
+.wizard-center h2{font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:12px}
+.wizard-center p{color:var(--text-muted);margin-bottom:24px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -178,7 +205,7 @@ const DEMO = {
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
 
 // 登录后页才套侧栏壳；未登录页裸 body
-const AUTHED = new Set(['workbench','calibrate','account-positioning','account-profile','topics','create','analyze','kb','review']);
+const AUTHED = new Set(['workbench','account-positioning','account-profile','topics','create','analyze','kb','review']);
 function sidebarHTML(s){
   const on = p => s.page===p ? ' class="on"' : '';
   return `<aside class="sidebar"><div class="brand">随口说</div><nav>
@@ -228,7 +255,9 @@ document.getElementById('bar-stage').addEventListener('change',e=>setStage(e.tar
 // ===== 倒计时 =====
 let countdownTimer = null;
 let countdownValue = 60;
+let calibrateTimer = null;
 function clearCountdown(){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; } }
+function clearCalibrateTimer(){ if(calibrateTimer){ clearTimeout(calibrateTimer); calibrateTimer = null; } }
 function startCountdown(){
   clearCountdown();
   countdownValue = 60;
@@ -260,6 +289,7 @@ function wbDefaultForStage(stage){
 
 function setPage(p) {
   clearCountdown();
+  clearCalibrateTimer();
   STATE.page = p;
   STATE._explicitState = false;
   if (p === 'workbench') {
@@ -271,6 +301,7 @@ function setPage(p) {
 }
 function setState(st) {
   clearCountdown();
+  clearCalibrateTimer();
   STATE.state = st;
   STATE._explicitState = true;
   render();
@@ -579,11 +610,139 @@ function renderWorkbench(s){
   }
 }
 
+// ===== 校准（六态） =====
+function renderCalibrate(s){
+  function stepIndicator(current){
+    const steps = ['贴链接','一问一答','确认档案'];
+    const dots = steps.map((label, i) => {
+      const num = i + 1;
+      let cls = 'wizard-step-dot';
+      if (current > num) cls += ' done';
+      else if (current === num) cls += ' active';
+      return `<div class="${cls}"><div class="dot">${current > num ? '✓' : num}</div><div class="label">${label}</div></div>`;
+    }).join('');
+    return `<div class="wizard-steps">${dots}</div>`;
+  }
+
+  switch(s.state){
+    case '步骤1':
+      return `<div class="wizard">
+        ${stepIndicator(1)}
+        <div class="wizard-body">
+          <h2 style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:12px">贴一个主页或作品链接</h2>
+          <p style="color:var(--text-muted);margin-bottom:20px;line-height:1.7">AI 会分析你的内容风格、口吻和目标人群，帮你梳理定位档案。</p>
+          <div class="form-group">
+            <input class="form-input" type="text" placeholder="例如：https://v.douyin.com/xxxxx" value="https://v.douyin.com/abc123">
+          </div>
+        </div>
+        <div class="wizard-footer">
+          <button class="btn ghost" onclick="setPage('workbench')">退出</button>
+          <button class="btn" onclick="setState('步骤2')">下一步</button>
+        </div>
+      </div>`;
+
+    case '步骤2':
+      return `<div class="wizard">
+        ${stepIndicator(2)}
+        <div class="wizard-body">
+          <h2 style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:16px">确认你的定位</h2>
+          <div class="card" style="margin-bottom:20px;background:var(--paper)">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:12px">根据主页分析，AI 初步判断：</p>
+            <div style="font-size:15px;color:var(--charcoal);line-height:1.8">
+              <b>人设</b>：${DEMO.profile.人设}<br>
+              <b>口吻</b>：${DEMO.profile.口吻}<br>
+              <b>目标人群</b>：${DEMO.profile.目标人群}
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:14px;color:var(--charcoal);display:block;margin-bottom:8px">这个定位准确吗？有什么需要补充的？</label>
+            <textarea class="form-input" rows="3" placeholder="说说你的想法…">基本准确，我主要做非标定制件</textarea>
+          </div>
+          <button class="btn ghost" style="font-size:13px;margin-top:8px" id="btn-not-right" onclick="var el=document.getElementById('persona-edit');el.style.display=el.style.display==='none'?'block':'none';this.style.display='none'">不太对</button>
+          <div id="persona-edit" style="display:none;margin-top:12px">
+            <div class="form-group"><label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">人设</label><input class="form-input" value="${DEMO.profile.人设}"></div>
+            <div class="form-group"><label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">口吻</label><input class="form-input" value="${DEMO.profile.口吻}"></div>
+            <div class="form-group"><label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">目标人群</label><input class="form-input" value="${DEMO.profile.目标人群}"></div>
+          </div>
+        </div>
+        <div class="wizard-footer">
+          <button class="btn ghost" onclick="setState('步骤1')">上一步</button>
+          <button class="btn" onclick="setState('步骤3')">下一步</button>
+        </div>
+      </div>`;
+
+    case '步骤3':
+      return `<div class="wizard">
+        ${stepIndicator(3)}
+        <div class="wizard-body">
+          <h2 style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:16px">确认定位档案</h2>
+          <div class="profile-fields" style="margin-bottom:24px">
+            ${Object.entries(DEMO.profile).map(([k,v]) =>
+              `<div class="profile-field-row"><span class="pf-key">${k}</span><span class="pf-val">${v}</span></div>`
+            ).join('')}
+          </div>
+          <h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">留下这些客户问答</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">勾选的问答会进入选题库，不勾也能完成校准</p>
+          ${DEMO.faq.map((f, i) =>
+            `<div class="faq-check-item">
+              <input type="checkbox" id="faq-${i}">
+              <div class="faq-body">
+                <label for="faq-${i}" class="faq-q">${f.q}</label>
+                <div class="faq-a">${f.a}</div>
+              </div>
+            </div>`
+          ).join('')}
+        </div>
+        <div class="wizard-footer">
+          <button class="btn ghost" onclick="setState('步骤2')">上一步</button>
+          <button class="btn" onclick="setState('进行中')">完成</button>
+        </div>
+      </div>`;
+
+    case '进行中':
+      clearCalibrateTimer();
+      calibrateTimer = setTimeout(() => { setState('完成确认'); }, 2000);
+      return `<div class="wizard">
+        ${stepIndicator(4)}
+        <div class="wizard-center">
+          <p style="font-size:16px;color:var(--charcoal);margin-bottom:16px">正在分析主页…</p>
+          <div class="pulse" style="max-width:300px;margin:0 auto"><i></i></div>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:24px">这可能需要几秒钟</p>
+        </div>
+      </div>`;
+
+    case '失败':
+      return `<div class="wizard">
+        ${stepIndicator(4)}
+        <div class="wizard-center">
+          <h2>分析没成功</h2>
+          <p>网络或服务暂时不可用，请稍后重试</p>
+          <button class="btn" onclick="setState('进行中')">重试</button>
+        </div>
+      </div>`;
+
+    case '完成确认':
+      return `<div class="wizard">
+        ${stepIndicator(4)}
+        <div class="wizard-center">
+          <div style="font-size:48px;margin-bottom:16px;color:var(--ok)">&#10003;</div>
+          <h2>定位档案已保存</h2>
+          <p>校准完成，接下来完善你的账号信息</p>
+          <button class="btn" style="padding:10px 32px;font-size:15px" onclick="setPage('account-positioning')">去账号定位</button>
+        </div>
+      </div>`;
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
 register('recharge', ['默认说明'], renderRecharge);
 register('workbench', ['刚开通引导','已校准空库','使用中','加载','失败','额度用尽'], renderWorkbench);
+register('calibrate', ['步骤1','步骤2','步骤3','进行中','失败','完成确认'], renderCalibrate);
 render();
 </script>
 </body>
