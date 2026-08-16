@@ -33,12 +33,65 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .btn{display:inline-block;padding:8px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;font:inherit}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.danger{background:var(--danger);border-color:var(--danger)}
+.btn-block{display:block;width:100%;text-align:center}
 /* 脉冲加载条 */
 .pulse{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
 .pulse i{display:block;height:100%;width:40%;background:var(--ink-soft);animation:pulse 1.1s infinite}
 @keyframes pulse{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 /* 诚实占位 fallback */
 .fallback{margin:40px auto;max-width:560px;padding:24px;border:1px dashed var(--ink-soft);border-radius:var(--r-card);background:repeating-linear-gradient(45deg,#fbf8f1 0 10px,#f4f1e9 10px 20px)}
+
+/* ===== 对话框 ===== */
+.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(244,241,233,.94);display:flex;align-items:center;justify-content:center}
+.modal-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:32px;max-width:440px;width:90%;position:relative;box-shadow:0 12px 40px rgba(42,36,33,.12)}
+.modal-close{position:absolute;top:14px;right:18px;background:none;border:none;font-size:24px;color:var(--ink-soft);cursor:pointer;line-height:1;padding:0}
+.modal-close:hover{color:var(--ink)}
+.modal-title{font-family:var(--serif);font-size:22px;color:var(--ink);text-align:center;margin-bottom:24px}
+
+/* ===== 落地页 ===== */
+.landing-page{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.landing-topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+.landing-topbar .logo{font-family:var(--serif);font-size:24px;color:var(--ink)}
+.landing-topbar nav{display:flex;gap:24px}
+.landing-topbar nav a{color:var(--charcoal);text-decoration:none;font-size:14px;transition:color .2s}
+.landing-topbar nav a:hover{color:var(--ink)}
+.landing-hero{text-align:center;padding:90px 0 70px}
+.landing-hero h1{font-size:44px;margin-bottom:18px;line-height:1.25}
+.landing-hero p{font-size:17px;color:#6b5a45;max-width:620px;margin:0 auto 32px;line-height:1.7}
+.landing-section{padding:64px 0}
+.landing-section h2{font-size:28px;text-align:center;margin-bottom:40px}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:800px;margin:0 auto}
+.step-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;text-align:center}
+.step-card .step-num{font-family:var(--serif);font-size:32px;color:var(--ink-soft);margin-bottom:10px;line-height:1}
+.step-card h3{font-size:16px;margin-bottom:10px;line-height:1.4}
+.step-card p{font-size:14px;color:#6b5a45;line-height:1.6}
+.tech-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:24px}
+.tech-card .tech-icon{font-size:22px;margin-bottom:10px;color:var(--ink-soft)}
+.tech-card h3{font-size:16px;margin-bottom:10px}
+.tech-card p{font-size:14px;color:#6b5a45;line-height:1.6}
+.price-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:28px 24px;text-align:center}
+.price-card h3{font-size:18px;margin-bottom:12px}
+.price-card .price{font-family:var(--serif);font-size:36px;color:var(--ink);margin-bottom:6px;line-height:1}
+.price-card .note{font-size:13px;color:#6b5a45;margin-top:10px;line-height:1.5}
+.price-card.featured{border-color:var(--ink);box-shadow:0 4px 20px rgba(138,90,43,.15);position:relative}
+.price-card.featured::before{content:'推荐';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;padding:2px 12px;border-radius:10px}
+
+/* ===== 表单 ===== */
+.form-group{margin-bottom:16px}
+.form-input{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--paper);color:var(--charcoal);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--ink)}
+.form-input:disabled{opacity:.6;cursor:not-allowed}
+.form-error{color:var(--danger);font-size:13px;margin-top:6px}
+.form-hint{font-size:13px;color:#6b5a45;margin-top:6px}
+
+/* ===== 充值档位芯片 ===== */
+.tier-chips{display:flex;gap:10px;margin:16px 0}
+.tier-chip{flex:1;padding:12px 10px;border:1px solid var(--line);border-radius:var(--r-card);text-align:center;background:var(--paper)}
+.tier-chip .tier-name{font-size:14px;margin-bottom:4px;color:var(--charcoal)}
+.tier-chip .tier-price{font-family:var(--serif);font-size:20px;color:var(--ink)}
+.tier-chip.highlight{border-color:var(--ink);background:var(--card);box-shadow:0 2px 12px rgba(138,90,43,.1)}
 </style>
 </head>
 <body>
@@ -76,7 +129,9 @@ const DEMO = {
   faq: [
     { q:'你设备为什么比别人便宜三成？', a:'工厂直营没有中间商，加上我量大议价。' },
     { q:'便宜的会不会偷工减料？', a:'材料牌号、公差我全写在合同里，到货可复检。' }
-  ]
+  ],
+  // 充值档位（充值对话框用，与落地页价格三卡不是同一套 SKU）
+  tiers: [['50 条','¥49'],['150 条','¥129'],['拆账号 1 次','10 条']]
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -129,22 +184,189 @@ document.getElementById('bar-page').addEventListener('change',e=>setPage(e.targe
 document.getElementById('bar-state').addEventListener('change',e=>setState(e.target.value));
 document.getElementById('bar-stage').addEventListener('change',e=>setStage(e.target.value));
 
-function setPage(p) { STATE.page = p; STATE.state = (REGISTRY[p]?.states || ['default'])[0]; render(); }
-function setState(st) { STATE.state = st; render(); }
+// ===== 倒计时 =====
+let countdownTimer = null;
+let countdownValue = 60;
+function clearCountdown(){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; } }
+function startCountdown(){
+  clearCountdown();
+  countdownValue = 60;
+  const el = document.getElementById('countdown-text');
+  if(!el) return;
+  el.textContent = countdownValue + 's 后重新获取';
+  countdownTimer = setInterval(() => {
+    countdownValue--;
+    const el2 = document.getElementById('countdown-text');
+    if(!el2) { clearCountdown(); return; }
+    if(countdownValue > 0){
+      el2.textContent = countdownValue + 's 后重新获取';
+    } else {
+      el2.innerHTML = '<a href="javascript:void(0)" style="color:var(--ink);font-size:14px" onclick="event.stopPropagation();setState(\'倒计时\')">重新获取</a>';
+      clearCountdown();
+    }
+  }, 1000);
+}
+
+function setPage(p) { clearCountdown(); STATE.page = p; STATE.state = (REGISTRY[p]?.states || ['default'])[0]; render(); }
+function setState(st) { clearCountdown(); STATE.state = st; render(); }
 function setStage(sg) { STATE.stage = sg; render(); }
 
-function renderLanding(s){
-  return `<header style="display:flex;justify-content:space-between;align-items:center;padding:18px 40px">
-    <span style="font-family:var(--serif);font-size:24px;color:var(--ink)">随口说</span>
-    <button class="btn" onclick="setPage('login')">登录</button>
-  </header>
-  <section style="text-align:center;padding:80px 40px">
-    <h1 style="font-size:40px">把口播这件事，说清楚再做</h1>
-    <p style="margin:16px 0 24px;color:#6b5a45">完整落地页在 Task 2 画。</p>
-    <button class="btn" onclick="setPage('login')">开始用</button>
-  </section>`;
+// ===== 对话框辅助 =====
+function modal(html){
+  return `<div class="modal-overlay" onclick="closeModalIfBg(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="setPage('landing')">&times;</button>
+      ${html}
+    </div>
+  </div>`;
 }
+function closeModalIfBg(e){ if(e.target === e.currentTarget) setPage('landing'); }
+
+// ===== 落地页（五段） =====
+function renderLanding(s){
+  return `<div class="landing-page">
+    <header class="landing-topbar">
+      <span class="logo">随口说</span>
+      <nav>
+        <a href="#features">功能</a>
+        <a href="#tech">技术</a>
+        <a href="#pricing">价格</a>
+      </nav>
+      <button class="btn" onclick="setPage('login')">登录</button>
+    </header>
+    <section class="landing-hero">
+      <h1>把口播这件事，说清楚再做</h1>
+      <p>从定位到复盘，你的账号大脑——整篇内容可检索、可复用。一句话生成两个平台的口播文案，点采用才进知识库。</p>
+      <button class="btn" style="padding:10px 32px;font-size:16px" onclick="setPage('login')">开始用</button>
+    </section>
+    <section id="features" class="landing-section">
+      <h2>四步走通</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>聊 15 分钟，留下定位档案</h3>
+          <p>人设、人群、口吻、红线、支柱</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>选题从三处来</h3>
+          <p>你确认过的客户问答、对标账号 TOP10、爆款复盘后的续集</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>一句话，两个平台，扣 1 条</h3>
+          <p>按你写过的整篇内容检索；点采用才进知识库</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <h3>登记只存链接，你点复盘才抓数</h3>
+          <p>爆款留下续集选题；不自动出周报</p>
+        </div>
+      </div>
+    </section>
+    <section id="tech" class="landing-section">
+      <h2>技术底气</h2>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-icon">&#9678;</div>
+          <h3>多模型调度</h3>
+          <p>任务自动匹配最合适的模型，兼顾质量与成本，不锁定单一供应商</p>
+        </div>
+        <div class="tech-card">
+          <div class="tech-icon">&#9672;</div>
+          <h3>知识库</h3>
+          <p>定位档案 + 你写过的口播稿 = 账号大脑，整篇检索、参考可点回原文</p>
+        </div>
+        <div class="tech-card">
+          <div class="tech-icon">&#9702;</div>
+          <h3>Skill 工作流</h3>
+          <p>可编排的标准化流程，确保每次输出稳定可控，告别随机结果</p>
+        </div>
+      </div>
+    </section>
+    <section id="pricing" class="landing-section">
+      <h2>开始用</h2>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <h3>体验</h3>
+          <div class="price">免费</div>
+          <div class="note">首充送 10 条</div>
+        </div>
+        <div class="price-card featured">
+          <h3>150 条</h3>
+          <div class="price">¥129</div>
+          <div class="note">每条约 ¥0.86</div>
+        </div>
+        <div class="price-card">
+          <h3>拆账号</h3>
+          <div class="price" style="font-size:24px">= 10 条额度</div>
+          <div class="note">一次拆解消耗</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:32px">
+        <button class="btn" style="padding:10px 32px;font-size:16px" onclick="setPage('login')">开始用</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+// ===== 登录对话框（四态） =====
+function renderLogin(s){
+  const landingHTML = renderLanding(s);
+  let body = '';
+  switch(s.state){
+    case '填手机':
+      body = `<div class="modal-title">登录</div>
+        <div class="form-group"><input class="form-input" type="tel" placeholder="手机号" maxlength="11"></div>
+        <button class="btn btn-block" onclick="setState('倒计时')">获取验证码</button>
+        <div class="form-hint" style="margin-top:12px">未注册手机号将自动创建账号</div>`;
+      break;
+    case '倒计时':
+      body = `<div class="modal-title">登录</div>
+        <div class="form-group"><input class="form-input" type="tel" placeholder="手机号" value="138****6789" disabled></div>
+        <div class="form-group"><input class="form-input" type="text" placeholder="验证码" maxlength="6"></div>
+        <div class="form-hint" id="countdown-text">60s 后重新获取</div>
+        <button class="btn btn-block" style="margin-top:12px" onclick="setState('开通引导')">登录</button>`;
+      setTimeout(() => startCountdown(), 0);
+      break;
+    case '验证码错':
+      body = `<div class="modal-title">登录</div>
+        <div class="form-group"><input class="form-input" type="tel" placeholder="手机号" value="138****6789" disabled></div>
+        <div class="form-group"><input class="form-input" type="text" placeholder="验证码" maxlength="6" style="border-color:var(--danger)"></div>
+        <div class="form-error">验证码错误，请重新输入</div>
+        <a href="javascript:void(0)" style="display:inline-block;margin-top:12px;font-size:14px;color:var(--ink)" onclick="event.stopPropagation();setState('倒计时')">重新获取</a>`;
+      break;
+    case '开通引导':
+      body = `<div class="modal-title">欢迎加入随口说</div>
+        <p style="text-align:center;color:#6b5a45;margin-bottom:16px;line-height:1.7">新账号体验额度：首充送 10 条，可用于文案生成。<br>完成校准定位后即可开始创作。</p>
+        <button class="btn btn-block" style="padding:10px 0;font-size:15px" onclick="setPage('workbench')">进工作台</button>`;
+      break;
+    default:
+      body = `<div class="modal-title">登录</div><p style="text-align:center;color:#6b5a45">未知状态</p>`;
+  }
+  return landingHTML + modal(body);
+}
+
+// ===== 充值对话框 =====
+function renderRecharge(s){
+  const landingHTML = renderLanding(s);
+  const tiersHTML = DEMO.tiers.map((t,i) => {
+    const hl = i === 1 ? ' highlight' : ''; // ¥129 高亮
+    return `<div class="tier-chip${hl}"><div class="tier-name">${t[0]}</div><div class="tier-price">${t[1]}</div></div>`;
+  }).join('');
+  const body = `<div class="modal-title">充值</div>
+    <p style="text-align:center;color:#6b5a45;margin-bottom:12px;line-height:1.7">全站暂不支持在线支付，请联系我开通额度</p>
+    <p style="text-align:center;font-size:14px;color:var(--charcoal);margin-bottom:16px">备注你的手机尾号 <b style="color:var(--ink)">***6789</b></p>
+    <div style="width:150px;height:150px;background:var(--line);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;color:#6b5a45">微信二维码占位</div>
+    <div class="tier-chips">${tiersHTML}</div>
+    <button class="btn btn-block" style="margin-top:16px" onclick="setPage('landing')">知道了</button>`;
+  return landingHTML + modal(body);
+}
+
+// ===== 注册 =====
 register('landing', ['default'], renderLanding);
+register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
+register('recharge', ['默认说明'], renderRecharge);
 render();
 </script>
 </body>
