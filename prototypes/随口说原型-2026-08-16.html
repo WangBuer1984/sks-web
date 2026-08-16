@@ -7,7 +7,7 @@
 :root{
   --paper:#f4f1e9; --ink:#8a5a2b; --ink-soft:#b07d4e;
   --charcoal:#2a2421; --sidebar:#3a2f29; --sidebar-ink:#e9ddc9;
-  --line:#d9cfb8; --card:#fbf8f1; --danger:#9c3d3d; --ok:#5a7a4a;
+  --line:#d9cfb8; --card:#fbf8f1; --danger:#9c3d3d; --ok:#5a7a4a; --text-muted:#6b5a45;
   --serif:"Noto Serif SC","Songti SC",serif;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
   --r-card:12px; --maxw:1040px;
@@ -57,7 +57,7 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .landing-topbar nav a:hover{color:var(--ink)}
 .landing-hero{text-align:center;padding:90px 0 70px}
 .landing-hero h1{font-size:44px;margin-bottom:18px;line-height:1.25}
-.landing-hero p{font-size:17px;color:#6b5a45;max-width:620px;margin:0 auto 32px;line-height:1.7}
+.landing-hero p{font-size:17px;color:var(--text-muted);max-width:620px;margin:0 auto 32px;line-height:1.7}
 .landing-section{padding:64px 0}
 .landing-section h2{font-size:28px;text-align:center;margin-bottom:40px}
 .steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
@@ -66,15 +66,15 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .step-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;text-align:center}
 .step-card .step-num{font-family:var(--serif);font-size:32px;color:var(--ink-soft);margin-bottom:10px;line-height:1}
 .step-card h3{font-size:16px;margin-bottom:10px;line-height:1.4}
-.step-card p{font-size:14px;color:#6b5a45;line-height:1.6}
+.step-card p{font-size:14px;color:var(--text-muted);line-height:1.6}
 .tech-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:24px}
 .tech-card .tech-icon{font-size:22px;margin-bottom:10px;color:var(--ink-soft)}
 .tech-card h3{font-size:16px;margin-bottom:10px}
-.tech-card p{font-size:14px;color:#6b5a45;line-height:1.6}
+.tech-card p{font-size:14px;color:var(--text-muted);line-height:1.6}
 .price-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:28px 24px;text-align:center}
 .price-card h3{font-size:18px;margin-bottom:12px}
 .price-card .price{font-family:var(--serif);font-size:36px;color:var(--ink);margin-bottom:6px;line-height:1}
-.price-card .note{font-size:13px;color:#6b5a45;margin-top:10px;line-height:1.5}
+.price-card .note{font-size:13px;color:var(--text-muted);margin-top:10px;line-height:1.5}
 .price-card.featured{border-color:var(--ink);box-shadow:0 4px 20px rgba(138,90,43,.15);position:relative}
 .price-card.featured::before{content:'推荐';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;padding:2px 12px;border-radius:10px}
 
@@ -84,7 +84,7 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .form-input:focus{border-color:var(--ink)}
 .form-input:disabled{opacity:.6;cursor:not-allowed}
 .form-error{color:var(--danger);font-size:13px;margin-top:6px}
-.form-hint{font-size:13px;color:#6b5a45;margin-top:6px}
+.form-hint{font-size:13px;color:var(--text-muted);margin-top:6px}
 
 /* ===== 充值档位芯片 ===== */
 .tier-chips{display:flex;gap:10px;margin:16px 0}
@@ -338,11 +338,11 @@ function renderLogin(s){
       break;
     case '开通引导':
       body = `<div class="modal-title">欢迎加入随口说</div>
-        <p style="text-align:center;color:#6b5a45;margin-bottom:16px;line-height:1.7">新账号体验额度：首充送 10 条，可用于文案生成。<br>完成校准定位后即可开始创作。</p>
+        <p style="text-align:center;color:var(--text-muted);margin-bottom:16px;line-height:1.7">新账号体验额度：首充送 10 条，可用于文案生成。<br>完成校准定位后即可开始创作。</p>
         <button class="btn btn-block" style="padding:10px 0;font-size:15px" onclick="setPage('workbench')">进工作台</button>`;
       break;
     default:
-      body = `<div class="modal-title">登录</div><p style="text-align:center;color:#6b5a45">未知状态</p>`;
+      body = `<div class="modal-title">登录</div><p style="text-align:center;color:var(--text-muted)">未知状态</p>`;
   }
   return landingHTML + modal(body);
 }
@@ -355,9 +355,9 @@ function renderRecharge(s){
     return `<div class="tier-chip${hl}"><div class="tier-name">${t[0]}</div><div class="tier-price">${t[1]}</div></div>`;
   }).join('');
   const body = `<div class="modal-title">充值</div>
-    <p style="text-align:center;color:#6b5a45;margin-bottom:12px;line-height:1.7">全站暂不支持在线支付，请联系我开通额度</p>
+    <p style="text-align:center;color:var(--text-muted);margin-bottom:12px;line-height:1.7">全站暂不支持在线支付，请联系我开通额度</p>
     <p style="text-align:center;font-size:14px;color:var(--charcoal);margin-bottom:16px">备注你的手机尾号 <b style="color:var(--ink)">***6789</b></p>
-    <div style="width:150px;height:150px;background:var(--line);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;color:#6b5a45">微信二维码占位</div>
+    <div style="width:150px;height:150px;background:var(--line);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;color:var(--text-muted)">微信二维码占位</div>
     <div class="tier-chips">${tiersHTML}</div>
     <button class="btn btn-block" style="margin-top:16px" onclick="setPage('landing')">知道了</button>`;
   return landingHTML + modal(body);
