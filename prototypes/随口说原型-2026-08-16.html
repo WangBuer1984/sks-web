@@ -8,6 +8,7 @@
   --paper:#f4f1e9; --ink:#8a5a2b; --ink-soft:#b07d4e;
   --charcoal:#2a2421; --sidebar:#3a2f29; --sidebar-ink:#e9ddc9;
   --line:#d9cfb8; --card:#fbf8f1; --danger:#9c3d3d; --ok:#5a7a4a; --text-muted:#6b5a45;
+  --highlight-soft:rgba(176,125,78,.08);
   --white:#fff;
   --serif:"Noto Serif SC","Songti SC",serif;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
@@ -178,6 +179,15 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 /* 账号页 phone 行 */
 .phone-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
 .phone-row .phone-num{font-size:15px;color:var(--charcoal)}
+
+/* ===== 选题库 ===== */
+.topic-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.topic-item:last-child{border-bottom:none}
+.topic-item.highlight{background:var(--highlight-soft);padding:12px;margin:0 -12px;border-radius:8px;border-bottom:none}
+.topic-item.highlight+.topic-item{border-top:1px solid var(--line);margin-top:0;padding-top:12px}
+.topic-title{font-size:14px;color:var(--charcoal);flex:1}
+.topic-from{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.topic-tag-deleted{display:inline-block;padding:1px 6px;border-radius:8px;font-size:11px;background:rgba(107,90,69,.08);color:var(--text-muted);margin-left:8px}
 </style>
 </head>
 <body>
@@ -233,6 +243,12 @@ const DEMO = {
   pendingReview: [
     {title:'材料牌号怎么写进合同', platform:'抖音', link:'v.douyin.com/abc1'},
     {title:'到货复检三步', platform:'视频号', link:'channels/xyz2'}
+  ],
+  topics: [
+    {title:'设备为什么便宜三成', from:'定位问答', tag:'原问答已删除'},
+    {title:'某同行 TOP1 续：开工前先报材料牌号', from:'对标拆解'},
+    {title:'爆款《便宜三成》续集：到货怎么复检', from:'复盘续集'},
+    {title:'合同里写公差这件事', from:'定位问答'}
   ],
   // 保存失败态演示用户刚改的值（不回滚）
   profileFormDraft: {
@@ -1124,6 +1140,57 @@ function renderProfile(s){
   }
 }
 
+// ===== 选题库（六态） =====
+function renderTopics(s){
+  function topicList(highlightFirst){
+    const items = DEMO.topics.map((t, i) => {
+      const hl = (highlightFirst && i === 0) ? ' highlight' : '';
+      const tagHTML = t.tag === '原问答已删除' ? ` <span class="topic-tag-deleted">原问答已删除</span>` : '';
+      return `<div class="topic-item${hl}">
+        <span class="topic-title">${t.title}${tagHTML}</span>
+        <span class="topic-from">${t.from}</span>
+        <button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="setPage('create')">进创作</button>
+      </div>`;
+    }).join('');
+    return `<div class="card">${items}</div>`;
+  }
+
+  switch(s.state){
+    case '空':
+      return `<div style="text-align:center;padding:60px 0">
+        <p style="color:var(--text-muted);margin-bottom:24px;font-size:16px">还没有选题</p>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button class="btn" onclick="setPage('account-positioning')">去定位加高频问答</button>
+          <button class="btn ghost" onclick="setPage('analyze')">去拆一条对标</button>
+        </div>
+      </div>`;
+
+    case '加载':
+      return `<div style="padding:60px 0;text-align:center">
+        <div class="pulse" style="max-width:300px;margin:0 auto 16px"><i></i></div>
+        <p style="color:var(--text-muted)">加载选题库…</p>
+      </div>`;
+
+    case '失败':
+      return `<div style="padding:60px 0;text-align:center">
+        <p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">没拉到选题，请稍后重试</p>
+        <button class="btn" onclick="setState('有选题')">重试</button>
+      </div>`;
+
+    case '有选题':
+      return topicList(false);
+
+    case '刚从FAQ生成':
+      return topicList(true);
+
+    case '含原问答已删除':
+      return topicList(false);
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
@@ -1132,6 +1199,7 @@ register('workbench', ['刚开通引导','已校准空库','使用中','加载',
 register('calibrate', ['步骤1','步骤2','步骤3','进行中','失败','完成确认'], renderCalibrate);
 register('account-positioning', ['未校准','档案在FAQ空','有FAQ','保存中','保存失败'], renderPositioning);
 register('account-profile', ['完善度未满','已满','保存中','保存失败','换绑','换绑验证码错','加载','加载失败'], renderProfile);
+register('topics', ['空','加载','失败','有选题','刚从FAQ生成','含原问答已删除'], renderTopics);
 render();
 </script>
 </body>
