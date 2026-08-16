@@ -306,7 +306,13 @@ const DEMO = {
   analyze: {
     portrait:{对比:[['人设','说真话工厂老板','同行讲排场'],['人群','30-45 业主','泛创业者']], top10:[{title:'开工前先报材料牌号',plays:'12万'}]},
     fourFields:{结构:'钩子3s + 痛点 + 证据 + 转化', 为什么爆:'戳中怕被坑', 框架:'报牌号→合同→复检', 和你的差异:'你更直，他更演'}
-  }
+  },
+  kb: [
+    {title:'便宜三成不是偷工减料', src:'平台生成', status:'爆款'},
+    {title:'合同里写公差这件事', src:'我传的', status:'未发布'},
+    {title:'工厂老板的一天', src:'平台生成', status:'已发布'},
+    {title:'到货复检三步', src:'我传的', status:'未发布'}
+  ]
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -1253,6 +1259,11 @@ function renderTopics(s){
 
 // ===== 文案创作（十一态） =====
 function renderCreate(s) {
+  // KB「去创作页改」入口
+  if (STATE._editKb) {
+    s.state = '改已有稿';
+    STATE._editKb = false;
+  }
   function personaCard(uncalibrated) {
     if (uncalibrated) {
       return `<div class="create-persona">
@@ -1575,6 +1586,157 @@ function renderAnalyze(s) {
   }
 }
 
+// ===== 知识库（七态） =====
+function renderKb(s) {
+  if (!STATE._kbSourceFilter) STATE._kbSourceFilter = 'all';
+  if (!STATE._kbStatusFilter) STATE._kbStatusFilter = 'all';
+
+  const statusClass = {
+    '未发布': 'badge-draft',
+    '已发布': 'badge-published',
+    '爆款': 'badge-viral'
+  };
+
+  function filteredList() {
+    return DEMO.kb.filter(function(item) {
+      if (STATE._kbSourceFilter !== 'all' && item.src !== STATE._kbSourceFilter) return false;
+      if (STATE._kbStatusFilter !== 'all' && item.status !== STATE._kbStatusFilter) return false;
+      return true;
+    });
+  }
+
+  function pageHeader() {
+    var total = DEMO.kb.length;
+    var viral = DEMO.kb.filter(function(i) { return i.status === '爆款'; }).length;
+    return '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">共 ' + total + ' 篇 · 爆款 ' + viral + ' 篇</div>';
+  }
+
+  function filterBar() {
+    var sf = STATE._kbSourceFilter;
+    var stf = STATE._kbStatusFilter;
+    function a(val, current, label) {
+      var on = val === current ? ' style="font-weight:500;color:var(--ink)"' : ' style="color:var(--text-muted);text-decoration:none;cursor:pointer"';
+      return '<a href="javascript:void(0)"' + on + '>' + label + '</a>';
+    }
+    return '<div style="display:flex;gap:16px;margin-bottom:16px;font-size:13px;align-items:center;flex-wrap:wrap">' +
+      '<span style="color:var(--text-muted);white-space:nowrap">来源</span>' +
+      a(sf, 'all', '全部').replace('href', 'onclick="STATE._kbSourceFilter=\'all\';render()" href') +
+      a(sf, '平台生成', '平台生成').replace('href', 'onclick="STATE._kbSourceFilter=\'平台生成\';render()" href') +
+      a(sf, '我传的', '我传的').replace('href', 'onclick="STATE._kbSourceFilter=\'我传的\';render()" href') +
+      '<span style="color:var(--text-muted);white-space:nowrap;margin-left:8px">状态</span>' +
+      a(stf, 'all', '全部').replace('href', 'onclick="STATE._kbStatusFilter=\'all\';render()" href') +
+      a(stf, '未发布', '未发布').replace('href', 'onclick="STATE._kbStatusFilter=\'未发布\';render()" href') +
+      a(stf, '已发布', '已发布').replace('href', 'onclick="STATE._kbStatusFilter=\'已发布\';render()" href') +
+      a(stf, '爆款', '爆款').replace('href', 'onclick="STATE._kbStatusFilter=\'爆款\';render()" href') +
+      '</div>';
+  }
+
+  function kbList(items) {
+    var rows = items.map(function(item) {
+      var origIdx = DEMO.kb.indexOf(item);
+      var cls = statusClass[item.status] || 'badge-draft';
+      var actions = '';
+      var confirmHTML = '';
+      if (item.src === '平台生成') {
+        actions = '<button class="btn ghost" style="padding:4px 12px;font-size:12px" onclick="STATE._editKb=true;setPage(\'create\')">去创作页改</button>';
+      } else {
+        actions = '<button class="btn ghost" style="padding:4px 12px;font-size:12px" onclick="STATE._kbEditIndex=' + origIdx + ';setState(\'新建编辑\')">改</button>' +
+          '<button class="btn ghost" style="padding:4px 12px;font-size:12px;color:var(--danger)" id="kb-del-btn-' + origIdx + '" onclick="var c=document.getElementById(\'kb-del-confirm-' + origIdx + '\');c.style.display=c.style.display===\'none\'?\'flex\':\'none\'">删</button>';
+        confirmHTML = '<div class="confirm-bar" id="kb-del-confirm-' + origIdx + '" style="display:none;margin-top:8px">' +
+          '<span class="confirm-msg">确认删除《' + item.title + '》？</span>' +
+          '<div class="confirm-actions">' +
+          '<button class="btn danger" style="padding:4px 12px;font-size:12px" onclick="var idx=DEMO.kb.findIndex(function(x){return x.title===' + JSON.stringify(item.title) + '});if(idx>=0)DEMO.kb.splice(idx,1);setState(\'有内容\')">确认</button>' +
+          '<button class="btn ghost" style="padding:4px 12px;font-size:12px" onclick="document.getElementById(\'kb-del-confirm-' + origIdx + '\').style.display=\'none\'">取消</button>' +
+          '</div></div>';
+      }
+      return '<div class="card" style="margin-bottom:8px;padding:14px 16px">' +
+        '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<span style="font-size:14px;color:var(--charcoal);flex:1;min-width:160px">' + item.title + '</span>' +
+        '<span class="badge" style="background:rgba(107,90,69,.08);color:var(--text-muted);font-size:12px">' + item.src + '</span>' +
+        '<span class="badge ' + cls + '">' + item.status + '</span>' +
+        actions +
+        '</div>' + confirmHTML + '</div>';
+    }).join('');
+    return rows;
+  }
+
+  function emptyFilterMsg() {
+    return '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:14px">当前筛选下没有内容，<a href="javascript:void(0)" onclick="STATE._kbSourceFilter=\'all\';STATE._kbStatusFilter=\'all\';render()" style="color:var(--ink);cursor:pointer">清掉筛选</a></div>';
+  }
+
+  switch(s.state) {
+    case '空':
+      return '<div style="text-align:center;padding:60px 0">' +
+        '<p style="color:var(--text-muted);margin-bottom:8px;font-size:16px">知识库还没有内容</p>' +
+        '<p style="color:var(--text-muted);margin-bottom:24px;font-size:14px">生成文案点采用、或把旧文案粘进来，都会存进知识库</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center">' +
+        '<button class="btn" onclick="setPage(\'create\')">去创作</button>' +
+        '<button class="btn ghost" onclick="setState(\'新建编辑\')">把旧文案粘进来</button>' +
+        '</div></div>';
+
+    case '加载':
+      return '<div style="padding:60px 0;text-align:center">' +
+        '<div class="pulse" style="max-width:300px;margin:0 auto 16px"><i></i></div>' +
+        '<p style="color:var(--text-muted)">加载知识库…</p></div>';
+
+    case '失败':
+      return '<div style="padding:60px 0;text-align:center">' +
+        '<p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">没拉到知识库，请稍后重试</p>' +
+        '<button class="btn" onclick="setState(\'有内容\')">重试</button></div>';
+
+    case '有内容': {
+      var items = filteredList();
+      var showEmpty = items.length === 0;
+      return pageHeader() + filterBar() + (showEmpty ? emptyFilterMsg() : kbList(items)) +
+        '<div style="margin-top:16px;display:flex;gap:10px">' +
+        '<button class="btn ghost" onclick="setState(\'新建编辑\')">+ 新建内容</button>' +
+        '<button class="btn ghost" onclick="setState(\'登记弹窗\')">+ 登记外部链接</button>' +
+        '</div>';
+    }
+
+    case '筛选后为空':
+      return pageHeader() + filterBar() + emptyFilterMsg();
+
+    case '新建编辑': {
+      var editIdx = STATE._kbEditIndex;
+      var isEdit = (typeof editIdx === 'number' && editIdx >= 0);
+      var title = isEdit ? DEMO.kb[editIdx].title : '';
+      var body = isEdit ? (DEMO.kb[editIdx].body || '') : '';
+      var saveLabel = isEdit ? '保存修改' : '保存';
+      var saveOnclick = isEdit
+        ? "DEMO.kb[" + editIdx + "].title=document.getElementById('kb-edit-title').value;DEMO.kb[" + editIdx + "].body=document.getElementById('kb-edit-body').value;STATE._kbEditIndex=null;setState('有内容')"
+        : "var t=document.getElementById('kb-edit-title').value;if(!t.trim())return;DEMO.kb.push({title:t,src:'我传的',status:'未发布',body:document.getElementById('kb-edit-body').value});setState('有内容')";
+      return '<div style="max-width:680px">' +
+        '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">' + (isEdit ? '编辑内容' : '新建内容') + '</div>' +
+        '<div class="form-group"><input class="form-input" id="kb-edit-title" placeholder="标题" value="' + title.replace(/"/g, '&quot;') + '" style="font-size:15px"></div>' +
+        '<div class="form-group"><textarea class="form-input" id="kb-edit-body" rows="12" placeholder="正文（Markdown）" style="font-family:var(--serif);line-height:1.8">' + body.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>' +
+        '<div style="display:flex;gap:10px;margin-top:16px">' +
+        '<button class="btn" onclick="' + saveOnclick + '">' + saveLabel + '</button>' +
+        '<button class="btn ghost" onclick="STATE._kbEditIndex=null;setState(\'有内容\')">取消</button>' +
+        '</div></div>';
+    }
+
+    case '登记弹窗':
+      return '<div class="modal-overlay" onclick="if(event.target===this)setState(\'有内容\')">' +
+        '<div class="modal-card" onclick="event.stopPropagation()" style="max-width:480px">' +
+        '<button class="modal-close" onclick="setState(\'有内容\')">&times;</button>' +
+        '<div class="modal-title">登记外部链接</div>' +
+        '<p style="text-align:center;color:var(--text-muted);margin-bottom:20px;font-size:13px;line-height:1.6">贴一条已发布的作品链接，留作复盘用。<br>登记不抓数据，一篇可登多个平台。</p>' +
+        '<div class="form-group"><label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:6px">平台</label>' +
+        '<div style="display:flex;gap:10px">' +
+        '<label style="flex:1;padding:10px;border:1px solid var(--ink);border-radius:8px;text-align:center;font-size:14px;cursor:pointer;background:var(--card);color:var(--ink)" onclick="var p=this.parentElement.querySelectorAll(\'label\');for(var i=0;i<p.length;i++){p[i].style.borderColor=\'var(--line)\';p[i].style.background=\'var(--paper)\';p[i].style.color=\'var(--charcoal)\'}this.style.borderColor=\'var(--ink)\';this.style.background=\'var(--card)\';this.style.color=\'var(--ink)\';this.querySelector(\'input\').checked=true"><input type="radio" name="kb-platform" value="抖音" checked style="display:none">抖音</label>' +
+        '<label style="flex:1;padding:10px;border:1px solid var(--line);border-radius:8px;text-align:center;font-size:14px;cursor:pointer;background:var(--paper);color:var(--charcoal)" onclick="var p=this.parentElement.querySelectorAll(\'label\');for(var i=0;i<p.length;i++){p[i].style.borderColor=\'var(--line)\';p[i].style.background=\'var(--paper)\';p[i].style.color=\'var(--charcoal)\'}this.style.borderColor=\'var(--ink)\';this.style.background=\'var(--card)\';this.style.color=\'var(--ink)\';this.querySelector(\'input\').checked=true"><input type="radio" name="kb-platform" value="视频号" style="display:none">视频号</label>' +
+        '</div></div>' +
+        '<div class="form-group"><label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:6px">作品链接</label>' +
+        '<input class="form-input" placeholder="粘贴链接…"></div>' +
+        '<button class="btn btn-block" style="margin-top:12px" onclick="setState(\'有内容\')">登记</button>' +
+        '</div></div>';
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
@@ -1586,6 +1748,7 @@ register('account-profile', ['完善度未满','已满','保存中','保存失�
 register('topics', ['空','加载','失败','有选题','刚从FAQ生成','含原问答已删除'], renderTopics);
 register('create', ['未校准','空态','生成中','失败','额度不够','只有抖音版','两版都在','查重提示','无关选题无参考','改已有稿','采用成功'], renderCreate);
 register('analyze', ['空','进行中','失败','额度不够','账号结果','视频结果','已存入选题'], renderAnalyze);
+register('kb', ['空','加载','失败','有内容','筛选后为空','新建编辑','登记弹窗'], renderKb);
 render();
 </script>
 </body>
