@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { getBizMessage } from '../../api/client';
 import { adminLogin } from '../../api/admin';
 import { useAuthStore } from '../../store/auth';
+import BrandMark from '../../components/BrandMark';
 
 /**
  * 管理端登录页：独立账号密码体系，与 C 端手机号隔离，无自助注册/找回。
@@ -41,6 +42,7 @@ export default function AdminLogin() {
     >
       <div className="w-full max-w-[372px] rounded-2xl bg-[#fdfcf8] p-9 shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
         <header className="mb-6 text-center">
+          <BrandMark size={40} className="mx-auto mb-3" />
           <h1 className="font-serif text-[22px] font-black tracking-[0.04em] text-[#23231f]">
             随口说 · 站长后台
           </h1>

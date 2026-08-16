@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import BrandMark from '../components/BrandMark';
 
 /**
  * 落地页（公开，无需登录）——对齐原型 `{{ isLanding }}` 那一支的五段：
@@ -68,7 +69,7 @@ export default function Landing() {
       <header className="sticky top-0 z-10 border-b border-paper-line bg-paper-base/[0.92] backdrop-blur-[10px]">
         <div className="mx-auto flex max-w-[1120px] items-center px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-paper-primary" />
+            <BrandMark size={28} />
             <span className="font-serif text-[22px] font-black tracking-label">随口说</span>
           </div>
           <nav className="ml-auto flex items-center gap-[26px] text-body">

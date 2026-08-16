@@ -76,7 +76,7 @@ describe('创作页人设声音面板', () => {
     renderPanel();
     expect(await screen.findByText('佛山做了 12 年全屋定制的工厂老板娘')).toBeTruthy();
     expect(screen.getByText('直白、爱举例、不端着')).toBeTruthy();
-    expect(screen.getByText('不诋毁同行')).toBeTruthy();
+    expect(screen.getByText(/不诋毁同行/)).toBeTruthy();
 
     // 创作页只关心「怎么说」，不该把整份档案搬过来——那是定位页的职责
     expect(screen.queryByText('怕被装修公司坑的业主')).toBeNull();
@@ -93,7 +93,7 @@ describe('创作页人设声音面板', () => {
     const toneBox = screen.getByLabelText('口吻');
     await user.clear(toneBox);
     await user.type(toneBox, '更直白一点');
-    await user.click(screen.getByRole('button', { name: '保存' }));
+    await user.click(screen.getByRole('button', { name: '保存并回写档案' }));
 
     await waitFor(() => expect(updateProfileFields).toHaveBeenCalledTimes(1));
     expect(updateProfileFields).toHaveBeenCalledWith({ tone: '更直白一点' });
@@ -106,9 +106,9 @@ describe('创作页人设声音面板', () => {
     renderPanel();
     await user.click(await screen.findByRole('button', { name: '编辑' }));
 
-    expect(screen.getByLabelText('人设')).toBeTruthy();
+    expect(screen.getByLabelText('人设一句话')).toBeTruthy();
     expect(screen.getByLabelText('口吻')).toBeTruthy();
-    expect(screen.getByLabelText(/红线/)).toBeTruthy(); // 标签带「（一行一条）」提示
+    expect(screen.getByLabelText(/红线/)).toBeTruthy();
     expect(screen.queryByLabelText('目标人群')).toBeNull();
     expect(screen.queryByLabelText(/内容支柱/)).toBeNull();
   });
@@ -133,7 +133,7 @@ describe('创作页人设声音面板', () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(await screen.findByRole('button', { name: '编辑' }));
-    await user.click(screen.getByRole('button', { name: '保存' }));
+    await user.click(screen.getByRole('button', { name: '保存并回写档案' }));
 
     expect(updateProfileFields).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByLabelText('口吻')).toBeNull());
@@ -151,7 +151,7 @@ describe('创作页人设声音面板', () => {
     const toneBox = screen.getByLabelText('口吻');
     await user.clear(toneBox);
     await user.type(toneBox, '更直白一点');
-    await user.click(screen.getByRole('button', { name: '保存' }));
+    await user.click(screen.getByRole('button', { name: '保存并回写档案' }));
 
     const cancel = await screen.findByRole('button', { name: '取消' });
     await waitFor(() => expect((cancel as HTMLButtonElement).disabled).toBe(true));
@@ -170,7 +170,7 @@ describe('创作页人设声音面板', () => {
       content: {},
     });
     renderPanel();
-    expect(await screen.findByText(/还没有定位档案/)).toBeTruthy();
+    expect(await screen.findByText(/还没校准定位/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: '编辑' })).toBeNull();
   });
 
@@ -184,6 +184,6 @@ describe('创作页人设声音面板', () => {
     renderPanel();
     expect(await screen.findByText('老档案人设')).toBeTruthy();
     expect(screen.getByText('老档案口吻')).toBeTruthy();
-    expect(screen.getByText('不夸大功效')).toBeTruthy();
+    expect(screen.getByText(/不夸大功效/)).toBeTruthy();
   });
 });

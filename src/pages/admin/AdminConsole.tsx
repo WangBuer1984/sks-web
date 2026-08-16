@@ -10,6 +10,7 @@ import {
 } from '../../api/admin';
 import { getBizMessage } from '../../api/client';
 import { useAuthStore } from '../../store/auth';
+import BrandMark from '../../components/BrandMark';
 
 type Pkg = 'p50' | 'p150';
 const PKG_INFO: Record<Pkg, { name: string; price: number; per: string; n: number }> = {
@@ -145,6 +146,7 @@ export default function AdminConsole() {
       {/* 侧边栏（暖炭） */}
       <aside className="sticky top-0 flex h-full min-h-screen w-[208px] shrink-0 flex-col bg-[#23231f] py-[22px] text-[#b5ae9a]">
         <div className="border-b border-[#3a382f] px-[22px] pb-5">
+          <BrandMark size={26} className="mb-2" />
           <div className="font-serif text-[17px] font-black tracking-[0.05em] text-[#f4f1e9]">随口说 · 站长后台</div>
           <div className="mt-[3px] text-[11px] tracking-[0.15em] text-[#8a8578]">ADMIN CONSOLE</div>
         </div>

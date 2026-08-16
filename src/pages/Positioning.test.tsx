@@ -48,8 +48,8 @@ const PROFILE: profileApi.ActiveProfileView = {
     differentiation: '敢报真价',
     conversionPath: '私信要模板',
     tone: '直白',
-    redlines: ['不诋毁同行'],
-    contentPillars: ['报价拆解'],
+    redlines: ['不诋毁同行', '不承诺零甲醛'],
+    contentPillars: ['报价拆解 40%', '工艺科普 30%', '客户案例 20%', '产品种草 10%'],
   },
 };
 
@@ -92,6 +92,15 @@ afterEach(() => {
 });
 
 describe('定位页：保存竞态与精确失效', () => {
+  it('红线中点连写，内容支柱独立成配比条', async () => {
+    renderPage();
+    expect(await screen.findByText('不诋毁同行 · 不承诺零甲醛')).toBeTruthy();
+    expect(screen.getByText('选题库按此配比推荐')).toBeTruthy();
+    expect(screen.getByText('报价拆解')).toBeTruthy();
+    expect(screen.getByText('40%')).toBeTruthy();
+    expect(screen.queryByText('观众常问的问题——每条都能一键变成选题')).toBeNull();
+  });
+
   it('字段保存进行中，取消按钮被禁用', async () => {
     const user = userEvent.setup();
     let release: (v: profileApi.ActiveProfileView) => void = () => {};
@@ -120,7 +129,7 @@ describe('定位页：保存竞态与精确失效', () => {
     const { invalidateSpy } = renderPage();
     await screen.findByText('报价为什么差一倍');
 
-    await user.type(screen.getByPlaceholderText(/再添一条/), '订金能退吗');
+    await user.type(screen.getByPlaceholderText(/再加一句/), '订金能退吗');
     invalidateSpy.mockClear();
     await user.click(screen.getByRole('button', { name: '添加问答' }));
 

@@ -5,6 +5,7 @@ import { getBizMessage } from '../api/client';
 import { login, sendCode } from '../api/auth';
 import { useAuthStore } from '../store/auth';
 import LoginOnboarding from './LoginOnboarding';
+import BrandMark from '../components/BrandMark';
 
 /**
  * C 端登录页：手机号 + 验证码（登录即注册）。
@@ -67,6 +68,7 @@ export default function Login() {
     <main className="flex min-h-full flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm rounded-2xl border border-paper-line bg-paper-card p-8 shadow-sm">
         <header className="mb-7 text-center">
+          <BrandMark size={44} className="mx-auto mb-3" />
           <h1 className="text-3xl font-black tracking-wide text-paper-ink">随口说</h1>
           <p className="mt-1.5 text-[11px] tracking-[0.22em] text-paper-muted">SUIKOUSHUO</p>
         </header>

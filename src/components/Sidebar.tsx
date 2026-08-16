@@ -1,8 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchMe, type MeResponse } from '../api/auth';
 import { useAuthStore } from '../store/auth';
 import { useRechargeStore } from '../store/recharge';
+import BrandMark from './BrandMark';
 
 /**
  * App 持久侧边栏——对齐原型「侧边栏」段（`prototypes/extracted/sections/06-侧边栏.html`）。
@@ -25,6 +26,7 @@ const NAV: { to: string; label: string; ready: boolean }[] = [
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const logoutUser = useAuthStore((s) => s.logoutUser);
   const openRecharge = useRechargeStore((s) => s.open);
 
@@ -44,14 +46,25 @@ export default function Sidebar() {
 
   const logout = () => {
     logoutUser();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
+  };
+
+  /** 点品牌名：回工作台并重拉数据，和刚登录进系统同一落地。 */
+  const goHome = () => {
+    void queryClient.invalidateQueries();
+    navigate('/workbench');
   };
 
   return (
     <nav className="flex w-[216px] shrink-0 flex-col bg-paper-ink px-3 py-5 text-paper-shadeDeep">
-      <div className="px-3 pb-[22px] pt-1 font-serif text-[22px] font-black tracking-label">
+      <button
+        type="button"
+        onClick={goHome}
+        className="flex items-center gap-2 px-3 pb-[22px] pt-1 text-left font-serif text-[22px] font-black tracking-label hover:text-paper-gold"
+      >
+        <BrandMark size={28} />
         随口说
-      </div>
+      </button>
 
       <div className="flex flex-col gap-1">
         {NAV.map((item) =>

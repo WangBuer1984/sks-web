@@ -21,6 +21,7 @@ import {
   type ProfileFieldKey,
 } from '../api/profile';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ContentPillarsChart from './ContentPillarsChart';
 import { shouldShowReplay, voiceSuggestText } from './positioningMode';
 import { faqDraftError, moveFaq } from './faqMode';
 import {
@@ -48,6 +49,8 @@ import {
  */
 
 const FIELD_ROWS: ProfileFieldKey[] = [...PROFILE_FIELD_KEYS];
+/** 档案卡只排六格；内容支柱在原型里是独立配比条，不进这张网格。 */
+const ARCHIVE_DISPLAY_KEYS: ProfileFieldKey[] = FIELD_ROWS.filter((k) => k !== 'contentPillars');
 
 export default function Positioning() {
   const queryClient = useQueryClient();
@@ -402,37 +405,20 @@ export default function Positioning() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-copy">
-                  {FIELD_ROWS.map((key) => {
+                  {ARCHIVE_DISPLAY_KEYS.map((key) => {
                     const value = profile[key];
                     const list = isListField(key) ? ((value as string[] | undefined) ?? []) : null;
                     return (
                       <div
                         key={key}
-                        className={`rounded-card border px-3.5 py-3 ${
-                          key === 'redlines'
-                            ? 'border-paper-dangerLine bg-paper-dangerTint'
-                            : 'border-paper-tintDeep bg-paper-sunken'
-                        } ${key === 'contentPillars' ? 'col-span-2' : ''}`}
+                        className="rounded-card border border-paper-tintDeep bg-paper-sunken px-3.5 py-3"
                       >
-                        <div
-                          className={`mb-1 text-hint font-bold ${
-                            key === 'redlines' ? 'text-paper-danger' : 'text-paper-primary'
-                          }`}
-                        >
+                        <div className="mb-1 text-hint font-bold text-paper-primary">
                           {PROFILE_FIELD_LABELS[key]}
                         </div>
                         {list ? (
                           list.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
-                              {list.map((item) => (
-                                <span
-                                  key={item}
-                                  className="rounded-tag border border-paper-lineStrong bg-paper-card px-2 py-[3px] text-hint text-paper-inkSoft"
-                                >
-                                  {item}
-                                </span>
-                              ))}
-                            </div>
+                            <div className="leading-normal">{list.join(' · ')}</div>
                           ) : (
                             <span className="text-paper-mutedLight">档案里没有这一项</span>
                           )
@@ -450,15 +436,16 @@ export default function Positioning() {
               )}
             </section>
 
+            {!editing && (
+              <ContentPillarsChart
+                items={(profile.contentPillars as string[] | undefined) ?? []}
+              />
+            )}
+
             <section className="rounded-block border border-paper-line bg-paper-card px-6 py-5">
-              <h2 className="mb-1 font-sans text-copy font-bold">
-                高频问答
-                <span className="ml-2 text-hint font-normal text-paper-muted">
-                  观众常问的问题——每条都能一键变成选题
-                </span>
-              </h2>
-              <p className="mb-3.5 text-caption text-paper-muted">
-                顺序由你决定（不代表咨询频率）。答案可以先空着，想起来再补。
+              <h2 className="mb-1.5 font-sans text-copy font-bold">高频问答</h2>
+              <p className="mb-3 text-meta text-paper-muted">
+                属于定位档案。点「生成选题」才会进选题库。顺序由你排，不代表咨询频率。
               </p>
 
               {faqError && (
@@ -492,7 +479,7 @@ export default function Positioning() {
                   {(faqs ?? []).map((f, i) => (
                     <li
                       key={f.id}
-                      className="rounded-card border border-paper-tintDeep bg-paper-sunken px-3.5 py-3"
+                      className="rounded-card border border-paper-tintDeep bg-paper-sunken px-3 py-2.5"
                     >
                       {editFaqId === f.id ? (
                         <div className="flex flex-col gap-2">
@@ -502,23 +489,22 @@ export default function Positioning() {
                               setFaqDraft({ ...faqDraft, question: e.target.value })
                             }
                             placeholder="观众常问的问题"
-                            className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy outline-none focus:border-paper-primary"
+                            className="w-full rounded-chip border border-paper-lineStrong bg-paper-card px-2.5 py-2 text-copy text-paper-ink outline-none focus:border-paper-primary"
                           />
-                          <textarea
-                            rows={2}
+                          <input
                             value={faqDraft.answer}
                             onChange={(e) => setFaqDraft({ ...faqDraft, answer: e.target.value })}
                             placeholder="你平时怎么回答（可留空）"
-                            className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy outline-none focus:border-paper-primary"
+                            className="w-full rounded-chip border border-paper-lineStrong bg-paper-card px-2.5 py-2 text-copy text-paper-ink outline-none focus:border-paper-primary"
                           />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
                               onClick={() => {
                                 setEditFaqId(null);
                                 setFaqError(null);
                               }}
-                              className="rounded-chip border border-paper-lineStrong px-3.5 py-[6px] text-hint text-paper-inkSoft hover:border-paper-primary"
+                              className="py-1.5 text-meta text-paper-muted hover:text-paper-primary"
                             >
                               取消
                             </button>
@@ -526,69 +512,62 @@ export default function Positioning() {
                               type="button"
                               disabled={faqBusy}
                               onClick={submitEditFaq}
-                              className="rounded-chip bg-paper-primary px-3.5 py-[6px] text-hint text-white hover:bg-paper-primaryHover disabled:opacity-45"
+                              className="rounded-chip bg-paper-primary px-3 py-1.5 text-caption text-white hover:bg-paper-primaryHover disabled:opacity-45"
                             >
                               保存
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-start gap-3">
-                          <span className="mt-[2px] shrink-0 text-hint text-paper-mutedLight">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-copy font-medium leading-normal text-paper-ink">
-                              {f.question}
-                            </div>
-                            <div className="mt-1 text-caption leading-normal text-paper-muted">
+                        <div className="flex flex-wrap items-start gap-2">
+                          <button
+                            type="button"
+                            disabled={faqBusy || i === 0}
+                            onClick={() => move(f.id, 'up')}
+                            aria-label="上移"
+                            className="mt-0.5 rounded-tag border border-paper-line px-1.5 py-0.5 text-meta text-paper-muted hover:border-paper-primary disabled:cursor-default disabled:opacity-35"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            disabled={faqBusy || i === (faqs ?? []).length - 1}
+                            onClick={() => move(f.id, 'down')}
+                            aria-label="下移"
+                            className="mt-0.5 rounded-tag border border-paper-line px-1.5 py-0.5 text-meta text-paper-muted hover:border-paper-primary disabled:cursor-default disabled:opacity-35"
+                          >
+                            ↓
+                          </button>
+                          <div className="min-w-[160px] flex-1">
+                            <div className="text-body leading-snug text-paper-ink">{f.question}</div>
+                            <div className="mt-1 text-meta leading-snug text-paper-muted">
                               {f.answer?.trim() || '答案还没写——生成文案时 AI 会按档案口吻替你说'}
                             </div>
                           </div>
-                          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              disabled={faqBusy || i === 0}
-                              onClick={() => move(f.id, 'up')}
-                              aria-label="上移"
-                              className="rounded-chip border border-paper-lineStrong px-2 py-[5px] text-hint text-paper-inkSoft hover:border-paper-primary disabled:opacity-35"
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              disabled={faqBusy || i === (faqs ?? []).length - 1}
-                              onClick={() => move(f.id, 'down')}
-                              aria-label="下移"
-                              className="rounded-chip border border-paper-lineStrong px-2 py-[5px] text-hint text-paper-inkSoft hover:border-paper-primary disabled:opacity-35"
-                            >
-                              ↓
-                            </button>
-                            <button
-                              type="button"
-                              disabled={faqBusy}
-                              onClick={() => faqTopicMut.mutate(f.id)}
-                              className="rounded-chip border border-paper-primary px-3 py-[5px] text-hint text-paper-primary hover:bg-paper-tint disabled:opacity-45"
-                            >
-                              生成选题
-                            </button>
-                            <button
-                              type="button"
-                              disabled={faqBusy}
-                              onClick={() => startEditFaq(f)}
-                              className="rounded-chip border border-paper-lineStrong px-3 py-[5px] text-hint text-paper-inkSoft hover:border-paper-primary disabled:opacity-45"
-                            >
-                              编辑
-                            </button>
-                            <button
-                              type="button"
-                              disabled={faqBusy}
-                              onClick={() => setFaqToDelete(f)}
-                              className="rounded-chip border border-paper-lineStrong px-3 py-[5px] text-hint text-paper-muted hover:border-paper-danger hover:text-paper-danger disabled:opacity-45"
-                            >
-                              删除
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            disabled={faqBusy}
+                            onClick={() => faqTopicMut.mutate(f.id)}
+                            className="whitespace-nowrap rounded-chip border border-paper-primary bg-transparent px-3 py-1.5 text-caption text-paper-primary hover:bg-paper-tint disabled:opacity-45"
+                          >
+                            生成选题
+                          </button>
+                          <button
+                            type="button"
+                            disabled={faqBusy}
+                            onClick={() => startEditFaq(f)}
+                            className="pt-1.5 text-meta text-paper-muted hover:text-paper-primary disabled:opacity-45"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            type="button"
+                            disabled={faqBusy}
+                            onClick={() => setFaqToDelete(f)}
+                            className="pt-1.5 text-meta text-paper-muted hover:text-paper-danger disabled:opacity-45"
+                          >
+                            删除
+                          </button>
                         </div>
                       )}
                     </li>
@@ -596,26 +575,25 @@ export default function Positioning() {
                 </ul>
               )}
 
-              <div className="flex flex-col gap-2 rounded-card border border-dashed border-paper-goldSoft bg-paper-tint px-3.5 py-3">
+              <div className="mt-1 flex flex-col gap-2 rounded-card border border-dashed border-paper-goldSoft bg-paper-tint px-3 py-3">
                 <input
                   value={newFaq.question}
                   onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
-                  placeholder="再添一条观众常问的问题…"
-                  className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy outline-none focus:border-paper-primary"
+                  placeholder="再加一句客户常问的话"
+                  className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy text-paper-ink outline-none focus:border-paper-primary"
                 />
-                <textarea
-                  rows={2}
+                <input
                   value={newFaq.answer}
                   onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
                   placeholder="你平时怎么回答（可留空，答案后补）"
-                  className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy outline-none focus:border-paper-primary"
+                  className="w-full rounded-card border border-paper-lineStrong bg-paper-card px-3 py-2 text-copy text-paper-ink outline-none focus:border-paper-primary"
                 />
                 <div className="flex justify-end">
                   <button
                     type="button"
                     disabled={faqBusy || !newFaq.question.trim()}
                     onClick={submitNewFaq}
-                    className="rounded-chip bg-paper-primary px-4 py-[7px] text-copy text-white hover:bg-paper-primaryHover disabled:cursor-not-allowed disabled:opacity-45"
+                    className="whitespace-nowrap rounded-card border border-paper-primary bg-transparent px-3.5 py-2 text-copy text-paper-primary hover:bg-paper-tint disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {createFaqMut.isPending ? '添加中…' : '添加问答'}
                   </button>
@@ -625,7 +603,7 @@ export default function Positioning() {
           </div>
 
           <aside className="flex flex-col rounded-block border border-paper-line bg-paper-card p-5">
-            <h2 className="mb-1 font-sans text-copy font-bold">建库引导对话</h2>
+            <h2 className="mb-1 font-sans text-copy font-bold">定位校准对话</h2>
             <p className="mb-3.5 text-[11.5px] text-paper-muted">
               你注册时 15 分钟聊出来的档案，随时可以重聊校准
             </p>

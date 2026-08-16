@@ -11,3 +11,6 @@ prototypes/extracted/full.html
 
 # superpowers SDD 工作区（ledger/brief/review 包，scratch，不入库）
 .superpowers/
+
+# 原型备份副本（约 15MB，勿入库——源文件随口说原型-07191700.html 才是基准）
+prototypes/*_副本.html
