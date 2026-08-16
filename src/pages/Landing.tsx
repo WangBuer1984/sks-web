@@ -218,7 +218,7 @@ export default function Landing() {
           现在开始 →
         </Link>
         <p className="mt-12 border-t border-paper-line pt-[22px] text-meta text-paper-mutedLight">
-          随口说 · 个人开发者产品 · 微信：suikoushuo-wang
+          随口说 · by 王不二 · 微信：suikoushuo-wang
         </p>
       </section>
     </div>
