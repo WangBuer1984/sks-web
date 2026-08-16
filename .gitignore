@@ -8,3 +8,6 @@ dist/
 # 无 diff 价值且随时可由 scripts/extract-prototype.mjs 重生成。
 # 同目录的 sections/ 与 SECTIONS.md / TOKENS.md 要入库——那是逐段保真的对照基准。
 prototypes/extracted/full.html
+
+# superpowers SDD 工作区（ledger/brief/review 包，scratch，不入库）
+.superpowers/
