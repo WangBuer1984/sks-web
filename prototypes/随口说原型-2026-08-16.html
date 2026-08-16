@@ -312,7 +312,11 @@ const DEMO = {
     {title:'合同里写公差这件事', src:'我传的', status:'未发布'},
     {title:'工厂老板的一天', src:'平台生成', status:'已发布'},
     {title:'到货复检三步', src:'我传的', status:'未发布'}
-  ]
+  ],
+  reviewPending: [{title:'材料牌号怎么写进合同', platform:'抖音'}],
+  reviewRegistered: [{title:'便宜三成不是偷工减料', platform:'抖音', link:'v.douyin.com/abc1', reviewed:false}],
+  reviewDone: [{title:'便宜三成不是偷工减料', platform:'抖音', result:'爆款', fiveCode:{play:'12万',like:'8200',comment:'610',share:'430',follow:'210'}}],
+  weeklyReport: '本周发布 3 篇，1 篇爆款《便宜三成》。建议续集：到货复检。'
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -1737,6 +1741,93 @@ function renderKb(s) {
   }
 }
 
+// ===== 发布复盘（七态） =====
+function renderReview(s) {
+  function fiveCodeTable(fc) {
+    if (!fc) return '';
+    return '<div style="display:flex;gap:16px;margin-top:10px;font-size:13px;color:var(--text-muted);flex-wrap:wrap">' +
+      '<span>播放 <b style="color:var(--charcoal)">' + fc.play + '</b></span>' +
+      '<span>点赞 <b style="color:var(--charcoal)">' + fc.like + '</b></span>' +
+      '<span>评论 <b style="color:var(--charcoal)">' + fc.comment + '</b></span>' +
+      '<span>分享 <b style="color:var(--charcoal)">' + fc.share + '</b></span>' +
+      '<span>关注 <b style="color:var(--charcoal)">' + fc.follow + '</b></span>' +
+      '</div>';
+  }
+
+  switch(s.state) {
+    case '待发布空':
+      return '<div class="card" style="text-align:center;padding:48px 24px">' +
+        '<div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:12px">还没有待发布</div>' +
+        '<p style="color:var(--text-muted);margin-bottom:24px;line-height:1.7">去知识库登记一篇已发布的作品链接，登记后即可复盘</p>' +
+        '<button class="btn" style="padding:10px 24px;font-size:15px" onclick="setPage(\'kb\');setTimeout(function(){setState(\'登记弹窗\')},0)">去知识库登记一篇</button>' +
+        '</div>';
+
+    case '已登记未复盘': {
+      var registeredRows = DEMO.reviewRegistered.map(function(item) {
+        return '<div class="card" style="margin-bottom:8px;padding:14px 16px">' +
+          '<div style="display:flex;align-items:center;gap:12px">' +
+          '<span style="font-size:14px;color:var(--charcoal);flex:1">' + item.title + '</span>' +
+          '<span class="badge" style="background:rgba(107,90,69,.08);color:var(--text-muted)">' + item.platform + '</span>' +
+          '<span style="font-size:12px;color:var(--text-muted)">' + item.link + '</span>' +
+          '<button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="setState(\'已复盘\')">复盘</button>' +
+          '</div></div>';
+      }).join('');
+      return '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">待复盘</div>' + registeredRows;
+    }
+
+    case '已复盘': {
+      var doneRows = DEMO.reviewDone.map(function(item) {
+        var resultBadge = item.result === '爆款'
+          ? '<span class="badge badge-viral">爆款</span>'
+          : '<span class="badge badge-published">普通</span>';
+        return '<div class="card" style="margin-bottom:8px;padding:14px 16px">' +
+          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+          '<span style="font-size:14px;color:var(--charcoal);flex:1;min-width:160px">' + item.title + '</span>' +
+          '<span class="badge" style="background:rgba(107,90,69,.08);color:var(--text-muted)">' + item.platform + '</span>' +
+          resultBadge +
+          '</div>' +
+          fiveCodeTable(item.fiveCode) +
+          '</div>';
+      }).join('');
+      return '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">已复盘</div>' + doneRows;
+    }
+
+    case '爆款降级':
+      return '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">已复盘</div>' +
+        '<div class="card" style="margin-bottom:8px;padding:14px 16px">' +
+        '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<span style="font-size:14px;color:var(--charcoal);flex:1;min-width:160px">便宜三成不是偷工减料</span>' +
+        '<span class="badge" style="background:rgba(107,90,69,.08);color:var(--text-muted)">抖音</span>' +
+        '<span class="badge badge-published">已发布</span>' +
+        '</div>' +
+        fiveCodeTable(DEMO.reviewDone[0].fiveCode) +
+        '</div>' +
+        '<div style="margin-top:12px;padding:10px 14px;background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;font-size:13px;color:var(--text-muted);line-height:1.6">某发布记录数据更新，标签降级；原续集选题保留，不重复创建续集</div>';
+
+    case '周报空':
+      return '<div style="text-align:center;padding:60px 0">' +
+        '<p style="color:var(--text-muted);margin-bottom:24px;font-size:16px">本周还没复盘周报</p>' +
+        '<button class="btn" style="padding:10px 24px;font-size:15px" onclick="setState(\'周报生成中\')">生成本周复盘</button>' +
+        '</div>';
+
+    case '周报生成中':
+      return '<div style="text-align:center;padding:60px 0">' +
+        '<div class="pulse" style="max-width:300px;margin:0 auto 16px"><i></i></div>' +
+        '<p style="color:var(--text-muted);margin-top:16px;font-size:15px">生成中…</p>' +
+        '</div>';
+
+    case '有周报':
+      return '<div style="font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:20px">本周复盘周报</div>' +
+        '<div class="card" style="margin-bottom:16px;padding:20px">' +
+        '<div style="font-size:14px;color:var(--charcoal);line-height:1.8;white-space:pre-wrap">' + DEMO.weeklyReport + '</div>' +
+        '</div>' +
+        '<button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="setState(\'周报生成中\')">再生成</button>';
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
@@ -1749,6 +1840,7 @@ register('topics', ['空','加载','失败','有选题','刚从FAQ生成','含�
 register('create', ['未校准','空态','生成中','失败','额度不够','只有抖音版','两版都在','查重提示','无关选题无参考','改已有稿','采用成功'], renderCreate);
 register('analyze', ['空','进行中','失败','额度不够','账号结果','视频结果','已存入选题'], renderAnalyze);
 register('kb', ['空','加载','失败','有内容','筛选后为空','新建编辑','登记弹窗'], renderKb);
+register('review', ['待发布空','已登记未复盘','已复盘','爆款降级','周报空','周报生成中','有周报'], renderReview);
 render();
 </script>
 </body>
