@@ -302,7 +302,11 @@ const DEMO = {
   createRef: [
     {title:'便宜三成不是偷工减料', platform:'抖音', sim:'高'}
   ],
-  createUnrelated: '本稿只基于你的定位档案'
+  createUnrelated: '本稿只基于你的定位档案',
+  analyze: {
+    portrait:{对比:[['人设','说真话工厂老板','同行讲排场'],['人群','30-45 业主','泛创业者']], top10:[{title:'开工前先报材料牌号',plays:'12万'}]},
+    fourFields:{结构:'钩子3s + 痛点 + 证据 + 转化', 为什么爆:'戳中怕被坑', 框架:'报牌号→合同→复检', 和你的差异:'你更直，他更演'}
+  }
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -360,9 +364,11 @@ let countdownTimer = null;
 let countdownValue = 60;
 let calibrateTimer = null;
 let createTimer = null;
+let analyzeTimer = null;
 function clearCountdown(){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; } }
 function clearCalibrateTimer(){ if(calibrateTimer){ clearTimeout(calibrateTimer); calibrateTimer = null; } }
 function clearCreateTimer(){ if(createTimer){ clearTimeout(createTimer); createTimer = null; } }
+function clearAnalyzeTimer(){ if(analyzeTimer){ clearTimeout(analyzeTimer); analyzeTimer = null; } }
 function startCountdown(){
   clearCountdown();
   countdownValue = 60;
@@ -396,6 +402,7 @@ function setPage(p) {
   clearCountdown();
   clearCalibrateTimer();
   clearCreateTimer();
+  clearAnalyzeTimer();
   STATE.page = p;
   STATE._explicitState = false;
   if (p === 'workbench') {
@@ -409,6 +416,7 @@ function setState(st) {
   clearCountdown();
   clearCalibrateTimer();
   clearCreateTimer();
+  clearAnalyzeTimer();
   STATE.state = st;
   STATE._explicitState = true;
   render();
@@ -1437,6 +1445,136 @@ function renderCreate(s) {
   </div>`;
 }
 
+// ===== 对标拆解（七态） =====
+function renderAnalyze(s) {
+  if (!STATE._analyzeTab) STATE._analyzeTab = 'account';
+  const tab = STATE._analyzeTab;
+
+  function tabs() {
+    const aOn = tab === 'account' ? ' on' : '';
+    const vOn = tab === 'video' ? ' on' : '';
+    return '<div class="tabs">' +
+      '<a class="' + aOn + '" onclick="STATE._analyzeTab=\'account\';setState(\'空\')">拆账号</a>' +
+      '<a class="' + vOn + '" onclick="STATE._analyzeTab=\'video\';setState(\'空\')">拆视频</a>' +
+      '</div>';
+  }
+
+  function portraitTable() {
+    var rows = DEMO.analyze.portrait['对比'].map(function(row) {
+      return '<tr>' +
+        '<td style="padding:8px 12px;font-size:13px;color:var(--text-muted);border-bottom:1px solid var(--line)">' + row[0] + '</td>' +
+        '<td style="padding:8px 12px;font-size:14px;border-bottom:1px solid var(--line)">' + row[1] + '</td>' +
+        '<td style="padding:8px 12px;font-size:14px;border-bottom:1px solid var(--line)">' + row[2] + '</td>' +
+        '</tr>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:20px">' +
+      '<h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">画像对比</h3>' +
+      '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr>' +
+      '<th style="text-align:left;padding:8px 12px;font-size:13px;color:var(--text-muted);border-bottom:2px solid var(--line)">维度</th>' +
+      '<th style="text-align:left;padding:8px 12px;font-size:13px;color:var(--text-muted);border-bottom:2px solid var(--line)">你的账号</th>' +
+      '<th style="text-align:left;padding:8px 12px;font-size:13px;color:var(--text-muted);border-bottom:2px solid var(--line)">对标账号</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table></div>';
+  }
+
+  function top10List() {
+    var items = DEMO.analyze.portrait.top10.map(function(t) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">' +
+        '<span style="font-size:14px;color:var(--charcoal)">' + t.title + '</span>' +
+        '<span style="font-size:12px;color:var(--text-muted)">播放 ' + t.plays + '</span>' +
+        '</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:20px">' +
+      '<h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">TOP10 内容</h3>' +
+      items + '</div>';
+  }
+
+  function fourFields() {
+    var f = DEMO.analyze.fourFields;
+    var fields = Object.keys(f).map(function(k) {
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">' +
+        '<div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">' + k + '</div>' +
+        '<div style="font-size:14px;color:var(--charcoal);line-height:1.6">' + f[k] + '</div>' +
+        '</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:20px">' +
+      '<h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">深拆</h3>' +
+      fields + '</div>';
+  }
+
+  function accountInput() {
+    return '<div class="card" style="margin-bottom:20px">' +
+      '<div class="form-group">' +
+      '<label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">贴一个对标账号主页链接</label>' +
+      '<input class="form-input" placeholder="例如：https://v.douyin.com/xxxxx">' +
+      '</div>' +
+      '<button class="btn" style="margin-top:8px" onclick="setState(\'进行中\')">拆</button>' +
+      '</div>';
+  }
+
+  function videoInput() {
+    return '<div class="card" style="margin-bottom:20px">' +
+      '<div class="form-group">' +
+      '<label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:8px">贴一个作品链接或粘贴文案</label>' +
+      '<textarea class="form-input" rows="4" placeholder="贴链接或粘文案…"></textarea>' +
+      '</div>' +
+      '<button class="btn" style="margin-top:8px" onclick="setState(\'进行中\')">拆</button>' +
+      '</div>';
+  }
+
+  switch(s.state) {
+    case '空':
+      return tabs() + (tab === 'account' ? accountInput() : videoInput());
+
+    case '进行中':
+      clearAnalyzeTimer();
+      var targetTab = tab;
+      analyzeTimer = setTimeout(function() {
+        setState(targetTab === 'account' ? '账号结果' : '视频结果');
+      }, 2000);
+      return tabs() + '<div class="card" style="text-align:center;padding:40px">' +
+        '<p style="font-size:15px;color:var(--charcoal);margin-bottom:16px">正在拆…</p>' +
+        '<div class="pulse" style="max-width:300px;margin:0 auto"><i></i></div>' +
+        '</div>';
+
+    case '失败':
+      return tabs() + '<div class="card" style="text-align:center;padding:40px">' +
+        '<p style="color:var(--danger);margin-bottom:16px;font-size:16px">拆解失败，请重试</p>' +
+        '<button class="btn" onclick="setState(\'进行中\')">重试</button>' +
+        '</div>';
+
+    case '额度不够':
+      return tabs() + '<div class="card" style="text-align:center;padding:40px">' +
+        '<p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">拆账号扣 10 条，额度不够</p>' +
+        '<button class="btn" onclick="STATE._rechargeFrom=\'analyze\';setPage(\'recharge\')">去充值</button>' +
+        '</div>';
+
+    case '账号结果':
+      return tabs() + portraitTable() + top10List() + fourFields() +
+        '<div style="margin-top:16px">' +
+        '<button class="btn" onclick="setState(\'已存入选题\')">存入选题库</button>' +
+        '</div>';
+
+    case '视频结果':
+      return tabs() + fourFields() +
+        '<div style="display:flex;gap:10px;margin-top:16px">' +
+        '<button class="btn" onclick="setPage(\'create\')">用这个框架仿写</button>' +
+        '<button class="btn ghost" onclick="setState(\'已存入选题\')">存入选题库</button>' +
+        '</div>';
+
+    case '已存入选题':
+      return tabs() + (tab === 'account' ? portraitTable() + top10List() + fourFields() : fourFields()) +
+        '<div style="margin-top:16px">' +
+        '<button class="btn ghost" onclick="setPage(\'topics\')">已存入 / 去选题库</button>' +
+        '</div>';
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
@@ -1447,6 +1585,7 @@ register('account-positioning', ['未校准','档案在FAQ空','有FAQ','保存�
 register('account-profile', ['完善度未满','已满','保存中','保存失败','换绑','换绑验证码错','加载','加载失败'], renderProfile);
 register('topics', ['空','加载','失败','有选题','刚从FAQ生成','含原问答已删除'], renderTopics);
 register('create', ['未校准','空态','生成中','失败','额度不够','只有抖音版','两版都在','查重提示','无关选题无参考','改已有稿','采用成功'], renderCreate);
+register('analyze', ['空','进行中','失败','额度不够','账号结果','视频结果','已存入选题'], renderAnalyze);
 render();
 </script>
 </body>
