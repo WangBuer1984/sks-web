@@ -62,7 +62,7 @@ describe('hasMetrics', () => {
 describe('复盘态文案', () => {
   it('四态各有中文说法，且不含旧的采用/追踪态', () => {
     expect(PUBLICATION_STATE_LABELS).toEqual({
-      registered: '待复盘',
+      registered: '已登记',
       hot: '爆款',
       plain: '平平',
       flop: '扑街',

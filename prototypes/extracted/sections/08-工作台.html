@@ -23,7 +23,7 @@
               <div sc-camel-on-click="{{ goCreate }}" style="border: 1px solid #e2dccd; background: #faf8f2; border-radius: 10px; padding: 16px 18px; cursor: pointer;" style-hover="border-color: #8a5a2b;">
                 <div style="font-size: 12px; font-weight: 700; color: #8a5a2b; margin-bottom: 6px;">第 3 步 · 约 1 分钟</div>
                 <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px;">生成第一条文案</div>
-                <div style="font-size: 12px; color: #6b6558; line-height: 1.6;">挑个选题一键生成，不满意免费换角度</div>
+                <div style="font-size: 12px; color: #6b6558; line-height: 1.6;">挑个选题生成口播稿，换个角度会再扣 1 条</div>
               </div>
             </div>
           </div>
@@ -42,15 +42,15 @@
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 30px;">
           <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 18px 20px;">
             <div style="font-size: 12px; color: #8a8578; margin-bottom: 8px;">知识库内容</div>
-            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">6 <span style="font-size: 12px; color: #4a8c5c; font-family: 'Noto Sans SC', sans-serif; font-weight: 500;">篇 · +2 本周</span></div>
+            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">{{ homeKbN }} <span style="font-size: 12px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">篇</span></div>
           </div>
           <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 18px 20px;">
-            <div style="font-size: 12px; color: #8a8578; margin-bottom: 8px;">本周生成文案</div>
-            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">9 <span style="font-size: 12px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">条</span></div>
+            <div style="font-size: 12px; color: #8a8578; margin-bottom: 8px;">待用选题</div>
+            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">{{ homeTopicN }} <span style="font-size: 12px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">条</span></div>
           </div>
           <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 18px 20px;">
-            <div style="font-size: 12px; color: #8a8578; margin-bottom: 8px;">文案采用率</div>
-            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">78% <span style="font-size: 12px; color: #4a8c5c; font-family: 'Noto Sans SC', sans-serif; font-weight: 500;">↑ 12%</span></div>
+            <div style="font-size: 12px; color: #8a8578; margin-bottom: 8px;">本周已采用</div>
+            <div style="font-size: 26px; font-weight: 700; font-family: 'Noto Serif SC', serif;">{{ homeAdoptN }} <span style="font-size: 12px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">篇</span></div>
           </div>
         </div>
         <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;">
@@ -70,7 +70,7 @@
             <span style="font-size: 11px; font-weight: 700; color: #8a5a2b; border: 1px solid #dcc6a4; background: #f7f3ea; padding: 3px 8px; border-radius: 4px; white-space: nowrap;">高频问答</span>
             <div style="flex: 1;">
               <div style="font-size: 14.5px; font-weight: 500; margin-bottom: 3px;">同样是做柜子，为什么报价能差一倍？</div>
-              <div style="font-size: 12px; color: #8a8578;">来自你知识库里聊过的「板材差价」· 客户咨询频率第 1</div>
+              <div style="font-size: 12px; color: #8a8578;">来自定位档案里你确认过的客户问答</div>
             </div>
             <button sc-camel-on-click="{{ pick2 }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #f7f3ea;">生成文案</button>
           </div>
@@ -84,7 +84,7 @@
           </div>
         </div>
         <div style="background: #f7f3ea; border: 1px solid #dcc6a4; border-left: 3px solid #8a5a2b; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
-          <div style="flex: 1; font-size: 13.5px; line-height: 1.6;"><strong>知识库已有 6 篇内容</strong>——点「直接采用」的稿子会自动存进去。把以前写过的口播文案粘进来，下次生成能参考的就更多，稿子更像你。</div>
+          <div style="flex: 1; font-size: 13.5px; line-height: 1.6;"><strong>点「采用抖音版 / 采用视频号版」才会进知识库</strong>。只生成或只复制，库里不会多一篇。旧文案也可以粘进来。</div>
           <button sc-camel-on-click="{{ goKb }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #6e4620;">去知识库 →</button>
         </div>
         </sc-if>

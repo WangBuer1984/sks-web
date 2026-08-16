@@ -1,5 +1,9 @@
 # C 端全站产品原型 Implementation Plan
 
+> **已作废（2026-08-16 下午）。** 另画 `随口说原型-2026-08-16.html` 与预期不符。现行做法：在 `随口说原型-07191700.html` 上改，见规格同日修订。不要再按下面任务往 2026-08-16.html 加页。
+
+# C 端全站产品原型 Implementation Plan（作废稿原文）
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 手写一份单文件可点桌面 HTML（`sks-web/prototypes/随口说原型-2026-08-16.html`），顶上「原型审查条」能切到规格 §5 列出的每一格「页 × 状态」，把 C 端全站空/加载/失败/成功/边界态点完，作为锁定后改 React 与 D18–D21 规格的视觉与交互真相。

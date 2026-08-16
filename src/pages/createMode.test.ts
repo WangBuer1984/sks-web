@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   adoptButtonLabel,
+  citedNote,
   flattenScriptMarkdown,
   platformTabLabel,
   versionForPlatform,
@@ -48,5 +49,14 @@ describe('platformTabLabel', () => {
 describe('flattenScriptMarkdown', () => {
   it('三段拼成一篇，空段跳过', () => {
     expect(flattenScriptMarkdown(script())).toBe('钩\n\n正\n\n转');
+  });
+});
+
+describe('citedNote', () => {
+  it('写明命中篇数、同组最多一篇、优先当前平台', () => {
+    const note = citedNote(2, 'channels');
+    expect(note).toContain('命中 2 篇');
+    expect(note).toContain('最多参考一篇');
+    expect(note).toContain('视频号');
   });
 });

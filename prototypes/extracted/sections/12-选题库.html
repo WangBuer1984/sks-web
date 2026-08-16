@@ -1,5 +1,5 @@
 <!-- 段：选题库　条件：{{ isTopics }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4565–4596 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4628–4659 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isTopics }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 880px; margin: 0 auto;">
@@ -10,7 +10,7 @@
         <sc-if value="{{ topicsEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 44px 40px; text-align: center;">
             <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">选题库还是空的</div>
-            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">拆一个对标账号，立刻拿到 TOP10 爆款选题参考<br>也可以在发布复盘里给爆款出续集，选题会汇到这里</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">在账号定位里把问答生成选题，或拆一个对标账号、给爆款出续集——都由你点了才会出现</div>
             <div style="display: flex; gap: 10px; justify-content: center;">
               <button sc-camel-on-click="{{ goBench }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">去拆一个对标账号</button>
               <button sc-camel-on-click="{{ goPos }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #f7f3ea;">先完成定位校准</button>
@@ -19,7 +19,7 @@
         </sc-if>
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <sc-for list="{{ topicList }}" as="t" hint-placeholder-count="3">
-            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="background: #fff; border: 1px solid {{ t.cardBd }}; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px;">
               <span style="font-size: 11px; font-weight: 700; color: {{ t.tagColor }}; border: 1px solid {{ t.tagBorder }}; background: {{ t.tagBg }}; padding: 3px 8px; border-radius: 4px; white-space: nowrap;">{{ t.tag }}</span>
               <div style="flex: 1;">
                 <div style="font-size: 14.5px; font-weight: 500; margin-bottom: 3px;">{{ t.title }}</div>
@@ -29,6 +29,6 @@
             </div>
           </sc-for>
         </div>
-        <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12.5px; color: #8a5a2b; line-height: 1.6;">在「对标拆解」里点「存入选题库」、或在「发布复盘」里给爆款出续集，选题会自动汇入这里。</div>
+        <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12.5px; color: #8a5a2b; line-height: 1.6;">选题只来自三处：定位页的「生成选题」、对标拆解存入、复盘爆款续集。没有每日热点。</div>
       </div>
     </sc-if>

@@ -25,7 +25,7 @@ const STEPS = [
     to: '/create',
     step: '第 3 步 · 约 1 分钟',
     title: '生成第一条文案',
-    desc: '挑个选题一键生成，不满意免费换角度',
+    desc: '挑个选题生成口播稿，换个角度会再扣 1 条',
     emphasize: false,
   },
 ] as const;

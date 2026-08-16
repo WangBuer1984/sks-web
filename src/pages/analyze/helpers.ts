@@ -218,6 +218,48 @@ export function validateLinkInput(text: string): LinkValidation {
   return { ok: true, url: ex.url };
 }
 
+/** 内容底仓 / 复盘登记用的平台（与 `api/content.Platform` 对齐）。 */
+export type RegisterPlatform = 'douyin' | 'channels';
+
+export type RegisterAttempt =
+  | { ok: false; message: string }
+  | { ok: true; url: string; needsConfirm: false }
+  | { ok: true; url: string; needsConfirm: true; message: string };
+
+const REGISTER_LABEL: Record<RegisterPlatform, string> = {
+  douyin: '抖音',
+  channels: '视频号',
+};
+
+function toRegisterPlatform(p: PlatformId): RegisterPlatform | null {
+  if (p === 'douyin') return 'douyin';
+  if (p === 'wechat_channels') return 'channels';
+  return null;
+}
+
+/**
+ * 登记前校验：链接合法且平台对得上才放行；对不上第一次只提示，再点一次才按所选平台确认。
+ */
+export function attemptRegister(
+  text: string,
+  selected: RegisterPlatform,
+  alreadyConfirmed: boolean,
+): RegisterAttempt {
+  const v = validateLinkInput(text);
+  if (!v.ok) return v;
+  const ex = extractShareUrl(text);
+  const guessed = ex ? toRegisterPlatform(ex.platform) : null;
+  if (guessed && guessed !== selected && !alreadyConfirmed) {
+    return {
+      ok: true,
+      url: v.url,
+      needsConfirm: true,
+      message: `链接看起来是${REGISTER_LABEL[guessed]}，你选的是${REGISTER_LABEL[selected]}。再点一次「登记」即按所选平台确认登记。`,
+    };
+  }
+  return { ok: true, url: v.url, needsConfirm: false };
+}
+
 /** 结构长文拆成钩子/正文/CTA 三段（启发式），供左侧时间轴。 */
 export function structureTimeline(structure: string): { label: string; tone: 'hook' | 'body' | 'cta' | 'plain'; text: string }[] {
   const t = structure.trim();

@@ -1,6 +1,6 @@
 /**
  * 创作页输入卡——对齐原型 `13-文案创作.html` 第 7–17 行（`{{ isCreate }}` 输入卡）。
- * 自由 textarea（「这条视频想讲什么？」）+ 时长芯片（45/90/3分钟，45 选中）+ 生成按钮。
+ * 自由 textarea（「这条视频想讲什么？」）+ 时长芯片（45/90/3分钟/5分钟，45 选中）+ 生成按钮。
  *
  * <p>时长 `duration` 真传后端（`generateScript(topicId, platform, duration)` → sks-ai system prompt
  * 控篇幅），非 display-only。原型 45 秒默认选中。
@@ -9,6 +9,7 @@ const DURATIONS = [
   { id: '45', label: '45 秒口播' },
   { id: '90', label: '90 秒' },
   { id: '180', label: '3 分钟深度' },
+  { id: '300', label: '5 分钟' },
 ] as const;
 
 export type DurationId = (typeof DURATIONS)[number]['id'];

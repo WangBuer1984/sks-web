@@ -37,6 +37,8 @@ export interface PendingContentView {
 export interface AttributionView {
   diagnosis: string | null;
   suggestions: string[];
+  /** 口吻建议是否已写入档案 `_pending_voice`；false 时定位页不会出条幅。 */
+  voiceSuggestSaved?: boolean | null;
 }
 
 /**

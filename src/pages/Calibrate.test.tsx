@@ -59,7 +59,7 @@ afterEach(() => {
 });
 
 describe('校准确认生效', () => {
-  it('confirm 成功后先精确失效 profile / faqs，再导航到工作台', async () => {
+  it('confirm 成功后先精确失效 profile / faqs，再导航到定位页', async () => {
     const user = userEvent.setup();
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -70,8 +70,8 @@ describe('校准确认生效', () => {
       seen.push({
         key: f?.queryKey,
         exact: f?.exact,
-        // 失效发生的那一刻，工作台还不该被渲染出来
-        navigated: screen.queryByText('工作台占位') != null,
+        // 失效发生的那一刻，定位页还不该被渲染出来
+        navigated: screen.queryByText('定位页占位') != null,
       });
     });
 
@@ -80,7 +80,7 @@ describe('校准确认生效', () => {
         <MemoryRouter initialEntries={['/calibrate']}>
           <Routes>
             <Route path="/calibrate" element={<Calibrate />} />
-            <Route path="/workbench" element={<div>工作台占位</div>} />
+            <Route path="/positioning" element={<div>定位页占位</div>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -91,7 +91,7 @@ describe('校准确认生效', () => {
     await user.click(confirmBtn);
 
     await waitFor(() => expect(api.confirmProfile).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByText('工作台占位')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('定位页占位')).toBeTruthy());
 
     expect(seen.map((s) => [s.key, s.exact])).toEqual([
       [['profile'], true],
@@ -110,7 +110,7 @@ describe('校准确认生效', () => {
         <MemoryRouter initialEntries={['/calibrate']}>
           <Routes>
             <Route path="/calibrate" element={<Calibrate />} />
-            <Route path="/workbench" element={<div>工作台占位</div>} />
+            <Route path="/positioning" element={<div>定位页占位</div>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   adoptRate,
+  countAdoptedThisWeek,
   countSince,
   deriveHomeMode,
   homeGreeting,
@@ -36,6 +37,22 @@ describe('adoptRate', () => {
   it('空样本', () => expect(adoptRate([])).toEqual({ pct: 0, sample: 0 }));
   it('2/4 采用', () => {
     expect(adoptRate(['draft', 'pending', 'hot', 'rejected'])).toEqual({ pct: 50, sample: 4 });
+  });
+});
+
+describe('countAdoptedThisWeek', () => {
+  it('只计本周更新的平台生成稿', () => {
+    const since = new Date('2026-07-28T00:00:00');
+    expect(
+      countAdoptedThisWeek(
+        [
+          { source: 'platform_generated', updatedAt: '2026-07-29T12:00:00' },
+          { source: 'manual', updatedAt: '2026-07-29T12:00:00' },
+          { source: 'platform_generated', updatedAt: '2026-07-27T12:00:00' },
+        ],
+        since,
+      ),
+    ).toBe(1);
   });
 });
 

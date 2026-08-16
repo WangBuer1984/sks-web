@@ -1,5 +1,5 @@
 <!-- 段：知识库　条件：{{ isKb }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4922–4985 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4992–5062 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isKb }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 880px; margin: 0 auto;">
@@ -11,7 +11,7 @@
         <sc-if value="{{ kbEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 44px 40px; text-align: center;">
             <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">知识库还没有内容</div>
-            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">这里是「稿子像你」的原料——去创作一篇，点「直接采用」它就会存进来<br>也可以把以前写过的口播文案直接粘进来，支持 Markdown</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">这里是「稿子像你」的原料——去创作一篇，点「采用抖音版 / 采用视频号版」才会存进来<br>也可以把以前写过的口播文案直接粘进来，支持 Markdown</div>
             <div style="display: flex; gap: 10px; justify-content: center;">
               <button sc-camel-on-click="{{ goCreate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">去创作一篇</button>
               <button sc-camel-on-click="{{ openKbNew }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #f7f3ea;">粘贴一篇旧文案</button>
@@ -36,15 +36,22 @@
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <sc-for list="{{ kbList }}" as="k" hint-placeholder-count="4">
             <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 15px 20px;" style-hover="border-color: #8a5a2b;">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
                 <span style="font-size: 11px; font-weight: 700; color: {{ k.srcC }}; border: 1px solid {{ k.srcBd }}; background: {{ k.srcBg }}; padding: 3px 8px; border-radius: 4px; white-space: nowrap;">{{ k.source }}</span>
+                <sc-if value="{{ k.hasPlat }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-size: 11px; font-weight: 700; color: {{ k.platC }}; border: 1px solid {{ k.platBd }}; background: {{ k.platBg }}; padding: 3px 8px; border-radius: 4px; white-space: nowrap;">{{ k.plat }}</span>
+                </sc-if>
                 <div style="flex: 1; font-size: 14.5px; font-weight: 500; line-height: 1.5;">{{ k.title }}</div>
                 <span style="font-size: 11.5px; color: {{ k.stC }}; background: {{ k.stBg }}; padding: 3px 10px; border-radius: 12px; white-space: nowrap;">{{ k.status }}</span>
               </div>
               <div style="font-size: 12.5px; color: #8a8578; line-height: 1.65;">{{ k.excerpt }}</div>
+              <sc-if value="{{ k.hasPubs }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 11.5px; color: #8a8578; line-height: 1.6; margin-top: 8px;">{{ k.pubLine }}</div>
+              </sc-if>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
                 <span style="font-size: 11.5px; color: #a09a8a;">{{ k.meta }}</span>
-                <div style="margin-left: auto; display: flex; gap: 8px;">
+                <div style="margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button sc-camel-on-click="{{ k.reg }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="background: #f7f3ea;">登记发布</button>
                   <sc-if value="{{ k.isMine }}" hint-placeholder-val="{{ true }}">
                     <button sc-camel-on-click="{{ k.edit }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">编辑</button>
                   </sc-if>
@@ -60,7 +67,7 @@
         <sc-if value="{{ kbNoMatch }}" hint-placeholder-val="{{ false }}">
           <div style="border: 1px dashed #d8d2c4; border-radius: 10px; padding: 30px; text-align: center; color: #a09a8a; font-size: 13px;">没有匹配的内容——换个搜索词，或把筛选切回「全部」</div>
         </sc-if>
-        <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">创作页点「直接采用」的稿子会自动存进来；发布复盘判为爆款的自动打上「爆款」标签，之后创作优先参考。内容越厚，稿子越像你——维护知识库不扣额度。</div>
+        <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">采用后带平台标签进来。未发布的点「登记发布」只存链接，不抓数；同一篇可以再登记另一个平台。爆款只能复盘判出。</div>
         </sc-if>
       </div>
     </sc-if>

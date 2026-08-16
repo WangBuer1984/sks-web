@@ -1,7 +1,7 @@
 import type { PublicationView, ReviewBoardView, WeeklyReportRaw } from '../api/publication';
 
 export const PUBLICATION_STATE_LABELS: Record<PublicationView['state'], string> = {
-  registered: '待复盘',
+  registered: '已登记',
   hot: '爆款',
   plain: '平平',
   flop: '扑街',

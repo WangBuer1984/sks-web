@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  attemptRegister,
   extractShareUrl,
   routeVideoInput,
   validateLinkInput,
@@ -122,6 +123,49 @@ describe('validateLinkInput', () => {
     const v = validateLinkInput('纯文案没有链接');
     expect(v.ok).toBe(false);
     if (!v.ok) expect(v.message).toContain('未识别');
+  });
+});
+
+describe('attemptRegister', () => {
+  it('链接平台与所选一致 → 直接登记', () => {
+    const r = attemptRegister('https://v.douyin.com/abc/', 'douyin', false);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.needsConfirm).toBe(false);
+      expect(r.url).toBe('https://v.douyin.com/abc/');
+    }
+  });
+
+  it('看起来是视频号却选了抖音 → 第一次只提示', () => {
+    const r = attemptRegister('https://weixin.qq.com/sph/xxx', 'douyin', false);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.needsConfirm).toBe(true);
+      expect(r.message).toContain('视频号');
+      expect(r.message).toContain('抖音');
+      expect(r.message).toContain('再点一次');
+    }
+  });
+
+  it('看起来是抖音却选了视频号 → 第一次只提示', () => {
+    const r = attemptRegister('https://v.douyin.com/abc/', 'channels', false);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.needsConfirm).toBe(true);
+      expect(r.message).toContain('抖音');
+      expect(r.message).toContain('视频号');
+    }
+  });
+
+  it('提示后再点一次 → 按所选平台放行', () => {
+    const r = attemptRegister('https://weixin.qq.com/sph/xxx', 'douyin', true);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.needsConfirm).toBe(false);
+  });
+
+  it('非法链接仍拒绝', () => {
+    const r = attemptRegister('纯文案', 'douyin', false);
+    expect(r.ok).toBe(false);
   });
 });
 

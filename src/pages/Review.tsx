@@ -12,7 +12,7 @@ import {
   type AttributionView,
   type ReviewBoardView,
 } from '../api/publication';
-import { validateLinkInput } from './analyze/helpers';
+import { attemptRegister } from './analyze/helpers';
 import {
   PUBLICATION_STATE_LABELS,
   countReviewable,
@@ -33,6 +33,7 @@ export default function Review() {
   const [regFor, setRegFor] = useState<number | null>(null);
   const [regPlatform, setRegPlatform] = useState<Platform>('douyin');
   const [regUrl, setRegUrl] = useState('');
+  const [regConfirmMismatch, setRegConfirmMismatch] = useState(false);
   const [attrs, setAttrs] = useState<Record<number, AttributionView>>({});
 
   const { data: board, isLoading } = useQuery<ReviewBoardView>({
@@ -81,15 +82,27 @@ export default function Review() {
     onError: (e: unknown) => setError(getBizMessage(e, '生成本周复盘失败')),
   });
 
+  const tryRegister = () => {
+    const v = attemptRegister(regUrl, regPlatform, regConfirmMismatch);
+    if (!v.ok) {
+      setError(v.message);
+      return;
+    }
+    if (v.needsConfirm) {
+      setRegConfirmMismatch(true);
+      setError(v.message);
+      return;
+    }
+    setError(null);
+    regMut.mutate(v.url);
+  };
+
   const regMut = useMutation({
-    mutationFn: () => {
-      const v = validateLinkInput(regUrl);
-      if (!v.ok) throw new Error(v.message);
-      return registerPublication(regFor!, regPlatform, v.url);
-    },
+    mutationFn: (url: string) => registerPublication(regFor!, regPlatform, url),
     onSuccess: () => {
       setRegFor(null);
       setRegUrl('');
+      setRegConfirmMismatch(false);
       setBanner('已登记，五码仍为空。点「复盘」才会抓数。');
       refresh();
     },
@@ -167,6 +180,7 @@ export default function Review() {
                     setRegFor(c.contentId);
                     setRegPlatform((c.platform as Platform) || 'douyin');
                     setRegUrl('');
+                    setRegConfirmMismatch(false);
                   }}
                   className="rounded-chip border border-paper-primary px-3 py-1 text-copy text-paper-primary"
                 >
@@ -225,6 +239,14 @@ export default function Review() {
                 <p className="mt-2 text-caption text-paper-inkSoft">
                   {attrs[p.id].diagnosis}
                   {attrs[p.id].suggestions?.length ? ` · ${attrs[p.id].suggestions.join('；')}` : ''}
+                  <span className="mt-1 block text-paper-muted">
+                    这些建议不会自动写入档案。
+                    {attrs[p.id].voiceSuggestSaved && (
+                      <Link to="/positioning" className="ml-1 text-paper-primary hover:text-paper-primaryHover">
+                        去定位页确认
+                      </Link>
+                    )}
+                  </span>
                 </p>
               )}
             </div>
@@ -241,7 +263,10 @@ export default function Review() {
                 <button
                   key={p}
                   type="button"
-                  onClick={() => setRegPlatform(p)}
+                  onClick={() => {
+                    setRegPlatform(p);
+                    setRegConfirmMismatch(false);
+                  }}
                   className={
                     regPlatform === p
                       ? 'rounded-badge border border-paper-primary px-3 py-1 text-paper-primary'
@@ -254,7 +279,10 @@ export default function Review() {
             </div>
             <textarea
               value={regUrl}
-              onChange={(e) => setRegUrl(e.target.value)}
+              onChange={(e) => {
+                setRegUrl(e.target.value);
+                setRegConfirmMismatch(false);
+              }}
               rows={3}
               placeholder="粘贴抖音或视频号分享文案"
               className="mb-3 w-full rounded-card border px-3 py-2"
@@ -262,7 +290,7 @@ export default function Review() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => regMut.mutate()}
+                onClick={tryRegister}
                 className="rounded-card bg-paper-primary px-5 py-2 text-white"
               >
                 登记

@@ -44,3 +44,14 @@ export function adoptRate(states: string[]): { pct: number; sample: number } {
   const hit = states.filter((s) => ADOPTED.has(s)).length;
   return { pct: Math.round((hit / sample) * 100), sample };
 }
+
+/** 本周已采用：平台生成稿在本周有过更新（采用入库会写 updatedAt）。 */
+export function countAdoptedThisWeek(
+  items: { source: string; updatedAt: string }[],
+  since: Date,
+): number {
+  return countSince(
+    items.filter((c) => c.source === 'platform_generated').map((c) => c.updatedAt),
+    since,
+  );
+}

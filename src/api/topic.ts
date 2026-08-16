@@ -3,7 +3,7 @@ import { userClient } from './client';
 /**
  * 选题库（`/api/topics`，对齐 Java `TopicController` / `Topic` 实体）。
  *
- * <p>四路来源 `hot / faq / benchmark / replay`（每日热点 / 你的 FAQ / 对标拆解 / 爆款复盘）。
+ * <p>四路来源 `hot / faq / benchmark / replay`（历史热点 / 你的 FAQ / 对标拆解 / 爆款复盘）。
  * `GET` 不传 `source` 即聚合四路、按 `pillar` 排序；传其一则单路过滤。
  */
 
@@ -54,7 +54,3 @@ export function createTopic(
   return userClient.post<number, number>('/topics', { title, rationale, source });
 }
 
-/** @deprecated 热点选题入口已下线（D10）。端点保留一个兼容周期，新 UI 不再调用。 */
-export function refreshHotTopics(): Promise<number> {
-  return userClient.post<number, number>('/topics/refresh-hot', {});
-}

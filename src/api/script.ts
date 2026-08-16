@@ -84,7 +84,7 @@ export interface GenerationView {
 export function generateScript(
   topicId: number,
   platform?: string,
-  duration?: '45' | '90' | '180',
+  duration?: '45' | '90' | '180' | '300',
   framework?: string,
 ): Promise<GenerationView> {
   return userClient.post<GenerationView, GenerationView>('/scripts/generate', {

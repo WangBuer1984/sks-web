@@ -14,8 +14,10 @@ export interface ScriptViewProps {
   lazyLoading?: boolean;
   lazyHint?: string | null;
   adopted?: boolean;
+  editingKb?: boolean;
   onPlatform: (p: Platform) => void;
   onAdopt: () => void;
+  onSaveKb?: () => void;
   onRegenerate: () => void;
   onEdited: (s: ScriptDetail) => void;
 }
@@ -27,8 +29,10 @@ export default function ScriptView({
   lazyLoading,
   lazyHint,
   adopted,
+  editingKb,
   onPlatform,
   onAdopt,
+  onSaveKb,
   onRegenerate,
   onEdited,
 }: ScriptViewProps) {
@@ -62,9 +66,14 @@ export default function ScriptView({
         )}
         {script && !lazyLoading && (
           <>
-            {script.dedupWarnScriptId != null && (
+            {editingKb && (
+              <div className="mb-[18px] rounded-chip border border-paper-goldPale border-l-[3px] border-l-paper-primary bg-paper-tint px-3.5 py-2.5 text-caption leading-normal text-paper-inkSoft">
+                正在改知识库里的这篇 · 保存回写同一条，不扣额度。点「换个角度」会放弃改稿、重新生成一篇（扣 1 条）。
+              </div>
+            )}
+            {!editingKb && script.dedupWarnScriptId != null && (
               <div className="mb-[18px] rounded-chip border border-paper-dangerLine bg-paper-dangerTint px-3.5 py-2.5 text-caption leading-normal text-paper-danger">
-                本稿与历史稿件 #{script.dedupWarnScriptId} 相似度较高——可「换个角度」重写，或继续采用。
+                本稿与历史稿件 #{script.dedupWarnScriptId} 相似度较高——可「换个角度」重写，或继续采用。不挡住入库、不另扣额度。
               </div>
             )}
             <div className="flex flex-col gap-5">
@@ -79,17 +88,28 @@ export default function ScriptView({
               ))}
             </div>
             <div className="mt-[22px] flex flex-wrap gap-2.5 border-t border-paper-tintDeep pt-[18px]">
-              <button
-                type="button"
-                onClick={onAdopt}
-                disabled={adopted}
-                className="rounded-card bg-paper-primary px-5 py-2.5 text-body font-medium text-white hover:bg-paper-primaryHover disabled:opacity-45"
-              >
-                {adopted ? '已采用此版本' : adoptButtonLabel(platform)}
-              </button>
+              {editingKb ? (
+                <button
+                  type="button"
+                  onClick={onSaveKb}
+                  className="rounded-card bg-paper-primary px-5 py-2.5 text-body font-medium text-white hover:bg-paper-primaryHover"
+                >
+                  保存回知识库
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onAdopt}
+                  disabled={adopted}
+                  className="rounded-card bg-paper-primary px-5 py-2.5 text-body font-medium text-white hover:bg-paper-primaryHover disabled:opacity-45"
+                >
+                  {adopted ? '已采用' : adoptButtonLabel(platform)}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onRegenerate}
+                title="重新生成消耗 1 条额度"
                 className="rounded-card border border-paper-lineStrong px-5 py-2.5 text-body text-paper-inkSoft hover:border-paper-primary hover:text-paper-primary"
               >
                 换个角度

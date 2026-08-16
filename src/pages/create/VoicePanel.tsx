@@ -38,7 +38,7 @@ import {
  */
 const ROWS: VoiceFieldKey[] = [...VOICE_FIELD_KEYS];
 
-export default function VoicePanel() {
+export default function VoicePanel({ generated = false }: { generated?: boolean }) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<ProfileFieldDraft | null>(null);
@@ -94,14 +94,9 @@ export default function VoicePanel() {
   };
 
   return (
-    <section className="mb-[18px] rounded-block border border-paper-line bg-paper-card px-6 py-[18px]">
-      <div className="mb-2.5 flex items-baseline justify-between gap-3">
-        <div className="text-copy font-bold text-paper-ink">
-          人设声音
-          <span className="ml-2 text-hint font-normal text-paper-muted">
-            这次生成会按这三项来写——不对味就在这里改，改的是同一份定位档案
-          </span>
-        </div>
+    <section className="rounded-panel border border-paper-goldPale bg-paper-tint px-4 py-3.5">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <div className="text-copy font-bold text-paper-inkSoft">人设声音</div>
         {data?.calibrated && !editing && (
           <button
             type="button"
@@ -125,12 +120,17 @@ export default function VoicePanel() {
       {isLoading ? (
         <p className="text-caption text-paper-muted">加载中…</p>
       ) : !data?.calibrated ? (
-        <p className="text-caption leading-normal text-paper-mutedLight">
-          还没有定位档案，AI 只能写出「谁都能用」的通用文案。
-          <Link to="/positioning" className="ml-1 text-paper-primary hover:text-paper-primaryHover">
-            去做一次定位校准
+        <div>
+          <p className="mb-2.5 text-caption leading-normal text-paper-inkSoft">
+            还没有定位档案，这次生成的是通用版口播稿。花 15 分钟聊出档案，稿子才会像你本人写的。
+          </p>
+          <Link
+            to="/positioning"
+            className="block w-full rounded-chip border border-paper-primary px-2 py-2 text-center text-caption text-paper-primary hover:bg-paper-goldSoft"
+          >
+            去校准定位 →
           </Link>
-        </p>
+        </div>
       ) : editing && draft ? (
         <div className="flex flex-col gap-2.5">
           {ROWS.map((key) => (
@@ -178,26 +178,15 @@ export default function VoicePanel() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-2.5 text-copy">
+        <div className="flex flex-col gap-1.5 text-caption leading-normal text-paper-inkSoft">
           {ROWS.map((key) => {
             const value = profile[key];
             const list = isListField(key) ? ((value as string[] | undefined) ?? []) : null;
             return (
-              <div
-                key={key}
-                className={`rounded-card border px-3.5 py-3 ${
-                  key === 'redlines'
-                    ? 'border-paper-dangerLine bg-paper-dangerTint'
-                    : 'border-paper-tintDeep bg-paper-sunken'
-                }`}
-              >
-                <div
-                  className={`mb-1 text-hint font-bold ${
-                    key === 'redlines' ? 'text-paper-danger' : 'text-paper-primary'
-                  }`}
-                >
-                  {PROFILE_FIELD_LABELS[key]}
-                </div>
+              <div key={key}>
+                {key !== 'persona' && (
+                  <span className="text-paper-mutedLight">{PROFILE_FIELD_LABELS[key]} </span>
+                )}
                 {list ? (
                   list.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
@@ -223,6 +212,11 @@ export default function VoicePanel() {
               </div>
             );
           })}
+          <div className="mt-2.5 border-t border-dashed border-paper-goldSoft pt-2 text-hint leading-normal text-paper-primary">
+            {generated
+              ? '本稿已按这套人设生成 · 改了会回写定位档案'
+              : '这次生成就会用它 · 现在改完再点「生成口播稿」'}
+          </div>
         </div>
       )}
     </section>

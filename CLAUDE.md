@@ -13,7 +13,7 @@
 
 ## 视觉基准
 
-`prototypes/` 两份原型 HTML（C 端 + admin）是前端视觉基准，**只读不改**。
+`prototypes/` 是前端视觉基准。C 端已锁定为 `随口说原型-07191700.html`（规格：`docs/superpowers/specs/2026-08-16-c-end-prototype-design.md`）：手改 `extracted/full.html` 后跑 `node scripts/repack-prototype.mjs` 写回，不要用设计工具重新导出覆盖。Admin 原型仍只读。`随口说原型-2026-08-16.html` 已作废，不当基准。
 
 ## 契约
 

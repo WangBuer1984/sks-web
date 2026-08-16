@@ -22,7 +22,8 @@ import {
   type Platform,
   type PublicationView,
 } from '../api/content';
-import { validateLinkInput } from './analyze/helpers';
+import { attemptRegister } from './analyze/helpers';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { canEditInLibrary, isLibraryEmpty, platformLabel } from './kbMode';
 
 export default function KB() {
@@ -37,8 +38,10 @@ export default function KB() {
   const [registerFor, setRegisterFor] = useState<number | null>(null);
   const [regPlatform, setRegPlatform] = useState<Platform>('douyin');
   const [regUrl, setRegUrl] = useState('');
+  const [regConfirmMismatch, setRegConfirmMismatch] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<number | null>(focusId);
+  const [delTarget, setDelTarget] = useState<ContentSummary | null>(null);
 
   const filters: ContentFilters = useMemo(
     () => ({
@@ -85,20 +88,33 @@ export default function KB() {
     mutationFn: (id: number) => deleteContent(id),
     onSuccess: () => {
       setDetailId(null);
+      setDelTarget(null);
       invalidate();
     },
     onError: (e: unknown) => setFormError(getBizMessage(e, '删除失败')),
   });
 
+  const tryRegister = () => {
+    const v = attemptRegister(regUrl, regPlatform, regConfirmMismatch);
+    if (!v.ok) {
+      setFormError(v.message);
+      return;
+    }
+    if (v.needsConfirm) {
+      setRegConfirmMismatch(true);
+      setFormError(v.message);
+      return;
+    }
+    setFormError(null);
+    regMut.mutate(v.url);
+  };
+
   const regMut = useMutation({
-    mutationFn: () => {
-      const v = validateLinkInput(regUrl);
-      if (!v.ok) throw new Error(v.message);
-      return registerPublication(registerFor!, regPlatform, v.url);
-    },
+    mutationFn: (url: string) => registerPublication(registerFor!, regPlatform, url),
     onSuccess: () => {
       setRegisterFor(null);
       setRegUrl('');
+      setRegConfirmMismatch(false);
       setFormError(null);
       invalidate();
     },
@@ -113,7 +129,9 @@ export default function KB() {
         <h1 className="font-serif text-title font-black text-paper-ink">
           知识库
           <span className="ml-2 font-sans text-copy font-normal text-paper-mutedLight">
-            {items ? `${items.length} 篇内容` : ''}
+            {items
+              ? `共 ${items.length} 篇 · 其中爆款 ${items.filter((c) => c.state === 'hot').length} 篇`
+              : ''}
           </span>
         </h1>
         <button
@@ -128,49 +146,42 @@ export default function KB() {
         </button>
       </header>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="搜索标题或正文"
-          className="rounded-card border border-paper-lineStrong bg-paper-sunken px-3 py-2 text-copy outline-none focus:border-paper-primary"
-        />
-        <select
-          value={source}
-          onChange={(e) => setSource(e.target.value as ContentSource | '')}
-          className="rounded-card border border-paper-lineStrong bg-paper-card px-2 py-2 text-copy"
-        >
-          <option value="">全部来源</option>
-          {CONTENT_SOURCES.map((s) => (
-            <option key={s} value={s}>
-              {CONTENT_SOURCE_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={state}
-          onChange={(e) => setState(e.target.value as ContentState | '')}
-          className="rounded-card border border-paper-lineStrong bg-paper-card px-2 py-2 text-copy"
-        >
-          <option value="">全部状态</option>
-          {CONTENT_STATES.map((s) => (
-            <option key={s} value={s}>
-              {CONTENT_STATE_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value as Platform | '')}
-          className="rounded-card border border-paper-lineStrong bg-paper-card px-2 py-2 text-copy"
-        >
-          <option value="">全部平台</option>
-          {PLATFORMS.map((p) => (
-            <option key={p} value={p}>
-              {PLATFORM_LABELS[p]}
-            </option>
-          ))}
-        </select>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="搜索标题或正文…"
+        className="mb-2.5 w-full rounded-card border border-paper-lineStrong bg-paper-sunken px-3.5 py-2 text-copy outline-none focus:border-paper-primary"
+      />
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
+        <span className="mr-0.5 text-[11.5px] text-paper-mutedLight">来源</span>
+        <FilterChip active={source === ''} onClick={() => setSource('')}>
+          全部
+        </FilterChip>
+        {CONTENT_SOURCES.map((s) => (
+          <FilterChip key={s} active={source === s} onClick={() => setSource(s)}>
+            {CONTENT_SOURCE_LABELS[s]}
+          </FilterChip>
+        ))}
+        <span className="mx-1 text-paper-line">|</span>
+        <span className="mr-0.5 text-[11.5px] text-paper-mutedLight">状态</span>
+        <FilterChip active={state === ''} onClick={() => setState('')}>
+          全部
+        </FilterChip>
+        {CONTENT_STATES.map((s) => (
+          <FilterChip key={s} active={state === s} onClick={() => setState(s)}>
+            {CONTENT_STATE_LABELS[s]}
+          </FilterChip>
+        ))}
+        <span className="mx-1 text-paper-line">|</span>
+        <span className="mr-0.5 text-[11.5px] text-paper-mutedLight">平台</span>
+        <FilterChip active={platform === ''} onClick={() => setPlatform('')}>
+          全部
+        </FilterChip>
+        {PLATFORMS.map((p) => (
+          <FilterChip key={p} active={platform === p} onClick={() => setPlatform(p)}>
+            {PLATFORM_LABELS[p]}
+          </FilterChip>
+        ))}
       </div>
 
       {formError && <p className="mb-3 text-copy text-paper-danger">{formError}</p>}
@@ -183,15 +194,25 @@ export default function KB() {
         <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-11 text-center">
           <p className="mb-2 font-serif text-[18px] font-black text-paper-ink">知识库还是空的</p>
           <p className="mb-5 text-body leading-loose text-paper-inkSoft">
-            知识库是你写过的内容底仓。手写一篇，或在创作页采用某个平台版本后入库。
+            这里是「稿子像你」的原料——去创作一篇，点「采用抖音版 / 采用视频号版」才会存进来
+            <br />
+            也可以把以前写过的口播文案直接粘进来，支持 Markdown
           </p>
-          <button
-            type="button"
-            onClick={() => setEditor({ title: '', body: '' })}
-            className="rounded-panel bg-paper-primary px-6 py-3 text-body text-white hover:bg-paper-primaryHover"
-          >
-            先写一篇
-          </button>
+          <div className="flex justify-center gap-2.5">
+            <Link
+              to="/create"
+              className="rounded-panel bg-paper-primary px-6 py-3 text-body text-white hover:bg-paper-primaryHover hover:text-white"
+            >
+              去创作一篇
+            </Link>
+            <button
+              type="button"
+              onClick={() => setEditor({ title: '', body: '' })}
+              className="rounded-panel border border-paper-primary px-6 py-3 text-body text-paper-primary hover:bg-paper-tint"
+            >
+              粘贴一篇旧文案
+            </button>
+          </div>
         </div>
       )}
 
@@ -226,6 +247,7 @@ export default function KB() {
                     setRegisterFor(c.id);
                     setRegPlatform(c.platform ?? 'douyin');
                     setRegUrl('');
+                    setRegConfirmMismatch(false);
                     setFormError(null);
                   }}
                   className="rounded-chip border border-paper-primary px-3 py-1 text-copy text-paper-primary"
@@ -254,7 +276,7 @@ export default function KB() {
                 )}
                 <button
                   type="button"
-                  onClick={() => delMut.mutate(c.id)}
+                  onClick={() => setDelTarget(c)}
                   className="rounded-chip border border-paper-lineStrong px-3 py-1 text-copy text-paper-muted"
                 >
                   删除
@@ -311,17 +333,34 @@ export default function KB() {
         </div>
       )}
 
+      {delTarget && (
+        <ConfirmDialog
+          title={`确认删除「${delTarget.title}」？`}
+          hint="删了之后的生成不再参考这篇。此操作不能撤销。"
+          pending={delMut.isPending}
+          onCancel={() => {
+            if (!delMut.isPending) setDelTarget(null);
+          }}
+          onConfirm={() => delMut.mutate(delTarget.id)}
+        />
+      )}
+
       {registerFor != null && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 p-4">
           <div className="w-full max-w-[440px] rounded-block border border-paper-line bg-paper-card p-6">
             <h2 className="mb-2 font-serif text-sub font-black">登记发布</h2>
-            <p className="mb-3 text-caption text-paper-muted">只保存平台和链接，不会抓数据。复盘请到发布复盘页点「复盘」。</p>
+            <p className="mb-3 text-caption text-paper-muted">
+              只保存平台和链接，不会抓数据。同一篇可以再登记另一个平台。复盘请到发布复盘页点「复盘」。
+            </p>
             <div className="mb-2 flex gap-2">
               {PLATFORMS.map((p) => (
                 <button
                   key={p}
                   type="button"
-                  onClick={() => setRegPlatform(p)}
+                  onClick={() => {
+                    setRegPlatform(p);
+                    setRegConfirmMismatch(false);
+                  }}
                   className={
                     regPlatform === p
                       ? 'rounded-badge border border-paper-primary bg-paper-tint px-3 py-1 text-copy text-paper-primary'
@@ -334,7 +373,10 @@ export default function KB() {
             </div>
             <textarea
               value={regUrl}
-              onChange={(e) => setRegUrl(e.target.value)}
+              onChange={(e) => {
+                setRegUrl(e.target.value);
+                setRegConfirmMismatch(false);
+              }}
               placeholder="粘贴抖音或视频号分享文案"
               rows={3}
               className="mb-3 w-full rounded-card border border-paper-lineStrong px-3 py-2 text-copy"
@@ -343,7 +385,7 @@ export default function KB() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => regMut.mutate()}
+                onClick={tryRegister}
                 disabled={regMut.isPending || !regUrl.trim()}
                 className="rounded-card bg-paper-primary px-5 py-2 text-white disabled:opacity-45"
               >
@@ -360,6 +402,30 @@ export default function KB() {
   );
 }
 
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        active
+          ? 'whitespace-nowrap rounded-badge border border-paper-primary bg-paper-tint px-3 py-[5px] text-meta text-paper-primary'
+          : 'whitespace-nowrap rounded-badge border border-paper-lineStrong bg-paper-card px-3 py-[5px] text-meta text-paper-inkSoft hover:border-paper-primary'
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
 function PublicationList({ pubs }: { pubs: PublicationView[] }) {
   if (pubs.length === 0) {
     return <p className="mt-3 text-meta text-paper-muted">还没有发布记录。</p>;
@@ -369,7 +435,7 @@ function PublicationList({ pubs }: { pubs: PublicationView[] }) {
       {pubs.map((p) => (
         <li key={p.id} className="text-meta text-paper-inkSoft">
           {PLATFORM_LABELS[p.platform]} · {p.state} · {p.publishUrl}
-          {p.reviewedAt == null && ' · 五码为空，待复盘'}
+          {p.reviewedAt == null && ' · 已登记 · 还没抓数据'}
         </li>
       ))}
     </ul>

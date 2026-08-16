@@ -51,7 +51,7 @@ function renderPanel() {
     invalidateSpy: vi.spyOn(queryClient, 'invalidateQueries'),
     ...render(
       <QueryClientProvider client={queryClient}>
-        {/* 未校准态里有「去做一次定位校准」链接，需要 router 上下文（真实使用中创作页也在 router 内） */}
+        {/* 未校准态里有「去校准定位」链接，需要 router 上下文（真实使用中创作页也在 router 内） */}
         <MemoryRouter>
           <VoicePanel />
         </MemoryRouter>

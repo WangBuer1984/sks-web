@@ -31,6 +31,8 @@ vi.mock('../api/profile', async () => {
     reorderFaqs: vi.fn(),
     createTopicFromFaq: vi.fn(),
     updateProfileFields: vi.fn(),
+    acceptVoiceSuggestion: vi.fn(),
+    dismissVoiceSuggestion: vi.fn(),
   };
 });
 
@@ -133,12 +135,14 @@ describe('定位页：保存竞态与精确失效', () => {
     invalidateSpy.mockClear();
 
     await user.click(screen.getAllByRole('button', { name: '删除' })[0]);
+    expect(api.deleteFaq).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: '确认删除' }));
 
     await waitFor(() => expect(api.deleteFaq).toHaveBeenCalledWith(11));
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile', 'faqs'], exact: true });
   });
 
-  it('FAQ 生成选题成功后精确失效 ["topics"]', async () => {
+  it('FAQ 生成选题成功后精确失效 ["topics"]，并渲染刚生成链接', async () => {
     const user = userEvent.setup();
     const { invalidateSpy } = renderPage();
     await screen.findByText('报价为什么差一倍');
@@ -148,6 +152,15 @@ describe('定位页：保存竞态与精确失效', () => {
 
     await waitFor(() => expect(api.createTopicFromFaq).toHaveBeenCalledWith(11));
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['topics'], exact: true });
+    const link = await screen.findByRole('link', { name: '去选题库看刚生成的那条' });
+    expect(link.getAttribute('href')).toBe('/topics?fresh=77');
+
+    await user.click(screen.getAllByRole('button', { name: '删除' })[0]);
+    await user.click(screen.getByRole('button', { name: '确认删除' }));
+    await waitFor(() => expect(api.deleteFaq).toHaveBeenCalledWith(11));
+    expect(screen.getByRole('link', { name: '去选题库看刚生成的那条' }).getAttribute('href')).toBe(
+      '/topics?fresh=77',
+    );
   });
 
   it('普通「编辑后取消」仍然不发请求、不动 cache', async () => {

@@ -115,7 +115,7 @@ export default function Calibrate() {
         queryClient.invalidateQueries({ queryKey: ['profile'], exact: true }),
         queryClient.invalidateQueries({ queryKey: ['profile', 'faqs'], exact: true }),
       ]);
-      navigate('/workbench');
+      navigate('/positioning');
     },
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
   });
@@ -245,10 +245,10 @@ export default function Calibrate() {
       <header className="mb-[18px] flex items-center justify-between">
         <h1 className="font-serif text-title font-black text-paper-ink">校准定位</h1>
         <Link
-          to="/workbench"
+          to="/positioning"
           className="text-copy text-paper-muted transition hover:text-paper-primary"
         >
-          保存并退出
+          退出不保存
         </Link>
       </header>
 

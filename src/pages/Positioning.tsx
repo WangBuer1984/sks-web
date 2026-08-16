@@ -4,9 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import {
   PROFILE_FIELD_KEYS,
+  acceptVoiceSuggestion,
   createFaq,
   createTopicFromFaq,
   deleteFaq,
+  dismissVoiceSuggestion,
   getActiveProfile,
   interviewHistory,
   listFaqs,
@@ -18,7 +20,8 @@ import {
   type InterviewHistoryView,
   type ProfileFieldKey,
 } from '../api/profile';
-import { shouldShowReplay } from './positioningMode';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { shouldShowReplay, voiceSuggestText } from './positioningMode';
 import { faqDraftError, moveFaq } from './faqMode';
 import {
   PROFILE_FIELD_HINTS,
@@ -56,6 +59,8 @@ export default function Positioning() {
   const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
   const [editFaqId, setEditFaqId] = useState<number | null>(null);
   const [faqDraft, setFaqDraft] = useState({ question: '', answer: '' });
+  const [faqToDelete, setFaqToDelete] = useState<FaqView | null>(null);
+  const [freshTopicId, setFreshTopicId] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery<ActiveProfileView>({
     queryKey: ['profile'],
@@ -76,6 +81,18 @@ export default function Positioning() {
 
   // 档案字段保存：只提交改动的键（部分更新）。成功后只失效档案本身——
   // exact 是有意的：FAQ 列表与回放挂在 ['profile', …] 下，改口吻不该顺手重拉它们。
+  const pending = data?.pendingSuggestion;
+  const showVoiceSuggest = !!(pending?.tone?.trim() || pending?.redlines?.trim());
+
+  const suggestMut = useMutation({
+    mutationFn: (action: 'accept' | 'dismiss') =>
+      action === 'accept' ? acceptVoiceSuggestion() : dismissVoiceSuggestion(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['profile'], exact: true });
+    },
+    onError: (e: unknown) => setSaveError(getBizMessage(e, '操作失败')),
+  });
+
   const fieldsMut = useMutation({
     mutationFn: (patch: Parameters<typeof updateProfileFields>[0]) => updateProfileFields(patch),
     onSuccess: () => {
@@ -118,6 +135,7 @@ export default function Positioning() {
     mutationFn: (id: number) => deleteFaq(id),
     onSuccess: () => {
       invalidateFaqs();
+      setFaqToDelete(null);
       setFaqError(null);
       setFaqMsg('已删除——由它生成的选题保留在选题库');
     },
@@ -135,10 +153,11 @@ export default function Positioning() {
 
   const faqTopicMut = useMutation({
     mutationFn: (id: number) => createTopicFromFaq(id),
-    onSuccess: () => {
+    onSuccess: (topicId) => {
       void queryClient.invalidateQueries({ queryKey: ['topics'], exact: true });
       setFaqError(null);
-      setFaqMsg('已写入选题库，可去「选题库」生成文案');
+      setFreshTopicId(topicId);
+      setFaqMsg('已写入选题库');
     },
     onError: (e: unknown) => setFaqError(getBizMessage(e, '生成选题失败')),
   });
@@ -276,6 +295,29 @@ export default function Positioning() {
         <div className="grid grid-cols-[1fr_340px] gap-[18px]">
           <div className="flex flex-col gap-3.5">
             <section className="rounded-block border border-paper-line bg-paper-card px-6 py-5">
+              {showVoiceSuggest && pending && (
+                <div className="mb-3.5 rounded-card border border-dashed border-paper-goldSoft bg-paper-tint px-3.5 py-3 text-caption leading-normal text-paper-inkSoft">
+                  {voiceSuggestText(pending)}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={suggestMut.isPending}
+                      onClick={() => suggestMut.mutate('accept')}
+                      className="rounded-chip bg-paper-primary px-3 py-1.5 text-meta text-white hover:bg-paper-primaryHover disabled:opacity-45"
+                    >
+                      采纳建议
+                    </button>
+                    <button
+                      type="button"
+                      disabled={suggestMut.isPending}
+                      onClick={() => suggestMut.mutate('dismiss')}
+                      className="rounded-chip border border-paper-lineStrong px-3 py-1.5 text-meta text-paper-inkSoft hover:border-paper-primary hover:text-paper-primary disabled:opacity-45"
+                    >
+                      忽略
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="mb-3.5 flex items-baseline justify-between gap-3">
                 <h2 className="font-sans text-copy font-bold">定位档案</h2>
                 <div className="flex items-baseline gap-3">
@@ -430,6 +472,16 @@ export default function Positioning() {
               {faqMsg && !faqError && (
                 <p className="mb-3 text-meta text-paper-muted">{faqMsg}</p>
               )}
+              {freshTopicId != null && (
+                <p className="mb-3 text-meta text-paper-muted">
+                  <Link
+                    to={`/topics?fresh=${freshTopicId}`}
+                    className="text-paper-primary hover:text-paper-primaryHover"
+                  >
+                    去选题库看刚生成的那条
+                  </Link>
+                </p>
+              )}
 
               {(faqs ?? []).length === 0 ? (
                 <p className="mb-3.5 rounded-card border border-dashed border-paper-lineStrong px-3.5 py-4 text-caption text-paper-mutedLight">
@@ -531,7 +583,7 @@ export default function Positioning() {
                             <button
                               type="button"
                               disabled={faqBusy}
-                              onClick={() => deleteFaqMut.mutate(f.id)}
+                              onClick={() => setFaqToDelete(f)}
                               className="rounded-chip border border-paper-lineStrong px-3 py-[5px] text-hint text-paper-muted hover:border-paper-danger hover:text-paper-danger disabled:opacity-45"
                             >
                               删除
@@ -605,6 +657,18 @@ export default function Positioning() {
             </Link>
           </aside>
         </div>
+      )}
+
+      {faqToDelete && (
+        <ConfirmDialog
+          title={`确认删除「${faqToDelete.question}」？`}
+          hint="已生成的选题还会留在选题库，并标「原问答已删除」。"
+          pending={deleteFaqMut.isPending}
+          onCancel={() => {
+            if (!deleteFaqMut.isPending) setFaqToDelete(null);
+          }}
+          onConfirm={() => deleteFaqMut.mutate(faqToDelete.id)}
+        />
       )}
     </div>
   );

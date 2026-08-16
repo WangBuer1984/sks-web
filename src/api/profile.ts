@@ -77,11 +77,19 @@ export function confirmProfile(
  *
  * <p>未校准不是错误：`calibrated=false` + `content={}`，据此渲染引导态而非报错。
  */
+/** 复盘归因留下的口吻 / 红线补丁。未确认前不进 content。 */
+export interface PendingVoiceSuggestion {
+  tone?: string | null;
+  redlines?: string | null;
+  reason?: string | null;
+}
+
 export interface ActiveProfileView {
   calibrated: boolean;
   version: number | null;
   calibratedAt: string | null;
   content: Record<string, unknown>;
+  pendingSuggestion?: PendingVoiceSuggestion | null;
 }
 
 /** 读取当前用户的 active 定位档案。未校准返回 calibrated=false（非 404）。 */
@@ -252,4 +260,14 @@ export interface InterviewHistoryView {
 /** 回放面板：读当前 active 档案 confirm 时入库的访谈问答。未校准/旧档案 → found=false。 */
 export function interviewHistory(): Promise<InterviewHistoryView> {
   return userClient.get<InterviewHistoryView, InterviewHistoryView>('/profile/interview/history');
+}
+
+/** 采纳复盘留下的口吻 / 红线建议：写入档案并清掉待确认条。 */
+export function acceptVoiceSuggestion(): Promise<ActiveProfileView> {
+  return userClient.post<ActiveProfileView, ActiveProfileView>('/profile/suggestion/accept', {});
+}
+
+/** 忽略建议：档案不动，只清掉待确认条。 */
+export function dismissVoiceSuggestion(): Promise<ActiveProfileView> {
+  return userClient.post<ActiveProfileView, ActiveProfileView>('/profile/suggestion/dismiss', {});
 }

@@ -1,5 +1,5 @@
 <!-- 段：文案创作　条件：{{ isCreate }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4598–4727 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4661–4797 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isCreate }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 1040px; margin: 0 auto;">
@@ -9,11 +9,12 @@
         <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
           <div style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">这条视频想讲什么？</div>
           <textarea value="{{ topic }}" sc-camel-on-change="{{ onTopic }}" placeholder="输入关键词、一句话选题，或粘贴要仿写的爆款文案…" style="width: 100%; height: 72px; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
-          <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
             <span style="font-size: 12px; color: #8a8578;">时长</span>
-            <span style="font-size: 12.5px; border: 1px solid #8a5a2b; color: #8a5a2b; background: #f7f3ea; border-radius: 20px; padding: 5px 14px;">45 秒口播</span>
-            <span style="font-size: 12.5px; border: 1px solid #d8d2c4; color: #6b6558; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">90 秒</span>
-            <span style="font-size: 12.5px; border: 1px solid #d8d2c4; color: #6b6558; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">3 分钟深度</span>
+            <span sc-camel-on-click="{{ setDur45 }}" style="font-size: 12.5px; border: 1px solid {{ dur45Bd }}; color: {{ dur45C }}; background: {{ dur45Bg }}; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">45 秒口播</span>
+            <span sc-camel-on-click="{{ setDur90 }}" style="font-size: 12.5px; border: 1px solid {{ dur90Bd }}; color: {{ dur90C }}; background: {{ dur90Bg }}; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">90 秒</span>
+            <span sc-camel-on-click="{{ setDur180 }}" style="font-size: 12.5px; border: 1px solid {{ dur180Bd }}; color: {{ dur180C }}; background: {{ dur180Bg }}; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">3 分钟深度</span>
+            <span sc-camel-on-click="{{ setDur300 }}" style="font-size: 12.5px; border: 1px solid {{ dur300Bd }}; color: {{ dur300C }}; background: {{ dur300Bg }}; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">5 分钟</span>
             <button sc-camel-on-click="{{ generate }}" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ genBtnLabel }}</button>
           </div>
         </div>
@@ -28,15 +29,18 @@
             <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; overflow: hidden; animation: slideup 0.4s ease;">
               <div style="display: flex; border-bottom: 1px solid #e2dccd; background: #faf8f2;">
                 <div sc-camel-on-click="{{ setDouyin }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ douyinWeight }}; color: {{ douyinColor }}; border-bottom: 2px solid {{ douyinBorder }};">抖音口播稿</div>
-                <div sc-camel-on-click="{{ setGzh }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ gzhWeight }}; color: {{ gzhColor }}; border-bottom: 2px solid {{ gzhBorder }};">视频号版（切换时生成）</div>
+                <div sc-camel-on-click="{{ setGzh }}" style="padding: 12px 20px; font-size: 13.5px; cursor: pointer; font-weight: {{ gzhWeight }}; color: {{ gzhColor }}; border-bottom: 2px solid {{ gzhBorder }};">视频号版</div>
               </div>
               <div style="padding: 24px 26px;">
+                <sc-if value="{{ gzhLazyHint }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 12.5px; color: #8a5a2b; margin-bottom: 12px;">视频号版刚生成 · 不另扣额度</div>
+                </sc-if>
                 <sc-if value="{{ editingKb }}" hint-placeholder-val="{{ false }}">
                   <div style="background: #f7f3ea; border: 1px solid #dcc6a4; border-left: 3px solid #8a5a2b; border-radius: 6px; padding: 9px 14px; font-size: 12.5px; color: #6b6558; margin-bottom: 18px;">正在改知识库里的这篇 · 保存回写同一条，不扣额度。点「换个角度」会放弃改稿、重新生成一篇（扣 1 条）。</div>
                   <textarea value="{{ kbDraftText }}" sc-camel-on-change="{{ onKbDraftText }}" style="width: 100%; height: 280px; border: 1px solid #d8d2c4; border-radius: 8px; padding: 14px 16px; font-size: 14.5px; line-height: 1.9; resize: vertical; background: #faf8f2; color: #23231f; outline: none;"></textarea>
                 </sc-if>
                 <sc-if value="{{ notEditingKb }}" hint-placeholder-val="{{ true }}">
-                <div style="background: #faf0ec; border: 1px solid #e4b9ab; border-radius: 6px; padding: 9px 14px; font-size: 12.5px; color: #b0492f; margin-bottom: 18px;">查重提醒：「报价差一倍」角度与你 6 月 28 日的稿件相似度 41%，本稿已自动换用「拆报价单」切入。</div>
+                <div style="background: #faf0ec; border: 1px solid #e4b9ab; border-radius: 6px; padding: 9px 14px; font-size: 12.5px; color: #b0492f; margin-bottom: 18px;">这篇和《同样是做柜子，为什么报价能差一倍？》相似度高，可换个角度或继续采用。不挡住入库、不另扣额度。</div>
                 <sc-if value="{{ isDouyin }}" hint-placeholder-val="{{ true }}">
                   <div style="font-size: 15px; line-height: 2; color: #23231f;">
                     <p style="margin: 0 0 14px;"><strong style="color: #8a5a2b;">【开场钩子 0–5s】</strong><br>同样一套柜子，别人报 3 万，我报 1 万 6，是我在亏本做慈善吗？不是，今天我把报价单拆开给你看。</p>
@@ -113,8 +117,11 @@
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <sc-for list="{{ citedList }}" as="c" hint-placeholder-count="2">
                 <div sc-camel-on-click="{{ c.open }}" style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 14px 16px; cursor: pointer;" style-hover="border-color: #8a5a2b;">
-                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap;">
                     <span style="font-size: 11px; font-weight: 700; color: {{ c.srcC }}; border: 1px solid {{ c.srcBd }}; background: {{ c.srcBg }}; padding: 2px 7px; border-radius: 4px; white-space: nowrap;">{{ c.source }}</span>
+                    <sc-if value="{{ c.hasPlat }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size: 11px; font-weight: 700; color: {{ c.platC }}; border: 1px solid {{ c.platBd }}; background: {{ c.platBg }}; padding: 2px 7px; border-radius: 4px; white-space: nowrap;">{{ c.plat }}</span>
+                    </sc-if>
                     <span style="font-size: 11px; color: #a09a8a;">{{ c.relevance }}</span>
                   </div>
                   <div style="font-size: 13.5px; font-weight: 500; margin-bottom: 4px; line-height: 1.5;">{{ c.title }}</div>
@@ -123,7 +130,7 @@
               </sc-for>
             </div>
             <sc-if value="{{ citedSome }}" hint-placeholder-val="{{ true }}">
-              <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">按这句选题从知识库整篇检索，命中 2 篇。文中下划线处即参考位置，悬停看来源。觉得参考得不对？去知识库改或删那篇内容。</div>
+              <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">{{ citedNote }}</div>
             </sc-if>
           </sc-if>
         </div>

@@ -1,5 +1,5 @@
 <!-- 段：账号定位　条件：{{ isPos }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4505–4563 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4517–4626 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isPos }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 1040px; margin: 0 auto;">
@@ -22,15 +22,26 @@
         <div style="display: grid; grid-template-columns: 1fr 340px; gap: 18px;">
           <div style="display: flex; flex-direction: column; gap: 14px;">
             <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <sc-if value="{{ voiceSuggest }}" hint-placeholder-val="{{ true }}">
+                <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-size: 12.5px; color: #6b6558; line-height: 1.7;">
+                  复盘后建议把口吻改成「先给数字，再讲故事」——<strong style="color: #8a5a2b;">点确认才写入档案</strong>，AI 不会悄悄改。
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button sc-camel-on-click="{{ acceptVoiceSuggest }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer;" style-hover="background: #6e4620;">采纳建议</button>
+                    <button sc-camel-on-click="{{ dismissVoiceSuggest }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">忽略</button>
+                  </div>
+                </div>
+              </sc-if>
               <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px;">
                 <div style="font-size: 13px; font-weight: 700;">定位档案</div>
-                <div style="font-size: 11px; color: #4a8c5c;">✓ 已校准 · 基于 31 次改稿记录持续更新</div>
+                <div style="font-size: 11px; color: #4a8c5c;">✓ 已校准 · AI 不会悄悄改档案</div>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
                 <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">人设</div><div style="line-height: 1.6;">说真话的工厂人 · 12 年全屋定制工厂主</div></div>
                 <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">目标人群</div><div style="line-height: 1.6;">30–45 岁装修业主，怕被坑、比价中</div></div>
                 <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">差异化</div><div style="line-height: 1.6;">工厂直营视角拆行业内幕，敢报真实价格</div></div>
                 <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">转化路径</div><div style="line-height: 1.6;">评论扣字 → 私域群 → 免费拆报价单 → 到店</div></div>
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">口吻</div><div style="line-height: 1.6;">直接、爱用数字、先给结论再给理由</div></div>
+                <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">红线</div><div style="line-height: 1.6;">不承诺零甲醛 · 不贬低具体同行 · 不说「家人们」</div></div>
               </div>
             </div>
             <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
@@ -40,6 +51,46 @@
                 <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>避坑清单</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 30%; background: #c89a5e; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">30%</span></div>
                 <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>客户案例</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 20%; background: #4a8c5c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">20%</span></div>
                 <div style="display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center;"><span>产品种草</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 10%; background: #4a6c8c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 12px;">10%</span></div>
+              </div>
+            </div>
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px;">高频问答</div>
+              <div style="font-size: 12px; color: #8a8578; margin-bottom: 12px;">属于定位档案。点「生成选题」才会进选题库。顺序由你排，不代表咨询频率。</div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <sc-for list="{{ faqList }}" as="f" hint-placeholder-count="2">
+                  <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 10px 12px;">
+                    <sc-if value="{{ f.editing }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input value="{{ faqEditText }}" sc-camel-on-change="{{ onFaqEdit }}" placeholder="观众常问的问题" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 6px; padding: 8px 10px; font-size: 13px; background: #fff; color: #23231f; outline: none;">
+                        <input value="{{ faqEditA }}" sc-camel-on-change="{{ onFaqEditA }}" placeholder="你平时怎么回答（可留空）" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 6px; padding: 8px 10px; font-size: 13px; background: #fff; color: #23231f; outline: none;">
+                        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                          <span sc-camel-on-click="{{ cancelFaqEdit }}" style="font-size: 12px; color: #8a8578; cursor: pointer; padding: 6px 0;" style-hover="color: #8a5a2b;">取消</span>
+                          <button sc-camel-on-click="{{ saveFaqEdit }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 6px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; white-space: nowrap;" style-hover="background: #6e4620;">保存</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ f.notEditing }}" hint-placeholder-val="{{ true }}">
+                      <div style="display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;">
+                        <span sc-camel-on-click="{{ f.up }}" style="font-size: 12px; color: {{ f.upC }}; cursor: pointer; padding: 2px 6px; border: 1px solid #e2dccd; border-radius: 4px; margin-top: 2px;" style-hover="border-color: #8a5a2b;">↑</span>
+                        <span sc-camel-on-click="{{ f.down }}" style="font-size: 12px; color: {{ f.downC }}; cursor: pointer; padding: 2px 6px; border: 1px solid #e2dccd; border-radius: 4px; margin-top: 2px;" style-hover="border-color: #8a5a2b;">↓</span>
+                        <div style="flex: 1; min-width: 160px;">
+                          <div style="font-size: 13.5px; line-height: 1.5;">{{ f.q }}</div>
+                          <div style="font-size: 12px; color: #8a8578; line-height: 1.5; margin-top: 4px;">{{ f.aHint }}</div>
+                        </div>
+                        <button sc-camel-on-click="{{ f.gen }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; white-space: nowrap;" style-hover="background: #f7f3ea;">{{ f.genLabel }}</button>
+                        <span sc-camel-on-click="{{ f.edit }}" style="font-size: 12px; color: #8a8578; cursor: pointer; padding-top: 6px;" style-hover="color: #8a5a2b;">编辑</span>
+                        <span sc-camel-on-click="{{ f.del }}" style="font-size: 12px; color: #8a8578; cursor: pointer; padding-top: 6px;" style-hover="color: #b0492f;">删除</span>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px; background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 8px; padding: 12px;">
+                  <input value="{{ faqNew }}" sc-camel-on-change="{{ onFaqNew }}" placeholder="再加一句客户常问的话" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 9px 12px; font-size: 13px; background: #fff; color: #23231f; outline: none;">
+                  <input value="{{ faqNewA }}" sc-camel-on-change="{{ onFaqNewA }}" placeholder="你平时怎么回答（可留空，答案后补）" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 9px 12px; font-size: 13px; background: #fff; color: #23231f; outline: none;">
+                  <div style="display: flex; justify-content: flex-end;">
+                    <button sc-camel-on-click="{{ addFaq }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #f2ead8;">添加问答</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

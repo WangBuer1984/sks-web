@@ -1,11 +1,11 @@
 <!-- 段：校准对话　条件：{{ isCalib }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4433–4503 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4433–4515 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isCalib }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 720px; margin: 0 auto;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
           <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900;">校准定位</div>
-          <div sc-camel-on-click="{{ exitCalib }}" style="font-size: 13px; color: #8a8578; cursor: pointer;" style-hover="color: #8a5a2b;">保存并退出</div>
+          <div sc-camel-on-click="{{ exitCalib }}" style="font-size: 13px; color: #8a8578; cursor: pointer;" style-hover="color: #8a5a2b;">退出不保存</div>
         </div>
         <div style="display: flex; gap: 6px; margin-bottom: 22px;">
           <div style="flex: 1; height: 5px; border-radius: 3px; background: {{ calibBar1 }};"></div>
@@ -61,6 +61,18 @@
               <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">目标人群</div><div style="line-height: 1.6;">30–45 岁装修业主，怕被坑、比价中</div></div>
               <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">差异化</div><div style="line-height: 1.6;">工厂直营视角拆行业内幕，敢报真实价格</div></div>
               <div style="background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 12px 14px;"><div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 4px;">表达红线</div><div style="line-height: 1.6;">不贬低具体同行品牌 · 不承诺零甲醛</div></div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">要不要留下这些客户问答？</div>
+            <div style="font-size: 12px; color: #8a8578; margin-bottom: 10px;">默认都不勾，不勾也能完成。勾了的会进定位档案，之后你可以再点「生成选题」。</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; font-size: 13px;">
+              <div sc-camel-on-click="{{ toggleFaq1 }}" style="display: flex; align-items: center; gap: 10px; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 10px 12px; cursor: pointer;">
+                <span style="width: 16px; height: 16px; border-radius: 4px; border: 1px solid #8a5a2b; background: {{ faq1Bg }};"></span>
+                <span>同样是做柜子，为什么报价能差一倍？</span>
+              </div>
+              <div sc-camel-on-click="{{ toggleFaq2 }}" style="display: flex; align-items: center; gap: 10px; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 10px 12px; cursor: pointer;">
+                <span style="width: 16px; height: 16px; border-radius: 4px; border: 1px solid #8a5a2b; background: {{ faq2Bg }};"></span>
+                <span>定制柜的甲醛到底多久能散？</span>
+              </div>
             </div>
             <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 6px; padding: 12px 16px; font-size: 12.5px; line-height: 1.7; margin-bottom: 18px;">试试效果：同一个选题「报价为什么差一倍」——<br><span style="color: #8a8578;">无档案版开头：</span>「今天教大家如何看懂全屋定制报价单…」<br><span style="color: #8a5a2b; font-weight: 700;">有档案版开头：</span>「同样一套柜子，别人报 3 万我报 1 万 6，是我在做慈善吗？」</div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">

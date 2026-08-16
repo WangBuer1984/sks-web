@@ -1,8 +1,14 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { listTopics, type Topic } from '../api/topic';
 import { topicSourceMeta } from '../lib/topicSourceMeta';
 import { topicFaqOrigin } from '../lib/topicFaqOrigin';
+import {
+  freshTopicIdFromSearch,
+  isFreshMissing,
+  isFreshTopic,
+  orderTopicsWithFresh,
+} from './topicsMode';
 
 /**
  * 选题库 `/topics`——对齐原型 `sections/12-选题库.html`。
@@ -48,12 +54,17 @@ function parseTopicSrc(t: Topic): {
 
 export default function Topics() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const freshId = freshTopicIdFromSearch(params.toString());
   const { data: topics, isLoading } = useQuery<Topic[]>({
     queryKey: ['topics'],
     queryFn: () => listTopics(),
   });
 
-  const pending = (topics ?? []).filter((t) => t.status === 'open');
+  const pending = orderTopicsWithFresh(
+    (topics ?? []).filter((t) => t.status === 'open'),
+    freshId,
+  );
 
   return (
     <div className="mx-auto max-w-[880px]">
@@ -68,6 +79,11 @@ export default function Topics() {
       <p className="mb-5 text-lead text-paper-muted">
         选题来自三个入口：你的 FAQ、对标拆解、爆款复盘。FAQ 需在定位页点「生成选题」后才会出现在这里。
       </p>
+      {!isLoading && isFreshMissing(pending, freshId) && (
+        <p className="mb-3 text-meta text-paper-muted">
+          刚生成的那条不在当前待拍列表里（可能已采用或已删除）。
+        </p>
+      )}
 
       {isLoading ? (
         <p className="text-copy text-paper-muted">加载中…</p>
@@ -109,7 +125,11 @@ export default function Topics() {
             return (
               <div
                 key={t.id}
-                className="flex items-center gap-4 rounded-panel border border-paper-line bg-paper-card px-5 py-4"
+                className={
+                  isFreshTopic(t.id, freshId)
+                    ? 'flex items-center gap-4 rounded-panel border border-paper-primary bg-paper-card px-5 py-4'
+                    : 'flex items-center gap-4 rounded-panel border border-paper-line bg-paper-card px-5 py-4'
+                }
               >
                 <span
                   className={`shrink-0 whitespace-nowrap rounded-tag border px-2 py-[3px] text-hint font-bold ${meta.cls}`}
@@ -166,7 +186,7 @@ export default function Topics() {
       )}
 
       <p className="mt-3.5 rounded-panel border border-dashed border-paper-goldSoft bg-paper-tint px-[18px] py-3.5 text-caption leading-normal text-paper-primary">
-        拆账号完成后 TOP 视频会自动汇入；拆视频可点「存入选题库」；发布复盘的爆款续集也会写入这里。FAQ 请在定位页维护后再点「生成选题」。
+        选题只来自三处：定位页的「生成选题」、对标拆解存入、复盘爆款续集。没有每日热点。
       </p>
     </div>
   );
