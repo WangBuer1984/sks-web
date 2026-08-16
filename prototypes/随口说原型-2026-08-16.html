@@ -144,6 +144,40 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .wizard-center{text-align:center;padding:40px 0}
 .wizard-center h2{font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:12px}
 .wizard-center p{color:var(--text-muted);margin-bottom:24px;line-height:1.7}
+
+/* ===== 账号页签 ===== */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:24px}
+.tabs a{display:inline-block;padding:10px 20px;font-size:15px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;text-decoration:none}
+.tabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+
+/* ===== 确认条 ===== */
+.confirm-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(156,61,61,.08);border:1px solid var(--danger);border-radius:8px;margin-bottom:16px;font-size:14px;color:var(--danger)}
+.confirm-bar .confirm-msg{flex:1}
+.confirm-bar .confirm-actions{display:flex;gap:8px}
+
+/* ===== 账号页布局 ===== */
+.account-layout{display:flex;gap:24px}
+.account-left{flex:1;min-width:0}
+.account-right{width:280px;flex-shrink:0}
+
+/* ===== 完善度条 ===== */
+.completeness-wrap{margin-bottom:20px}
+.completeness-head{display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.completeness-bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.completeness-bar .fill{height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
+
+/* ===== FAQ 行（列表/编辑共用） ===== */
+.faq-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.faq-row .faq-body{flex:1}
+.faq-row .faq-q{font-size:14px;color:var(--charcoal);font-weight:500}
+.faq-row .faq-a{font-size:13px;color:var(--text-muted);margin-top:4px}
+.faq-row .faq-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.faq-add-dashed{border:1px dashed var(--line);border-radius:8px;padding:12px;text-align:center;color:var(--text-muted);font-size:14px;cursor:pointer;margin-top:10px;transition:border-color .2s,color .2s}
+.faq-add-dashed:hover{border-color:var(--ink-soft);color:var(--ink)}
+
+/* 账号页 phone 行 */
+.phone-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+.phone-row .phone-num{font-size:15px;color:var(--charcoal)}
 </style>
 </head>
 <body>
@@ -199,7 +233,17 @@ const DEMO = {
   pendingReview: [
     {title:'材料牌号怎么写进合同', platform:'抖音', link:'v.douyin.com/abc1'},
     {title:'到货复检三步', platform:'视频号', link:'channels/xyz2'}
-  ]
+  ],
+  // 保存失败态演示用户刚改的值（不回滚）
+  profileFormDraft: {
+    人设:'说真话的工厂老板，精密加工二十年',
+    目标人群:'30–45 岁制造业老板、采购经理',
+    差异化:'工厂直营、不贬同行、可小批量试单',
+    转化路径:'主页留资 → 加微信 → 到店',
+    口吻:'直、带点狠、不端着',
+    红线:'不贬同行、不报虚价',
+    内容支柱:'4:2:2:2（行业 / 设备 / 老板日常 / 转化）'
+  }
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -737,12 +781,357 @@ function renderCalibrate(s){
   }
 }
 
+// ===== 账号页签头 =====
+function accountTabs(active){
+  return `<nav class="tabs">
+    <a class="${active==='positioning'?'on':''}" onclick="setPage('account-positioning')">定位</a>
+    <a class="${active==='profile'?'on':''}" onclick="setPage('account-profile')">资料</a>
+  </nav>`;
+}
+
+// ===== 账号 · 定位（五态） =====
+function renderPositioning(s){
+  const head = accountTabs('positioning');
+
+  // 七字段只读展示
+  function profileReadonly(){
+    return `<div class="profile-fields" style="margin-bottom:20px">
+      ${Object.entries(DEMO.profile).map(([k,v]) =>
+        `<div class="profile-field-row"><span class="pf-key">${k}</span><span class="pf-val">${v}</span></div>`
+      ).join('')}
+    </div>`;
+  }
+
+  // 七字段编辑态（取 draft 或原值）
+  function profileEditable(useDraft){
+    const src = useDraft ? DEMO.profileFormDraft : DEMO.profile;
+    return `<div class="profile-fields" style="margin-bottom:20px">
+      ${Object.entries(src).map(([k,v]) =>
+        `<div class="profile-field-row">
+          <span class="pf-key">${k}</span>
+          <div class="pf-val"><input class="form-input" value="${v.replace(/"/g,'&quot;')}" style="padding:6px 10px;font-size:14px"></div>
+        </div>`
+      ).join('')}
+    </div>`;
+  }
+
+  // FAQ 只读列表
+  function faqReadonly(faqs){
+    if(!faqs || faqs.length === 0){
+      return `<div style="margin-top:20px">
+        <h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">高频问答</h3>
+        <div class="faq-add-dashed">还没有，从校准里勾选或这里加</div>
+      </div>`;
+    }
+    return `<div style="margin-top:20px">
+      <h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">高频问答</h3>
+      ${faqs.map((f,i) =>
+        `<div class="faq-row">
+          <div class="faq-body">
+            <div class="faq-q">${f.q}</div>
+            <div class="faq-a">${f.a}</div>
+          </div>
+          <div class="faq-actions">
+            <button class="btn ghost" style="padding:4px 10px;font-size:12px" onclick="setPage('topics');STATE._highlightTopic='${i}'">生成选题</button>
+          </div>
+        </div>`
+      ).join('')}
+    </div>`;
+  }
+
+  // FAQ 编辑态
+  function faqEditable(faqs){
+    const list = (faqs && faqs.length > 0) ? faqs : DEMO.faq;
+    return `<div style="margin-top:20px">
+      <h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:12px">高频问答</h3>
+      ${list.map((f,i) =>
+        `<div class="faq-row">
+          <div class="faq-body">
+            <input class="form-input" value="${f.q.replace(/"/g,'&quot;')}" style="margin-bottom:6px;font-size:14px;padding:6px 10px">
+            <input class="form-input" value="${f.a.replace(/"/g,'&quot;')}" style="font-size:13px;padding:6px 10px">
+          </div>
+          <div class="faq-actions">
+            <button class="btn ghost" style="padding:4px 8px;font-size:12px;color:var(--danger)" onclick="var r=this.closest('.faq-row');r.parentNode.removeChild(r)">删除</button>
+            <button class="btn ghost" style="padding:4px 8px;font-size:12px" onclick="var r=this.closest('.faq-row');if(r.previousElementSibling)r.parentNode.insertBefore(r,r.previousElementSibling)">↑</button>
+            <button class="btn ghost" style="padding:4px 8px;font-size:12px" onclick="var r=this.closest('.faq-row');if(r.nextElementSibling)r.parentNode.insertBefore(r.nextElementSibling,r)">↓</button>
+          </div>
+        </div>`
+      ).join('')}
+      <div class="faq-add-dashed" onclick="var t=this.previousElementSibling;var div=document.createElement('div');div.className='faq-row';div.innerHTML='<div class=faq-body><input class=form-input placeholder=问题 style=margin-bottom:6px;font-size:14px;padding:6px 10px><input class=form-input placeholder=回答 style=font-size:13px;padding:6px 10px></div><div class=faq-actions><button class=\"btn ghost\" style=padding:4px 8px;font-size:12px;color:var(--danger) onclick=\"var r=this.closest(\\'.faq-row\\');r.parentNode.removeChild(r)\">删除</button><button class=\"btn ghost\" style=padding:4px 8px;font-size:12px onclick=\"var r=this.closest(\\'.faq-row\\');if(r.previousElementSibling)r.parentNode.insertBefore(r,r.previousElementSibling)\">↑</button><button class=\"btn ghost\" style=padding:4px 8px;font-size:12px onclick=\"var r=this.closest(\\'.faq-row\\');if(r.nextElementSibling)r.parentNode.insertBefore(r.nextElementSibling,r)\">↓</button></div>';this.parentNode.insertBefore(div,this)">+ 添加问答</div>
+    </div>`;
+  }
+
+  switch(s.state){
+    case '未校准':
+      return `${head}
+        <div class="card" style="text-align:center;padding:48px 24px">
+          <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:12px">还没有定位档案</div>
+          <p style="color:var(--text-muted);margin-bottom:24px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto">完成校准后，AI 会根据你的定位档案生成文案，更贴合你的风格。</p>
+          <button class="btn" style="padding:10px 32px;font-size:15px" onclick="setPage('calibrate')">开始校准</button>
+        </div>`;
+
+    case '档案在FAQ空':
+      return `${head}
+        ${profileReadonly()}
+        ${faqReadonly([])}`;
+
+    case '有FAQ':
+      return `${head}
+        ${profileReadonly()}
+        ${faqReadonly(DEMO.faq)}
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn ghost" onclick="setState('保存中')">编辑</button>
+        </div>`;
+
+    case '保存中':
+      return `${head}
+        <div class="pulse" style="margin-bottom:16px"><i></i></div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">保存中…</div>
+        ${profileEditable(false)}
+        ${faqEditable(DEMO.faq)}
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+          <button class="btn" onclick="setState('有FAQ')">保存</button>
+          <button class="btn ghost" id="btn-cancel-pos-edit" onclick="document.getElementById('confirm-cancel-pos').style.display='flex';this.style.display='none'">取消编辑</button>
+        </div>
+        <div class="confirm-bar" id="confirm-cancel-pos" style="display:none">
+          <span class="confirm-msg">确定要取消编辑吗？修改的内容将不会保存。</span>
+          <div class="confirm-actions">
+            <button class="btn danger" style="padding:4px 12px;font-size:13px" onclick="setState('有FAQ')">确认取消</button>
+            <button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="document.getElementById('confirm-cancel-pos').style.display='none';document.getElementById('btn-cancel-pos-edit').style.display='inline-block'">算了</button>
+          </div>
+        </div>`;
+
+    case '保存失败':
+      return `${head}
+        <div style="font-size:14px;color:var(--danger);margin-bottom:16px">保存失败，请重试</div>
+        ${profileEditable(true)}
+        ${faqEditable(DEMO.faq)}
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+          <button class="btn" onclick="setState('保存中')">重试</button>
+          <button class="btn ghost" id="btn-cancel-pos-fail" onclick="document.getElementById('confirm-cancel-pos-fail').style.display='flex';this.style.display='none'">取消编辑</button>
+        </div>
+        <div class="confirm-bar" id="confirm-cancel-pos-fail" style="display:none">
+          <span class="confirm-msg">确定要取消编辑吗？修改的内容将不会保存。</span>
+          <div class="confirm-actions">
+            <button class="btn danger" style="padding:4px 12px;font-size:13px" onclick="setState('有FAQ')">确认取消</button>
+            <button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="document.getElementById('confirm-cancel-pos-fail').style.display='none';document.getElementById('btn-cancel-pos-fail').style.display='inline-block'">算了</button>
+          </div>
+        </div>`;
+
+    default:
+      return fallback(s);
+  }
+}
+
+// ===== 账号 · 资料（八态） =====
+function renderProfile(s){
+  const head = accountTabs('profile');
+
+  // 完善度：只算 5 项（昵称/行业/身份/出镜风格/每周更新目标），性别/年龄/城市不计
+  const compItems = [
+    {key:'昵称', val:DEMO.account.nickname},
+    {key:'行业', val:DEMO.account.industry},
+    {key:'身份', val:DEMO.account.identity},
+    {key:'出镜风格', val:DEMO.account.style},
+    {key:'每周更新目标', val:DEMO.account.weeklyGoal}
+  ];
+  const compFilled = compItems.filter(i => i.val && i.val.trim()).length;
+  const compPct = Math.round(compFilled / compItems.length * 100);
+
+  function completenessBar(pct){
+    return `<div class="completeness-wrap">
+      <div class="completeness-head">
+        <span>资料完善度</span>
+        <span>${pct}%（${compFilled}/${compItems.length}）</span>
+      </div>
+      <div class="completeness-bar"><div class="fill" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">只算 5 项（昵称、行业、身份、出镜风格、每周更新目标），性别、年龄、城市不计入</div>
+    </div>`;
+  }
+
+  function profileForm(filled){
+    const a = DEMO.account;
+    return `<div class="card" style="margin-bottom:20px">
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">昵称</label>
+        <input class="form-input" value="${a.nickname}" ${filled?'':'placeholder="必填"'}>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div class="form-group" style="flex:1">
+          <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">性别</label>
+          <select class="form-input"><option>男</option><option>女</option></select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">年龄</label>
+          <input class="form-input" value="${a.age}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">城市</label>
+        <input class="form-input" value="${a.city}">
+      </div>
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">行业</label>
+        <input class="form-input" value="${filled ? a.industry : ''}" placeholder="${filled ? '' : '必填'}">
+      </div>
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">身份</label>
+        <input class="form-input" value="${a.identity}">
+      </div>
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">出镜风格</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          ${['口播出镜','不露脸','混合'].map(st =>
+            `<label style="flex:1;padding:8px;border:1px solid ${st===a.style?'var(--ink)':'var(--line)'};border-radius:8px;text-align:center;font-size:14px;cursor:pointer;background:${st===a.style?'var(--card)':'var(--paper)'}">
+              <input type="radio" name="style" value="${st}" ${st===a.style?'checked':''} style="display:none">${st}
+            </label>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">每周更新目标</label>
+        <input class="form-input" value="${filled ? a.weeklyGoal : ''}" placeholder="${filled ? '' : '必填'}">
+      </div>
+    </div>`;
+  }
+
+  function phoneSection(showBindForm, bindError){
+    return `<div class="card">
+      <h3 style="font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:16px">手机号</h3>
+      ${showBindForm ? `
+        <div class="form-group">
+          <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">新手机号</label>
+          <input class="form-input" placeholder="输入新手机号">
+        </div>
+        <div class="form-group">
+          <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:4px">验证码</label>
+          <div style="display:flex;gap:10px">
+            <input class="form-input" placeholder="验证码" style="flex:1;${bindError?'border-color:var(--danger)':''}">
+            <button class="btn ghost" style="white-space:nowrap;font-size:13px">获取验证码</button>
+          </div>
+          ${bindError ? '<div class="form-error">验证码错误，请重新输入</div>' : ''}
+        </div>
+        <button class="btn btn-block" style="margin-top:12px">确认换绑</button>
+      ` : `
+        <div class="phone-row">
+          <span class="phone-num">138****6789</span>
+          <button class="btn ghost" id="btn-rebind" onclick="document.getElementById('confirm-rebind').style.display='flex';this.style.display='none'">换绑</button>
+        </div>
+        <div class="confirm-bar" id="confirm-rebind" style="display:none">
+          <span class="confirm-msg">换绑后原手机号将无法登录，确定继续？</span>
+          <div class="confirm-actions">
+            <button class="btn danger" style="padding:4px 12px;font-size:13px" onclick="setState('换绑')">确认换绑</button>
+            <button class="btn ghost" style="padding:4px 12px;font-size:13px" onclick="document.getElementById('confirm-rebind').style.display='none';document.getElementById('btn-rebind').style.display='inline-block'">算了</button>
+          </div>
+        </div>
+      `}
+    </div>`;
+  }
+
+  switch(s.state){
+    case '完善度未满':
+      return `${head}
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(60)}
+            ${profileForm(false)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(false, false)}
+          </div>
+        </div>`;
+
+    case '已满':
+      return `${head}
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(100)}
+            ${profileForm(true)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(false, false)}
+          </div>
+        </div>`;
+
+    case '保存中':
+      return `${head}
+        <div class="pulse" style="margin-bottom:16px"><i></i></div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">保存中…</div>
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(compPct)}
+            ${profileForm(true)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(false, false)}
+          </div>
+        </div>`;
+
+    case '保存失败':
+      return `${head}
+        <div style="font-size:14px;color:var(--danger);margin-bottom:16px">保存失败，请重试</div>
+        <button class="btn" style="margin-bottom:16px" onclick="setState('保存中')">重试</button>
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(compPct)}
+            ${profileForm(true)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(false, false)}
+          </div>
+        </div>`;
+
+    case '换绑':
+      return `${head}
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(compPct)}
+            ${profileForm(true)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(true, false)}
+          </div>
+        </div>`;
+
+    case '换绑验证码错':
+      return `${head}
+        <div class="account-layout">
+          <div class="account-left">
+            ${completenessBar(compPct)}
+            ${profileForm(true)}
+          </div>
+          <div class="account-right">
+            ${phoneSection(true, true)}
+          </div>
+        </div>`;
+
+    case '加载':
+      return `${head}
+        <div style="padding:60px 0;text-align:center">
+          <div class="pulse" style="max-width:300px;margin:0 auto 16px"><i></i></div>
+          <p style="color:var(--text-muted)">加载资料…</p>
+        </div>`;
+
+    case '加载失败':
+      return `${head}
+        <div style="padding:60px 0;text-align:center">
+          <p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">没拉到资料，请稍后重试</p>
+          <button class="btn" onclick="setState('已满')">重试</button>
+        </div>`;
+
+    default:
+      return fallback(s);
+  }
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
 register('recharge', ['默认说明'], renderRecharge);
 register('workbench', ['刚开通引导','已校准空库','使用中','加载','失败','额度用尽'], renderWorkbench);
 register('calibrate', ['步骤1','步骤2','步骤3','进行中','失败','完成确认'], renderCalibrate);
+register('account-positioning', ['未校准','档案在FAQ空','有FAQ','保存中','保存失败'], renderPositioning);
+register('account-profile', ['完善度未满','已满','保存中','保存失败','换绑','换绑验证码错','加载','加载失败'], renderProfile);
 render();
 </script>
 </body>
