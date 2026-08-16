@@ -13,6 +13,7 @@
   --serif:"Noto Serif SC","Songti SC",serif;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
   --r-card:12px; --maxw:1040px;
+  --warn-bg:#faf3e0; --warn-border:#b08a3d;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--charcoal);font:15px/1.6 var(--sans)}
@@ -188,6 +189,39 @@ h1,h2,h3{font-family:var(--serif);color:var(--ink)}
 .topic-title{font-size:14px;color:var(--charcoal);flex:1}
 .topic-from{font-size:12px;color:var(--text-muted);white-space:nowrap}
 .topic-tag-deleted{display:inline-block;padding:1px 6px;border-radius:8px;font-size:11px;background:rgba(107,90,69,.08);color:var(--text-muted);margin-left:8px}
+
+/* ===== 文案创作 ===== */
+.create-layout{display:flex;gap:24px;align-items:flex-start}
+.create-left{flex:1;min-width:0}
+.create-right{width:300px;flex-shrink:0}
+.create-persona{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;margin-bottom:16px;position:relative}
+.create-persona .persona-cancel{position:absolute;top:12px;right:14px;font-size:20px;color:var(--ink-soft);cursor:pointer;line-height:1;background:none;border:none;padding:0}
+.create-persona .persona-cancel:hover{color:var(--ink)}
+.create-persona .persona-title{font-family:var(--serif);font-size:14px;color:var(--ink);margin-bottom:8px}
+.create-persona .persona-row{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:4px}
+.create-persona .persona-row b{color:var(--charcoal);font-weight:500}
+.create-topic-row{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.duration-chip{display:inline-flex;align-items:center;padding:6px 14px;border:1px solid var(--line);border-radius:20px;font-size:14px;color:var(--ink);background:var(--card);white-space:nowrap;gap:4px;flex-shrink:0}
+.create-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px}
+.create-tabs a{display:inline-block;padding:8px 20px;font-size:14px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;text-decoration:none}
+.create-tabs a.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+.create-content{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;min-height:240px;font-size:14px;line-height:1.8;color:var(--charcoal);white-space:pre-wrap}
+.create-content-placeholder{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;min-height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px}
+.create-actions{display:flex;gap:10px;margin-top:16px;align-items:center}
+.dup-warning{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--charcoal);display:flex;align-items:center;gap:8px;line-height:1.5}
+.dup-warning .dup-icon{font-size:16px;flex-shrink:0}
+.generate-overlay{position:relative}
+.generate-overlay .mask{position:absolute;inset:0;background:rgba(244,241,233,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;border-radius:var(--r-card)}
+.generate-overlay .mask .stage-text{font-size:13px;color:var(--text-muted);margin-top:8px}
+.right-ref-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px}
+.right-ref-card h4{font-family:var(--serif);font-size:14px;color:var(--ink);margin-bottom:12px}
+.right-ref-card .ref-count{font-size:14px;color:var(--text-muted);margin-bottom:12px}
+.right-ref-card .ref-item{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.right-ref-card .ref-item:last-child{border-bottom:none}
+.right-ref-card .ref-item .ref-title{color:var(--charcoal);margin-bottom:4px}
+.right-ref-card .ref-item .ref-meta{font-size:12px;color:var(--text-muted)}
+.right-ref-card .ref-unrelated{font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0;line-height:1.6}
+.adopted-msg{font-size:13px;color:var(--ok);margin-left:8px}
 </style>
 </head>
 <body>
@@ -259,7 +293,16 @@ const DEMO = {
     口吻:'直、带点狠、不端着',
     红线:'不贬同行、不报虚价',
     内容支柱:'4:2:2:2（行业 / 设备 / 老板日常 / 转化）'
-  }
+  },
+  createDraft: {
+    topic:'便宜三成不是偷工减料', duration:'60s',
+    douyin:'便宜三成？不是偷工减料。我是工厂直营，没中间商。你看到的价格，材料、加工、表面处理全写在合同里，到货可以复检。二十年的老厂，靠的不是广告，是回头客。',
+    video:'同样的稿子换个钩子开头——「为什么我的报价比别人低三成？」工厂直营，没有中间商赚差价。材料牌号、公差、热处理，合同里一条一条写清楚。二十年的老客户都知道，我报的价就是最终价，不玩虚的。'
+  },
+  createRef: [
+    {title:'便宜三成不是偷工减料', platform:'抖音', sim:'高'}
+  ],
+  createUnrelated: '本稿只基于你的定位档案'
 };
 
 function fallback(s){ return `<div class="fallback"><h3>尚未实现</h3><p>page=<code>${s.page}</code> state=<code>${s.state}</code></p><p>该格在后续任务接入。</p></div>`; }
@@ -316,8 +359,10 @@ document.getElementById('bar-stage').addEventListener('change',e=>setStage(e.tar
 let countdownTimer = null;
 let countdownValue = 60;
 let calibrateTimer = null;
+let createTimer = null;
 function clearCountdown(){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; } }
 function clearCalibrateTimer(){ if(calibrateTimer){ clearTimeout(calibrateTimer); calibrateTimer = null; } }
+function clearCreateTimer(){ if(createTimer){ clearTimeout(createTimer); createTimer = null; } }
 function startCountdown(){
   clearCountdown();
   countdownValue = 60;
@@ -350,6 +395,7 @@ function wbDefaultForStage(stage){
 function setPage(p) {
   clearCountdown();
   clearCalibrateTimer();
+  clearCreateTimer();
   STATE.page = p;
   STATE._explicitState = false;
   if (p === 'workbench') {
@@ -362,6 +408,7 @@ function setPage(p) {
 function setState(st) {
   clearCountdown();
   clearCalibrateTimer();
+  clearCreateTimer();
   STATE.state = st;
   STATE._explicitState = true;
   render();
@@ -1196,6 +1243,200 @@ function renderTopics(s){
   }
 }
 
+// ===== 文案创作（十一态） =====
+function renderCreate(s) {
+  function personaCard(uncalibrated) {
+    if (uncalibrated) {
+      return `<div class="create-persona">
+        <div class="persona-title">人设声音</div>
+        <p style="font-size:14px;color:var(--text-muted);margin-bottom:8px">尚未校准定位，AI 将生成通用稿</p>
+        <a style="font-size:14px;color:var(--ink);cursor:pointer;text-decoration:none" onclick="setPage('calibrate')">去校准定位 &rarr;</a>
+      </div>`;
+    }
+    return `<div class="create-persona">
+      <button class="persona-cancel" onclick="setPage('workbench')" title="取消">&times;</button>
+      <div class="persona-title">人设声音</div>
+      <div class="persona-row"><b>人设</b> ${DEMO.profile['人设']}</div>
+      <div class="persona-row"><b>口吻</b> ${DEMO.profile['口吻']}</div>
+      <div class="persona-row"><b>红线</b> ${DEMO.profile['红线']}</div>
+    </div>`;
+  }
+
+  function topicRow(topic, btnLabel, btnOnclick, disabled) {
+    const topicVal = topic || '';
+    const dis = disabled ? ' disabled' : '';
+    return `<div class="create-topic-row">
+      <input class="form-input" placeholder="一句话选题，例如：便宜三成不是偷工减料" value="${topicVal.replace(/"/g,'&quot;')}"${dis} style="flex:1">
+      <span class="duration-chip">&#9202; ${DEMO.createDraft.duration}</span>
+      <button class="btn"${dis} onclick="${btnOnclick}">${btnLabel}</button>
+    </div>`;
+  }
+
+  function platformTabs(active) {
+    const dOn = active === 'douyin' ? ' on' : '';
+    const vOn = active === 'video' ? ' on' : '';
+    return `<div class="create-tabs">
+      <a class="${dOn}" onclick="STATE._activeTab='douyin';render()">抖音</a>
+      <a class="${vOn}" onclick="STATE._activeTab='video';render()">视频号</a>
+    </div>`;
+  }
+
+  function contentArea(text, hint) {
+    if (text) {
+      return `<div class="create-content">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    }
+    if (hint) {
+      return `<div class="create-content-placeholder">${hint}</div>`;
+    }
+    return `<div class="create-content-placeholder">生成后这里显示文案</div>`;
+  }
+
+  function bottomActions(adopted) {
+    const adoptLabel = adopted ? '已采用' : '采用当前平台版';
+    const adoptAttrs = adopted ? ' disabled style="opacity:.7"' : ` onclick="setState('采用成功')"`;
+    const angleOnclick = STATE.stage === 'exhausted' ? `onclick="setState('额度不够')"` : `onclick="setState('生成中')"`;
+    return `<div class="create-actions">
+      <button class="btn"${adoptAttrs}>${adoptLabel}</button>
+      <button class="btn ghost" ${angleOnclick}>换个角度</button>
+      <button class="btn ghost">复制全文</button>
+      ${adopted ? '<span class="adopted-msg">已存入知识库</span>' : ''}
+    </div>`;
+  }
+
+  function rightPanel(st) {
+    if (st === '空态' || st === '未校准' || st === '生成中' || st === '失败' || st === '额度不够') {
+      return `<div class="right-ref-card">
+        <h4>参考</h4>
+        <div class="ref-count">知识库可参考 ${DEMO.numbers.kb} 篇</div>
+      </div>`;
+    }
+    if (st === '无关选题无参考') {
+      return `<div class="right-ref-card">
+        <h4>参考</h4>
+        <div class="ref-unrelated">${DEMO.createUnrelated}</div>
+      </div>`;
+    }
+    const refs = DEMO.createRef || [];
+    const refItems = refs.map(r =>
+      `<div class="ref-item">
+        <div class="ref-title">${r.title}</div>
+        <div class="ref-meta">${r.platform} · 相似度${r.sim}</div>
+      </div>`
+    ).join('');
+    return `<div class="right-ref-card">
+      <h4>参考</h4>
+      ${refItems}
+    </div>`;
+  }
+
+  function dupWarning() {
+    const refTitle = (DEMO.createRef && DEMO.createRef[0]) ? DEMO.createRef[0].title : '某篇';
+    return `<div class="dup-warning">
+      <span class="dup-icon">&#9888;</span>
+      <span>这篇和《${refTitle}》相似度高，可换个角度或继续采用</span>
+    </div>`;
+  }
+
+  const activeTab = STATE._activeTab || 'douyin';
+  let left = '', right = rightPanel(s.state);
+
+  switch(s.state) {
+    case '未校准':
+      left = personaCard(true) + topicRow('', '生成', "setState('生成中')", false);
+      break;
+
+    case '空态':
+      left = personaCard(false) + topicRow('', '生成', "setState('生成中')", false);
+      break;
+
+    case '生成中':
+      clearCreateTimer();
+      createTimer = setTimeout(function() { setState('只有抖音版'); }, 2000);
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '生成中…', '', true)
+        + `<div class="generate-overlay">
+          <div class="mask">
+            <div class="pulse" style="width:240px"><i></i></div>
+            <p style="margin-top:16px;color:var(--charcoal);font-size:15px">正在生成文案…</p>
+            <div class="stage-text">分析选题 &rarr; 检索知识库 &rarr; 生成抖音版 &rarr; 生成视频号版</div>
+          </div>
+          <div style="min-height:300px"></div>
+        </div>`;
+      break;
+
+    case '失败':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '重试', "setState('生成中')", false)
+        + `<div style="text-align:center;padding:40px 0">
+          <p style="color:var(--danger);margin-bottom:16px;font-size:16px">生成失败，请重试</p>
+          <button class="btn" onclick="setState('生成中')">重试</button>
+        </div>`;
+      break;
+
+    case '额度不够':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '生成', "setState('额度不够')", false)
+        + `<div style="text-align:center;padding:40px 0">
+          <p style="color:var(--text-muted);margin-bottom:16px;font-size:16px">额度不够</p>
+          <button class="btn" onclick="STATE._rechargeFrom='create';setPage('recharge')">去充值</button>
+        </div>`;
+      break;
+
+    case '只有抖音版':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '已生成', '', true)
+        + platformTabs(activeTab)
+        + (activeTab === 'douyin'
+          ? contentArea(DEMO.createDraft.douyin)
+          : contentArea(null, '切到这里将生成，不另扣额度'))
+        + bottomActions(false);
+      break;
+
+    case '两版都在':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '已生成', '', true)
+        + platformTabs(activeTab)
+        + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
+        + bottomActions(false);
+      break;
+
+    case '查重提示':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '已生成', '', true)
+        + dupWarning()
+        + platformTabs(activeTab)
+        + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
+        + bottomActions(false);
+      break;
+
+    case '无关选题无参考':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '已生成', '', true)
+        + platformTabs(activeTab)
+        + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
+        + bottomActions(false);
+      break;
+
+    case '改已有稿':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '保存回知识库', "this.textContent='已保存';this.disabled=true;this.style.opacity='0.7'", false)
+        + platformTabs(activeTab)
+        + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
+        + `<div class="create-actions">
+          <button class="btn ghost">换个角度</button>
+          <button class="btn ghost">复制全文</button>
+        </div>`;
+      break;
+
+    case '采用成功':
+      left = personaCard(false) + topicRow(DEMO.createDraft.topic, '已生成', '', true)
+        + platformTabs(activeTab)
+        + contentArea(activeTab === 'douyin' ? DEMO.createDraft.douyin : DEMO.createDraft.video)
+        + bottomActions(true);
+      break;
+
+    default:
+      return fallback(s);
+  }
+
+  return `<div class="create-layout">
+    <div class="create-left">${left}</div>
+    <div class="create-right">${right}</div>
+  </div>`;
+}
+
 // ===== 注册 =====
 register('landing', ['default'], renderLanding);
 register('login', ['填手机','倒计时','验证码错','开通引导'], renderLogin);
@@ -1205,6 +1446,7 @@ register('calibrate', ['步骤1','步骤2','步骤3','进行中','失败','完�
 register('account-positioning', ['未校准','档案在FAQ空','有FAQ','保存中','保存失败'], renderPositioning);
 register('account-profile', ['完善度未满','已满','保存中','保存失败','换绑','换绑验证码错','加载','加载失败'], renderProfile);
 register('topics', ['空','加载','失败','有选题','刚从FAQ生成','含原问答已删除'], renderTopics);
+register('create', ['未校准','空态','生成中','失败','额度不够','只有抖音版','两版都在','查重提示','无关选题无参考','改已有稿','采用成功'], renderCreate);
 render();
 </script>
 </body>
