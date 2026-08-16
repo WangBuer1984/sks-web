@@ -848,7 +848,7 @@ function renderPositioning(s){
             <div class="faq-a">${f.a}</div>
           </div>
           <div class="faq-actions">
-            <button class="btn ghost" style="padding:4px 10px;font-size:12px" onclick="setPage('topics');STATE._highlightTopic='${i}'">生成选题</button>
+            <button class="btn ghost" style="padding:4px 10px;font-size:12px" onclick="STATE._highlightTopic='${i}';setPage('topics')">生成选题</button>
           </div>
         </div>`
       ).join('')}
@@ -1142,6 +1142,11 @@ function renderProfile(s){
 
 // ===== 选题库（六态） =====
 function renderTopics(s){
+  // 从账号·定位「生成选题」过来时，强制高亮态
+  if (STATE._highlightTopic) {
+    s.state = '刚从FAQ生成';
+    STATE._highlightTopic = null;
+  }
   function topicList(highlightFirst){
     const items = DEMO.topics.map((t, i) => {
       const hl = (highlightFirst && i === 0) ? ' highlight' : '';
