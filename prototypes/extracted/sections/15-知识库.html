@@ -1,74 +1,66 @@
 <!-- 段：知识库　条件：{{ isKb }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4888–4959 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4922–4985 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isKb }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 880px; margin: 0 auto;">
-        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px;">
-          <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900;">知识库 <span style="font-size: 13px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">23 张卡片 · 近 30 天活卡率 74%</span></div>
-          <button sc-camel-on-click="{{ openGap }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 10px 20px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">+ 对话补卡</button>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;">
+          <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900;">知识库 <span style="font-size: 13px; color: #8a8578; font-family: 'Noto Sans SC', sans-serif; font-weight: 400;">{{ kbStat }}</span></div>
+          <button sc-camel-on-click="{{ openKbNew }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 10px 20px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">+ 新建内容</button>
         </div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">你的口播文案都沉在这里：采用的稿子自动进来，以前写过的可以粘进来。写新稿时 AI 从这里找相关内容，写出更像你的稿子</div>
         <sc-if value="{{ kbEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 44px 40px; text-align: center;">
-            <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">知识库还是空的</div>
-            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">知识库是「稿子像你」的原料——完成定位校准会自动生成人设卡<br>之后 AI 每次只问你一个 30 秒的问题，卡片越攒越多</div>
+            <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">知识库还没有内容</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">这里是「稿子像你」的原料——去创作一篇，点「直接采用」它就会存进来<br>也可以把以前写过的口播文案直接粘进来，支持 Markdown</div>
             <div style="display: flex; gap: 10px; justify-content: center;">
-              <button sc-camel-on-click="{{ goPos }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">先完成定位校准</button>
-              <button sc-camel-on-click="{{ openGap }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #f7f3ea;">直接回答一个问题建卡</button>
+              <button sc-camel-on-click="{{ goCreate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">去创作一篇</button>
+              <button sc-camel-on-click="{{ openKbNew }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #f7f3ea;">粘贴一篇旧文案</button>
             </div>
           </div>
         </sc-if>
         <sc-if value="{{ kbHasData }}" hint-placeholder-val="{{ true }}">
-        <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8a5a2b; margin-bottom: 10px;">A 层 · 人设声音（每次生成必用）</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 26px;">
-          <sc-for list="{{ kbAList }}" as="k" hint-placeholder-count="3">
-            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column;" style-hover="border-color: #8a5a2b;">
-              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 6px;">{{ k.title }}</div>
-              <div style="font-size: 12.5px; color: #6b6558; line-height: 1.65; flex: 1;">{{ k.desc }}</div>
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button sc-camel-on-click="{{ k.edit }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">编辑</button>
-                <button sc-camel-on-click="{{ k.del }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #b0492f; color: #b0492f;">删除</button>
+        <input value="{{ kbQuery }}" sc-camel-on-change="{{ onKbQuery }}" placeholder="搜索标题或正文…" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 9px 14px; font-size: 13px; background: #faf8f2; color: #23231f; outline: none; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+          <span style="font-size: 11.5px; color: #a09a8a; margin-right: 2px;">来源</span>
+          <span sc-camel-on-click="{{ kbPickAll }}" style="font-size: 12px; border: 1px solid {{ kbAllBd }}; color: {{ kbAllC }}; background: {{ kbAllBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">全部</span>
+          <span sc-camel-on-click="{{ kbPickGen }}" style="font-size: 12px; border: 1px solid {{ kbGenBd }}; color: {{ kbGenC }}; background: {{ kbGenBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">平台生成</span>
+          <span sc-camel-on-click="{{ kbPickMine }}" style="font-size: 12px; border: 1px solid {{ kbMineBd }}; color: {{ kbMineC }}; background: {{ kbMineBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">我传的</span>
+          <span style="color: #e2dccd; margin: 0 4px;">|</span>
+          <span style="font-size: 11.5px; color: #a09a8a; margin-right: 2px;">状态</span>
+          <span sc-camel-on-click="{{ kbStAll }}" style="font-size: 12px; border: 1px solid {{ kbStAllBd }}; color: {{ kbStAllC }}; background: {{ kbStAllBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">全部</span>
+          <span sc-camel-on-click="{{ kbStDraft }}" style="font-size: 12px; border: 1px solid {{ kbStDraftBd }}; color: {{ kbStDraftC }}; background: {{ kbStDraftBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">未发布</span>
+          <span sc-camel-on-click="{{ kbStPub }}" style="font-size: 12px; border: 1px solid {{ kbStPubBd }}; color: {{ kbStPubC }}; background: {{ kbStPubBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">已发布</span>
+          <span sc-camel-on-click="{{ kbStHot }}" style="font-size: 12px; border: 1px solid {{ kbStHotBd }}; color: {{ kbStHotC }}; background: {{ kbStHotBg }}; border-radius: 20px; padding: 5px 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b;">爆款</span>
+          <span style="margin-left: auto; font-size: 11.5px; color: #a09a8a;">{{ kbHitCount }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{ kbList }}" as="k" hint-placeholder-count="4">
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 15px 20px;" style-hover="border-color: #8a5a2b;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: {{ k.srcC }}; border: 1px solid {{ k.srcBd }}; background: {{ k.srcBg }}; padding: 3px 8px; border-radius: 4px; white-space: nowrap;">{{ k.source }}</span>
+                <div style="flex: 1; font-size: 14.5px; font-weight: 500; line-height: 1.5;">{{ k.title }}</div>
+                <span style="font-size: 11.5px; color: {{ k.stC }}; background: {{ k.stBg }}; padding: 3px 10px; border-radius: 12px; white-space: nowrap;">{{ k.status }}</span>
+              </div>
+              <div style="font-size: 12.5px; color: #8a8578; line-height: 1.65;">{{ k.excerpt }}</div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <span style="font-size: 11.5px; color: #a09a8a;">{{ k.meta }}</span>
+                <div style="margin-left: auto; display: flex; gap: 8px;">
+                  <sc-if value="{{ k.isMine }}" hint-placeholder-val="{{ true }}">
+                    <button sc-camel-on-click="{{ k.edit }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">编辑</button>
+                  </sc-if>
+                  <sc-if value="{{ k.isGen }}" hint-placeholder-val="{{ false }}">
+                    <button sc-camel-on-click="{{ k.openInCreate }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">去创作页改 →</button>
+                  </sc-if>
+                  <button sc-camel-on-click="{{ k.del }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #b0492f; color: #b0492f;">删除</button>
+                </div>
               </div>
             </div>
           </sc-for>
         </div>
-        <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8a5a2b; margin-bottom: 10px;">B 层 · 业务事实（按选题检索）</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 26px;">
-          <sc-for list="{{ kbBList }}" as="k" hint-placeholder-count="3">
-            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column;" style-hover="border-color: #8a5a2b;">
-              <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 5px;">{{ k.tag }}</div>
-              <div style="font-size: 13.5px; font-weight: 500; margin-bottom: 4px;">{{ k.title }}</div>
-              <div style="font-size: 12px; color: #8a8578; line-height: 1.6; flex: 1;">{{ k.meta }}</div>
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button sc-camel-on-click="{{ k.edit }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">编辑</button>
-                <button sc-camel-on-click="{{ k.del }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" style-hover="border-color: #b0492f; color: #b0492f;">删除</button>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-        <sc-if value="{{ gapPending }}" hint-placeholder-val="{{ true }}">
-          <div style="background: #faf0ec; border: 1px solid #e4b9ab; border-radius: 10px; padding: 14px 18px; margin-bottom: 26px; display: flex; align-items: center; gap: 14px;">
-            <div style="flex: 1; font-size: 13px; line-height: 1.6; color: #7a3a26;"><strong>缺卡提醒：</strong>「环保板材」被 3 条稿子提到但没有产品卡。回答一个问题即可补上：<em>「你们的板材环保等级是什么，有检测报告吗？」</em></div>
-            <button sc-camel-on-click="{{ openGap }}" style="border: none; background: #b0492f; color: #fff; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #8f3a25;">语音回答</button>
-          </div>
+        <sc-if value="{{ kbNoMatch }}" hint-placeholder-val="{{ false }}">
+          <div style="border: 1px dashed #d8d2c4; border-radius: 10px; padding: 30px; text-align: center; color: #a09a8a; font-size: 13px;">没有匹配的内容——换个搜索词，或把筛选切回「全部」</div>
         </sc-if>
-        <sc-if value="{{ gapDone }}" hint-placeholder-val="{{ false }}">
-          <div style="background: #edf5ef; border: 1px solid #bcd8c4; border-radius: 10px; padding: 14px 18px; margin-bottom: 26px; font-size: 13px; color: #2f5c3b; line-height: 1.6;"><strong>✓ 已补卡：</strong>产品卡「ENF 环保板材」已加入知识库，下次相关选题会自动引用。</div>
-        </sc-if>
-        <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8a5a2b; margin-bottom: 10px;">C 层 · 内容资产（自动沉淀）</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">历史稿件 47 篇</div>
-            <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">自动查重防选题撞车</div>
-          </div>
-          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">改稿记录 31 次</div>
-            <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">持续校准口吻样本</div>
-          </div>
-          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">表现数据</div>
-            <div style="font-size: 12px; color: #8a8578; line-height: 1.6;">接入后自动标记爆款素材（规划中）</div>
-          </div>
-        </div>
+        <div style="background: #f7f3ea; border: 1px dashed #c9b997; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">创作页点「直接采用」的稿子会自动存进来；发布复盘判为爆款的自动打上「爆款」标签，之后创作优先参考。内容越厚，稿子越像你——维护知识库不扣额度。</div>
         </sc-if>
       </div>
     </sc-if>

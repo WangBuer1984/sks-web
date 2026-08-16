@@ -1,4 +1,5 @@
 import { userClient } from './client';
+import type { ContentReferenceView } from './content';
 
 /** 选题（对齐 Java Topic）。 */
 export interface Topic {
@@ -71,13 +72,34 @@ export function createTopic(title: string, rationale: string, source?: string): 
   return userClient.post<number, number>('/topics', { title, rationale, source });
 }
 
-/** 生成文案（§4.1 额度事务链；30-60s）。platform 缺省取用户主平台。 */
+/** 一轮生成结果（D21）：组 + 已生成的平台版本 + 本稿参考的内容。 */
+export interface GenerationView {
+  groupId: number;
+  versions: ScriptDetail[];
+  citedContents: ContentReferenceView[];
+  dedupWarnScriptId: number | null;
+}
+
+/** 一轮生成：扣 1 条，返回 GenerationView（至少含请求平台那一版）。 */
 export function generateScript(
   topicId: number,
   platform?: string,
   duration?: '45' | '90' | '180',
-): Promise<ScriptDetail> {
-  return userClient.post<ScriptDetail, ScriptDetail>('/scripts/generate', { topicId, platform, duration });
+  framework?: string,
+): Promise<GenerationView> {
+  return userClient.post<GenerationView, GenerationView>('/scripts/generate', {
+    topicId,
+    platform,
+    duration,
+    framework,
+  });
+}
+
+/** 懒生成同一组的另一个平台版本，不另扣额度。 */
+export function generateGroupVersion(groupId: number, platform: string): Promise<ScriptDetail> {
+  return userClient.post<ScriptDetail, ScriptDetail>(`/scripts/groups/${groupId}/versions`, {}, {
+    params: { platform },
+  });
 }
 
 /** 稿件列表（可选 review_state 过滤）。 */

@@ -45,9 +45,9 @@ export interface WeeklyReportContent {
   blocked?: boolean;
 }
 
-/** 采用稿件：draft→pending。 */
-export function adoptScript(scriptId: number): Promise<void> {
-  return userClient.post<void, void>(`/review/${scriptId}/adopt`, {});
+/** 采用当前平台版：写入知识库，返回 contentId。重复采用幂等。 */
+export function adoptScript(scriptId: number): Promise<{ contentId: number }> {
+  return userClient.post<{ contentId: number }, { contentId: number }>(`/review/${scriptId}/adopt`, {});
 }
 
 /** 登记发布链接：pending→tracking，后端抓数据并判态，返回 TrackResponse。 */

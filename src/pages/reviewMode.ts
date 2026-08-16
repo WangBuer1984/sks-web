@@ -1,17 +1,57 @@
-/** Review 页纯逻辑（照 calibrateMode.ts 模式抽离，便于 node 环境单测）。 */
+import type { PublicationView, ReviewBoardView, WeeklyReportRaw } from '../api/publication';
 
-import type { ScriptSummary } from '../api/script';
+export const PUBLICATION_STATE_LABELS: Record<PublicationView['state'], string> = {
+  registered: '待复盘',
+  hot: '爆款',
+  plain: '平平',
+  flop: '扑街',
+};
 
-/**
- * 指标格式化：null/undefined → 「—」；其余按 zh-CN 本地化（千分位）。
- * 表格 5 列指标列统一走这里，避免裸 0 与「未抓到」混做一团。
- */
 export function formatMetric(n: number | null | undefined): string {
   if (n == null) return '—';
   return n.toLocaleString('zh-CN');
 }
 
-/** 稿件历史是否为空（空态插画分支判定）。 */
-export function isHistoryEmpty(scripts: ScriptSummary[]): boolean {
-  return scripts.length === 0;
+/** 是否已经抓过五码：看 reviewedAt，不看数字是否为 0。 */
+export function hasMetrics(p: Pick<PublicationView, 'reviewedAt'>): boolean {
+  return p.reviewedAt != null;
+}
+
+export function isBoardEmpty(board: ReviewBoardView): boolean {
+  return board.pending.length === 0 && board.publications.length === 0;
+}
+
+/** 当周可生成周报的样本 = 已复盘的发布记录（只登记过的不算）。 */
+export function countReviewable(board: ReviewBoardView): number {
+  return board.publications.filter((p) => hasMetrics(p)).length;
+}
+
+/** 今天所在 ISO 周的周一 YYYY-MM-DD。 */
+export function isoWeekStart(now = new Date()): string {
+  const d = new Date(now);
+  const offset = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - offset);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export interface WeeklyNormalized {
+  summary: string | null;
+  wins: string[];
+  gaps: string[];
+  nextFocus: string | null;
+  blocked: boolean;
+}
+
+export function normalizeWeekly(raw: WeeklyReportRaw | null | undefined): WeeklyNormalized | null {
+  if (raw == null) return null;
+  return {
+    summary: raw.summary ?? null,
+    wins: raw.wins ?? [],
+    gaps: raw.gaps ?? [],
+    nextFocus: raw.nextFocus ?? raw.next_focus ?? null,
+    blocked: raw.blocked === true,
+  };
 }

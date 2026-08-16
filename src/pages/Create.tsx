@@ -1,79 +1,80 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
-import { type CardSummary, listCards } from '../api/kb';
 import {
+  getContent,
+  updateContentInPlace,
+  type ContentDetail,
+  type ContentReferenceView,
+  type Platform,
+} from '../api/content';
+import { adoptScript } from '../api/review';
+import {
+  type GenerationView,
   type ScriptDetail,
-  type ScriptSummary,
   createTopic,
+  generateGroupVersion,
   generateScript,
-  listScripts,
+  getScript,
 } from '../api/script';
 import CreateAside from './create/CreateAside';
 import CreateInput from './create/CreateInput';
 import CreateProgress from './create/CreateProgress';
 import ScriptView from './create/ScriptView';
+import VoicePanel from './create/VoicePanel';
+import { flattenScriptMarkdown, versionForPlatform } from './createMode';
 
-/**
- * C 端创作页 `/create`——对齐原型 `sections/13-文案创作.html`（B 混合）。
- *
- * <p>两条入参路径：
- * - 自由 textarea → createTopic → generateScript(topicId, platform, duration)
- * - `?topic=<id>` 深链（Topics/HomeNormal「生成文案」）→ 复用已有选题直接 generate，不造重复选题
- *
- * <p>时长真传后端控篇幅（Task 0 跨仓）；三平台 Tab 切换重生；查重接 dedupWarnScriptId；
- * genLoading 用多阶段进度动画（CLAUDE.md 硬不变量「无流式→多阶段进度动画 mask 等待」）。
- */
 const PROGRESS_STAGES = ['检索知识库', '撰写中', '安全审核中'];
 
-type Platform = 'douyin' | 'xhs' | 'gzh';
 type Duration = '45' | '90' | '180';
 
 export default function Create() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [params] = useSearchParams();
   const presetTopicId = params.get('topic');
-  // 仿写深链（拆视频「用这个框架仿写」）经 router state 携带：预填框架到输入框、**不自动生成**。
-  // 与 `?topic=` 深链（选题库「生成文案」→ 复用已有选题直接生成）互斥：仿写用 state、无 query。
+  const contentIdParam = params.get('content');
   const preset = useLocation().state as
-    | { presetTopic?: string; presetRationale?: string; presetSource?: string }
+    | { presetTopic?: string; presetRationale?: string; presetSource?: string; presetFramework?: string }
     | null;
 
-  const { data: history } = useQuery<ScriptSummary[]>({
-    queryKey: ['scripts', 'draft'],
-    queryFn: () => listScripts('draft'),
-  });
-
-  // script 必须在 bCards query 之前声明——bCards 的 enabled 引用它（否则 TDZ 崩页）。
-  const [script, setScript] = useState<ScriptDetail | null>(null);
-  const { data: bCards } = useQuery<CardSummary[]>({
-    queryKey: ['kb-cards', 'B'],
-    queryFn: () => listCards('B'),
-    enabled: script != null && script.citedCardIds.length > 0,
-  });
+  const [groupId, setGroupId] = useState<number | null>(null);
+  const [versions, setVersions] = useState<ScriptDetail[]>([]);
+  const [citedContents, setCitedContents] = useState<ContentReferenceView[]>([]);
+  const [dedupWarn, setDedupWarn] = useState<number | null>(null);
+  const [adopted, setAdopted] = useState<Record<number, number>>({});
+  const [editingContent, setEditingContent] = useState<ContentDetail | null>(null);
 
   const [genError, setGenError] = useState<string | null>(null);
-  // 仿写预填：初始值取 router state 的 framework；无 state（自由进入/`?topic=` 深链）则为空。
   const [topic, setTopic] = useState(preset?.presetTopic ?? '');
   const [duration, setDuration] = useState<Duration>('45');
   const [platform, setPlatform] = useState<Platform>('douyin');
   const [stage, setStage] = useState(-1);
-  // createTopic await 期间也禁用按钮——否则二次点击会再 createTopic+generate，双扣额度。
   const [submitting, setSubmitting] = useState(false);
+  const [lazyLoading, setLazyLoading] = useState(false);
+  const [lazyHint, setLazyHint] = useState<string | null>(null);
+
+  const applyView = (v: GenerationView) => {
+    setGroupId(v.groupId);
+    setVersions(v.versions);
+    setCitedContents(v.citedContents ?? []);
+    setDedupWarn(v.dedupWarnScriptId);
+    const first = versionForPlatform(v.versions, platform) ?? v.versions[0];
+    if (first) setPlatform(first.platform as Platform);
+  };
 
   const genMut = useMutation({
-    mutationFn: (vars: { topicId: number; platform?: Platform; duration?: Duration }) =>
-      generateScript(vars.topicId, vars.platform, vars.duration),
+    mutationFn: (vars: { topicId: number; platform?: Platform; duration?: Duration; framework?: string }) =>
+      generateScript(vars.topicId, vars.platform, vars.duration, vars.framework),
     onMutate: () => {
       setGenError(null);
       setStage(0);
     },
-    onSuccess: (s) => {
-      setScript(s);
+    onSuccess: (v) => {
+      applyView(v);
       setStage(-1);
-      queryClient.invalidateQueries({ queryKey: ['scripts'] });
+      void queryClient.invalidateQueries({ queryKey: ['scripts'] });
+      void queryClient.invalidateQueries({ queryKey: ['me'] });
     },
     onError: (e: unknown) => {
       setStage(-1);
@@ -81,42 +82,69 @@ export default function Create() {
     },
   });
 
-  // 多阶段进度自动推进（每 7s，掩盖 30-60s 等待）
   useEffect(() => {
     if (stage < 0) return;
     const t = setTimeout(() => setStage((s) => (s + 1 < PROGRESS_STAGES.length ? s + 1 : s)), 7000);
     return () => clearTimeout(t);
   }, [stage]);
 
-  // ?topic=<id> 深链：复用已有选题直接生成（不 createTopic）。ref 防 StrictMode 双调。
   const presetFiredRef = useRef(false);
-  // 仿写携带的 benchmark 上下文：首次点「生成口播稿」时作 rationale 喂大模型
-  // （framework+whyHot+diffHint），编辑后文字作 title。source='benchmark'。
-  // 复用即消费；regenerate 走 script.topicId 不再碰这里。
   const presetRationaleRef = useRef(preset?.presetRationale ?? '');
   const presetSourceRef = useRef(preset?.presetSource);
+  const presetFrameworkRef = useRef(preset?.presetFramework ?? '');
   useEffect(() => {
     if (presetFiredRef.current) return;
     if (!presetTopicId) return;
     const tid = Number(presetTopicId);
     if (Number.isNaN(tid)) return;
     presetFiredRef.current = true;
-    setScript(null);
-    genMut.mutate({ topicId: tid, platform, duration });
-    // 依赖只看 presetTopicId：深链值变才重跑，平台/时长切换不重跑（由 Tab/handleGenerate 走）
+    setVersions([]);
+    genMut.mutate({
+      topicId: tid,
+      platform,
+      duration,
+      framework: presetFrameworkRef.current || undefined,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetTopicId]);
 
-  // 自由 textarea → createTopic → generateScript
+  const contentFiredRef = useRef(false);
+  useEffect(() => {
+    if (contentFiredRef.current) return;
+    const cid = Number(contentIdParam);
+    if (!contentIdParam || Number.isNaN(cid)) return;
+    contentFiredRef.current = true;
+    void (async () => {
+      try {
+        const c = await getContent(cid);
+        setEditingContent(c);
+        if (c.scriptId) {
+          const s = await getScript(c.scriptId);
+          setVersions([s]);
+          setGroupId(c.generationGroupId);
+          setPlatform((c.platform as Platform) ?? 'douyin');
+          setAdopted({ [s.id]: c.id });
+        }
+      } catch (e: unknown) {
+        setGenError(getBizMessage(e, '打开内容失败'));
+      }
+    })();
+  }, [contentIdParam]);
+
   const handleGenerate = async () => {
     const t = topic.trim();
     if (!t || submitting || genMut.isPending) return;
-    setScript(null);
+    setVersions([]);
     setGenError(null);
     setSubmitting(true);
     try {
       const topicId = await createTopic(t, presetRationaleRef.current, presetSourceRef.current);
-      genMut.mutate({ topicId, platform, duration });
+      genMut.mutate({
+        topicId,
+        platform,
+        duration,
+        framework: presetFrameworkRef.current || undefined,
+      });
     } catch (e: unknown) {
       setGenError(getBizMessage(e, '创建选题失败'));
     } finally {
@@ -124,24 +152,72 @@ export default function Create() {
     }
   };
 
-  // 切平台 / 换个角度 → 用当前 script.topicId 重生
-  const regenerate = (p: Platform = platform) => {
-    if (!script) return;
-    const topicId = script.topicId;
-    setScript(null);
-    genMut.mutate({ topicId, platform: p, duration });
+  const current = versionForPlatform(versions, platform) ?? null;
+  const missingChannels = !versionForPlatform(versions, 'channels');
+
+  const switchPlatform = async (p: Platform) => {
+    setPlatform(p);
+    setLazyHint(null);
+    if (p === 'channels' && missingChannels && groupId != null) {
+      setLazyLoading(true);
+      setLazyHint('视频号版将懒生成，不另扣额度。');
+      try {
+        const s = await generateGroupVersion(groupId, 'channels');
+        setVersions((prev) => [...prev.filter((v) => v.platform !== 'channels'), s]);
+        setLazyHint(null);
+      } catch (e: unknown) {
+        setGenError(getBizMessage(e, '视频号版生成失败，可重试'));
+      } finally {
+        setLazyLoading(false);
+      }
+    }
+  };
+
+  const regenerate = () => {
+    const sid = current ?? versions[0];
+    if (!sid) return;
+    setVersions([]);
+    genMut.mutate({
+      topicId: sid.topicId,
+      platform,
+      duration,
+      framework: presetFrameworkRef.current || undefined,
+    });
   };
 
   const handleEdited = (s: ScriptDetail) => {
-    setScript(s);
-    queryClient.invalidateQueries({ queryKey: ['scripts'] });
+    setVersions((prev) => prev.map((v) => (v.id === s.id ? s : v)));
+    void queryClient.invalidateQueries({ queryKey: ['scripts'] });
+    const cid = adopted[s.id] ?? editingContent?.id;
+    if (cid) {
+      void updateContentInPlace(
+        cid,
+        editingContent?.title ?? '未命名内容',
+        flattenScriptMarkdown(s),
+      ).then(() => queryClient.invalidateQueries({ queryKey: ['contents'] }));
+    }
   };
 
+  const adoptMut = useMutation({
+    mutationFn: (id: number) => adoptScript(id),
+    onSuccess: (r, id) => {
+      setAdopted((p) => ({ ...p, [id]: r.contentId }));
+      void queryClient.invalidateQueries({ queryKey: ['contents'] });
+      void queryClient.invalidateQueries({ queryKey: ['review'] });
+      void queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+    onError: (e: unknown) => setGenError(getBizMessage(e, '采用失败')),
+  });
+
   const generating = submitting || genMut.isPending || stage >= 0;
+  const shown = current
+    ? { ...current, dedupWarnScriptId: current.id === versions[0]?.id ? dedupWarn : current.dedupWarnScriptId }
+    : null;
 
   return (
     <div className="mx-auto max-w-[1040px]">
       <h1 className="mb-5 font-serif text-title font-black text-paper-ink">文案创作</h1>
+      <VoicePanel />
       <CreateInput
         topic={topic}
         onTopic={setTopic}
@@ -172,32 +248,32 @@ export default function Create() {
             ))}
           </ol>
           <p className="mt-3 text-center text-caption text-paper-muted">
-            约 30-60 秒，完成后整稿一次呈现
+            约 30-60 秒，完成后整稿一次呈现 · 一次额度含抖音与视频号两个独立版本
           </p>
         </div>
       )}
       <CreateProgress error={genError} />
 
-      {!script && !generating && (
+      {!shown && !generating && !lazyLoading && (
         <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-10 text-center text-body text-paper-mutedLight">
-          输入选题后点击「生成口播稿」，AI 会结合你的账号档案和知识库卡片来写
+          输入选题后点击「生成口播稿」，AI 会结合你的账号档案和你写过的内容来写
         </div>
       )}
-      {script && (
+      {(shown || lazyLoading) && (
         <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1fr_280px]">
           <ScriptView
-            script={script}
-            bCards={bCards ?? []}
+            script={shown}
             platform={platform}
-            onPlatform={(p) => {
-              setPlatform(p);
-              regenerate(p);
-            }}
-            onAdopt={() => navigate('/review')}
-            onRegenerate={() => regenerate()}
+            missingChannels={missingChannels}
+            lazyLoading={lazyLoading}
+            lazyHint={lazyHint}
+            adopted={shown ? adopted[shown.id] != null : false}
+            onPlatform={(p) => void switchPlatform(p)}
+            onAdopt={() => shown && adoptMut.mutate(shown.id)}
+            onRegenerate={regenerate}
             onEdited={handleEdited}
           />
-          <CreateAside script={script} bCards={bCards ?? []} history={history ?? []} />
+          <CreateAside citedContents={citedContents} />
         </div>
       )}
     </div>

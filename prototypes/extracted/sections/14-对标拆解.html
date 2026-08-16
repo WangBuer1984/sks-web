@@ -1,5 +1,5 @@
 <!-- 段：对标拆解　条件：{{ isBench }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4686–4886 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4729–4920 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isBench }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 1040px; margin: 0 auto;">
@@ -60,11 +60,12 @@
                     <div style="color: #6b6558;">{{ v.saves }}</div>
                     <div style="color: #8a8578; line-height: 1.5;">{{ v.structure }}</div>
                     <div style="display: flex; gap: 6px;">
-                      <button sc-camel-on-click="{{ v.deep }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">深拆</button>
+                      <button sc-camel-on-click="{{ v.deep }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b; color: #8a5a2b;" title="跳到「拆视频」页，用已留存的文案与结构填满结果区（免费）">深拆 →</button>
                       <button sc-camel-on-click="{{ v.imitate }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #f7f3ea;">仿写</button>
                     </div>
                   </div>
                 </sc-for>
+                <div style="padding: 10px 24px 14px; font-size: 11.5px; color: #a09a8a; line-height: 1.6;">点「深拆」跳到「拆视频」页：链接自动填进输入框，结果区用这条已留存的数据填满（结构拆解 / 可复用框架 / 爆点归因 / 文案全文）——<strong style="color: #8a5a2b;">不重新拆解、不扣额度</strong>。</div>
               </div>
               <!-- ③ 规律 + ④ 迁移 -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -103,6 +104,7 @@
             <span sc-camel-on-click="{{ benchSample }}" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;" style-hover="background: #f7f3ea;">「装修避坑老张」验收爆款 · 12w 赞</span>
             <button sc-camel-on-click="{{ benchGo }}" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">{{ benchBtnLabel }}</button>
           </div>
+          <div style="font-size: 11px; color: #8a8578; margin-top: 8px; line-height: 1.6;">从拆账号 TOP 清单或选题库「看文案」进来时，链接已自动填好、下方结果直接读已留存数据（不扣额度）；点「开始拆解」才按当前输入重拆并扣 1 条。</div>
         </div>
         <sc-if value="{{ benchLoading }}" hint-placeholder-val="{{ false }}">
           <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 30px; text-align: center;">
@@ -110,7 +112,8 @@
           </div>
         </sc-if>
         <sc-if value="{{ benchDone }}" hint-placeholder-val="{{ false }}">
-          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 18px; animation: slideup 0.4s ease;">
+          <div style="animation: slideup 0.4s ease;">
+          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start;">
             <div style="display: flex; flex-direction: column; gap: 14px;">
               <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
                 <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">结构拆解 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">「全屋定制验收，师傅最怕你检查这 4 个地方」· 58 秒</span></div>
@@ -139,7 +142,7 @@
                 <div style="font-size: 12.5px; color: #8a8578; line-height: 1.6;">⚠ 差异提醒：老张人设是「第三方监理」，你是「工厂主」。照搬「师傅最怕」会打到自己人，建议换成「工厂人教你验自家柜子，我们最欢迎较真的客户」——反差感更强，且符合你的表达规则。</div>
               </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="position: sticky; top: 8px; display: flex; flex-direction: column; gap: 12px;">
               <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
                 <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">爆点归因</div>
                 <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #6b6558; line-height: 1.6;">
@@ -149,55 +152,43 @@
                 </div>
               </div>
               <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">与你知识库的连接</div>
-                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.65;">案例卡「杭州客户验收返工」可直接作为第 3 个检查点的真实故事；FAQ 卡「工期」可回应评论区高频追问。</div>
+                <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">仿写时会参考你的内容</div>
+                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.65;">仿写时会自动检索你知识库里聊过的相关内容：《验收一定要看这 5 个地方》可作为第 3 个检查点的真实故事，《颗粒板到底能不能用》能回应评论区高频追问。</div>
               </div>
               <button sc-camel-on-click="{{ benchImitate }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 20px; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #6e4620;">用这个框架仿写 →</button>
               <button sc-camel-on-click="{{ benchSave }}" style="border: 1px solid #d8d2c4; background: none; color: {{ benchSaveColor }}; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">{{ benchSaveLabel }}</button>
             </div>
           </div>
-        </sc-if>
-        <sc-if value="{{ benchIdle }}" hint-placeholder-val="{{ false }}">
-          <div style="margin-bottom: 18px;">
-            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;">
-              <div style="font-size: 16px; font-weight: 700;">监控中的对标账号</div>
-              <span style="font-size: 12.5px; color: #8a5a2b; cursor: pointer;" style-hover="color: #6e4620;">+ 添加对标</span>
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px; margin-top: 16px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+              <div style="font-size: 13px; font-weight: 700;">文案全文 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">487 字 · 转写已留存</span></div>
+              <span style="font-size: 12px; color: #8a5a2b; cursor: pointer;" style-hover="color: #6e4620;">复制全文</span>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #4a6c8c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">张</div>
-                  <div>
-                    <div style="font-size: 13.5px; font-weight: 700;">装修避坑老张</div>
-                    <div style="font-size: 11px; color: #8a8578;">抖音 · 86w 粉</div>
-                  </div>
+            <details class="ptFold">
+              <summary>
+                <div style="position: relative;">
+                  <div class="ptFoldBody" style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.8; color: #23231f; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 14px 16px; max-width: 62em; margin: 0 auto;">家人们，全屋定制装完别急着签验收单。今天讲四个地方，师傅最怕你检查——不是因为难，是因为一查就藏不住。
+
+第一处，柜体和墙面的阴阳角。你拿手机的手电筒斜着照过去，别正着照。正着照什么缝都看不见，斜光一打，缝隙、波浪、鼓包全出来。标准是缝隙不超过两毫米，超过就是板材没吃住墙，时间长了柜门会歪。
+
+第二处，抽屉滑轨。别只拉一次，连续开合十下，听声音。前三下顺、后面开始发涩，说明滑轨没装平，是斜着上的螺丝。这种一年之内必定卡死，到时候换滑轨要拆整个柜体。
+
+第三处，门板缝。所有门关上，从侧面平视看一条线。上下缝宽度要一致，误差别超过一毫米。我去年在杭州有个客户，门缝上宽下窄差了三毫米，师傅说是正常公差——不是正常，是柜体没调平，我们整柜返工重装的。
+
+第四处，台面接缝。厨房台面如果是两块拼的，用指甲从接缝上刮过去。刮着不挂手才算合格。挂手的话，用久了这条缝会存水发黑，最后从里面烂。
+
+这四处，验收时你按顺序走一遍，二十分钟够了。师傅看你这么查，后面所有活都会认真做——这是我们工厂人最欢迎的客户，因为较真的客户才留得住。
+
+我把完整的验收清单整理成了一张表，评论区扣「验收」两个字，我发给你。</div>
+                  <div class="ptFoldMask" style="position: absolute; left: 0; right: 0; bottom: 0; height: 56px; border-radius: 0 0 8px 8px; background: linear-gradient(to bottom, rgba(250,248,242,0), #faf8f2); pointer-events: none;"></div>
                 </div>
-                <div style="font-size: 12.5px; color: #b0492f; line-height: 1.6;">🔥 昨日 1 条破 12w 赞（验收话题）</div>
-              </div>
-              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #4a8c5c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">默</div>
-                  <div>
-                    <div style="font-size: 13.5px; font-weight: 700;">默默住范儿</div>
-                    <div style="font-size: 11px; color: #8a8578;">抖音 · 120w 粉</div>
-                  </div>
-                </div>
-                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.6;">近 7 天更新 5 条，均值 8k 赞</div>
-              </div>
-              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #c89a5e; color: #23231f; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">柜</div>
-                  <div>
-                    <div style="font-size: 13.5px; font-weight: 700;">柜子厂小妹</div>
-                    <div style="font-size: 11px; color: #8a8578;">小红书 · 23w 粉</div>
-                  </div>
-                </div>
-                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.6;">同类工厂号 · 定位最接近你</div>
-              </div>
-            </div>
-            <div style="font-size: 12px; color: #a09a8a; margin-top: 12px;">监控账号有新爆款时，工作台会收到「对标动态」选题建议。</div>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #8a5a2b;"><span class="ptFoldMore">展开全文（487 字）</span><span class="ptFoldLess">收起</span></div>
+              </summary>
+            </details>
+          </div>
           </div>
         </sc-if>
+        
         </sc-if>
       </div>
     </sc-if>

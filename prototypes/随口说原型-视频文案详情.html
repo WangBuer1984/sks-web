@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>随口说原型 · 拆视频页视频文案详情态（定稿）</title>
+<!--
+  「视频文案详情态」定稿原型
+  ─ spec：sks-server/docs/superpowers/specs/2026-08-15-video-transcript-detail-design.md（D1–D11）
+  ─ plan：sks-server/docs/superpowers/plans/2026-08-15-video-transcript-detail.md
+
+  已定稿的形态（原 A/C 布局对比与演示脚手架已删除）：
+  D8  详情态不是独立页面，就是拆视频页本身——输入框预填该条链接，无「返回」、无「看原视频」。
+  D9  结构化四字段与拆视频同构，所以结果区两处共用同一份 resultBlock()。
+  D10 结果区 B 布局：分析区两栏（右栏 sticky 跟随）+ 文案全文全宽沉底、默认折叠 + 渐隐遮罩。
+  D11 已随拆账号汇入选题库的条目，「存入选题库」直接是绿色已存入终态。
+
+  导航按产品真实路径走：侧栏「对标拆解 / 选题库」+ 页内 tab +「深拆」/「看文案」按钮。
+  色板、字号、圆角全部照 extracted/TOKENS.md，不引入新令牌；不动 随口说原型-07191700.html 基准。
+-->
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    color: #23231f;
+    background: #f4f1e9;
+  }
+  .serif { font-family: 'Noto Serif SC', 'Songti SC', serif; }
+  button, input, textarea { font-family: inherit; }
+  @keyframes slideup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .slideup { animation: slideup 0.4s ease; }
+
+  /* hover：基准原型用 style-hover 伪属性，这里落成真 CSS */
+  .navItem:hover { background: #3a382f; }
+  .ghostBtn:hover { border-color: #8a5a2b; color: #8a5a2b; }
+  .primaryBtn:hover { background: #6e4620; }
+  .tintBtn:hover { background: #f7f3ea; }
+  .linkTxt:hover { color: #6e4620; text-decoration: underline; }
+  .row:hover { background: #faf8f2; }
+
+  /* 文案全文：折叠态限高 + 渐隐，展开即完整高度——不做内框滚动（避免嵌套滚动） */
+  .transcript { white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+
+<div style="display: flex; min-height: 100vh;">
+
+  <!-- ── 侧边栏（照 06-侧边栏.html） ──────────────────────────────── -->
+  <div style="width: 216px; flex-shrink: 0; background: #23231f; color: #e9e4d6; display: flex; flex-direction: column; padding: 20px 12px;">
+    <div class="serif" style="font-weight: 900; font-size: 22px; padding: 4px 12px 22px; letter-spacing: 0.06em;">
+      随口说<span style="font-size: 11px; font-weight: 400; color: #9a937f; margin-left: 8px; letter-spacing: 0;">v0.1 原型</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <div class="navItem" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #9a937f;">工作台</div>
+      <div class="navItem" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #9a937f;">账号定位</div>
+      <div class="navItem" id="nav-topics" onclick="go('topics')" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;">选题库</div>
+      <div class="navItem" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #9a937f;">文案创作</div>
+      <div class="navItem" id="nav-bench" onclick="go('acct')" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;">对标拆解</div>
+      <div class="navItem" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #9a937f;">知识库</div>
+      <div class="navItem" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #9a937f;">发布复盘</div>
+    </div>
+    <div style="margin-top: auto;">
+      <div style="background: #2e2c25; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+        <div style="font-size: 12px; color: #9a937f; margin-bottom: 6px;">剩余额度</div>
+        <div style="font-size: 18px; font-weight: 700;">32 <span style="font-size: 12px; font-weight: 400; color: #9a937f;">/ 50 条</span></div>
+        <div style="height: 4px; background: #444136; border-radius: 2px; margin-top: 8px;"><div style="height: 4px; width: 64%; background: #c89a5e; border-radius: 2px;"></div></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #c89a5e; color: #23231f; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">王</div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 500;">王姐</div>
+          <div style="font-size: 11px; color: #9a937f;">资料完善度 82%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 主区域 ─────────────────────────────────────────────────── -->
+  <div style="flex: 1; min-width: 0; padding: 32px 40px; overflow-x: hidden;">
+
+    <!-- ══════════ 对标拆解页（拆账号 / 拆视频 / 详情态） ══════════ -->
+    <div id="page-bench">
+      <div style="max-width: 1040px; margin: 0 auto;">
+        <div class="serif" style="font-size: 26px; font-weight: 900; margin-bottom: 4px;">对标拆解</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 16px;">拆账号看「它为什么值得抄、抄什么」，拆视频看「这条为什么火」</div>
+
+        <!-- tab：详情态下强制高亮「拆视频」（对齐 ?video= 在场时的行为） -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <div id="tab-acct" onclick="go('acct')" style="padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer;">拆账号</div>
+          <div id="tab-video" onclick="go('video')" style="padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer;">拆视频</div>
+        </div>
+
+        <!-- ─────── 拆账号结果 ─────── -->
+        <div id="scene-acct" style="display: none;">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
+            <div style="display: flex; gap: 10px;">
+              <input value="https://www.douyin.com/user/MS4wLjABAAAA..." style="flex: 1; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; background: #faf8f2; color: #23231f; outline: none;">
+              <button class="primaryBtn" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;">开始拆解</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px;">
+              <span style="font-size: 12px; color: #8a8578;">试试示例：</span>
+              <span class="tintBtn" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;">装修避坑老张 · 抖音 86w 粉</span>
+              <span style="margin-left: auto; font-size: 12px; color: #a09a8a;">消耗 10 条文案额度 · 抓取播放 TOP10 逐条拆解</span>
+            </div>
+          </div>
+
+          <div class="slideup" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- ① 画像对比 -->
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">① 账号画像 · 与你的定位对比</div>
+              <div style="display: grid; grid-template-columns: 84px 1fr 1fr; gap: 10px 14px; font-size: 12.5px;">
+                <div></div>
+                <div style="font-weight: 700; color: #4a6c8c;">装修避坑老张</div>
+                <div style="font-weight: 700; color: #8a5a2b;">你（王姐·全屋定制）</div>
+                <div style="color: #8a8578;">人设</div><div style="line-height: 1.6;">第三方监理，站业主立场揭施工方</div><div style="line-height: 1.6;">工厂主，敢自曝行业内幕</div>
+                <div style="color: #8a8578;">变现</div><div style="line-height: 1.6;">监理服务 + 团购佣金</div><div style="line-height: 1.6;">私域拆报价单 → 到店成交</div>
+                <div style="color: #8a8578;">频率</div><div style="line-height: 1.6;">日更，晚 19 点发布</div><div style="line-height: 1.6;">周 3–4 条</div>
+              </div>
+              <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 6px; padding: 10px 14px; margin-top: 12px; font-size: 12.5px; line-height: 1.65;"><strong>可借鉴：</strong>他靠「站业主立场」建立信任再变现，路径与你一致；<strong>差异点：</strong>他不能报价格（会得罪合作方），你能报真实价格——这是你独有的内容武器，TOP10 里没有一条报价内容。</div>
+            </div>
+
+            <!-- ② TOP 清单 -->
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; overflow: hidden;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 18px 24px 12px;">
+                <div style="font-size: 13px; font-weight: 700;">② 播放 TOP10 视频清单 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">文案与结构已全部留存，展示前 5 条</span></div>
+                <span class="linkTxt" style="font-size: 12px; color: #8a5a2b; cursor: pointer;">展开全部 10 条</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 28px 1fr repeat(5, 52px) minmax(100px, 1fr) 130px; gap: 8px; padding: 8px 24px; background: #faf8f2; border-bottom: 1px solid #e2dccd; font-size: 11.5px; font-weight: 700; color: #8a8578;">
+                <div>#</div><div>标题</div><div>播放</div><div>点赞</div><div>评论</div><div>分享</div><div>收藏</div><div>结构</div><div></div>
+              </div>
+              <div id="topList"></div>
+              <div style="padding: 10px 24px 14px; font-size: 11.5px; color: #a09a8a;">
+                点「深拆」跳到「拆视频」页，用这条已留存的数据把结果区完整填满（结构拆解 / 可复用框架 / 爆点归因 / 文案全文）——<strong style="color: #8a5a2b;">不重新拆解、不扣额度</strong>。
+              </div>
+            </div>
+
+            <!-- ③④ -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">③ TOP10 爆款规律</div>
+                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px;">
+                  <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>验收/避坑清单</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 60%; background: #8a5a2b; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">6条</span></div>
+                  <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>行业内幕</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 30%; background: #c89a5e; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">3条</span></div>
+                  <div style="display: grid; grid-template-columns: 96px 1fr 34px; gap: 10px; align-items: center;"><span>翻车实录</span><div style="height: 8px; background: #f2efe6; border-radius: 4px;"><div style="height: 8px; width: 10%; background: #4a6c8c; border-radius: 4px;"></div></div><span style="color: #8a8578; font-size: 11.5px;">1条</span></div>
+                </div>
+                <div style="font-size: 12.5px; color: #6b6558; line-height: 1.7; margin-top: 12px; border-top: 1px solid #eee8da; padding-top: 12px;">钩子句式：7/10 用「对立视角」（XX 最怕你/不会告诉你）；时长集中 45–75s；收藏率 &gt; 3% 的 5 条全部是清单体。</div>
+                <div style="font-size: 11.5px; color: #a09a8a; line-height: 1.6; margin-top: 10px;">规律归纳吃的是这 10 条的转写文案——所以拆账号仍在任务期把 10 条全转写完，详情页才能秒开。</div>
+              </div>
+              <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column;">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">④ 迁移到你的账号</div>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; line-height: 1.65; flex: 1;">
+                  <div style="background: #edf5ef; border-radius: 6px; padding: 9px 12px;"><strong style="color: #2f5c3b;">✓ 适合你：</strong>清单体 + 对立视角钩子，但立场换成「工厂人欢迎较真客户」</div>
+                  <div style="background: #edf5ef; border-radius: 6px; padding: 9px 12px;"><strong style="color: #2f5c3b;">✓ 空白机会：</strong>他做不了报价拆解，你的「拆报价单」系列没有竞争</div>
+                  <div style="background: #faf0ec; border-radius: 6px; padding: 9px 12px;"><strong style="color: #7a3a26;">✗ 别学：</strong>「揭施工方黑幕」类会打到你自己的工厂人设，违反你的表达规则</div>
+                </div>
+                <div style="font-size: 12px; color: #8a8578; margin-top: 10px;">TOP 视频选题已自动写入选题库（幂等，可重复查看）。</div>
+                <button class="primaryBtn" onclick="go('topics')" style="margin-top: 14px; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px; font-size: 13.5px; font-weight: 500; cursor: pointer;">去选题库查看</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────── 拆视频结果（粘链接完成态） ─────── -->
+        <div id="scene-video" style="display: none;">
+          <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;">
+            <textarea rows="3" placeholder="粘贴抖音/视频号分享文案（自动提取链接），或直接粘口播文案（不限平台）" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;">https://v.douyin.com/iRNBho6G/</textarea>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+              <span style="font-size: 12px; color: #8a8578;">试试示例：</span>
+              <span class="tintBtn" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;">「装修避坑老张」验收爆款 · 文案示例</span>
+              <button class="primaryBtn" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;">开始拆解</button>
+            </div>
+            <div style="font-size: 11px; color: #8a8578; margin-top: 8px;">识别为链接时走异步拆解（扣 1 条）；粘贴文案则同步拆解（扣 1 条）。可先去别处稍后回来看结果。</div>
+          </div>
+
+          <!-- 结果区由 resultBlock() 注入——与详情态是同一份代码 -->
+          <div id="result-video"></div>
+        </div>
+
+        <!-- ─────── 视频详情态（/analyze?video=<明细id>） ─────── -->
+        <div id="scene-detail" style="display: none;">
+          <div class="slideup" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- 输入区：与拆视频完全同一张卡，链接已自动填好 -->
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 22px 24px;">
+              <textarea id="d-input" rows="3" placeholder="粘贴抖音/视频号分享文案（自动提取链接），或直接粘口播文案（不限平台）" style="width: 100%; border: 1px solid #d8d2c4; border-radius: 8px; padding: 12px 14px; font-size: 14px; resize: none; background: #faf8f2; color: #23231f; outline: none; line-height: 1.6;"></textarea>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+                <span style="font-size: 12px; color: #8a8578;">试试示例：</span>
+                <span class="tintBtn" style="font-size: 12.5px; border: 1px dashed #c9b997; color: #8a5a2b; border-radius: 20px; padding: 5px 14px; cursor: pointer;">「装修避坑老张」验收爆款 · 文案示例</span>
+                <button class="primaryBtn" style="margin-left: auto; border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 500; cursor: pointer;">开始拆解</button>
+              </div>
+              <div style="font-size: 11px; color: #8a8578; margin-top: 8px;">
+                链接已按你点的那条自动填好——下方结果读的是拆账号时已留存的数据，<strong style="color: #8a5a2b;">不扣额度</strong>；点「开始拆解」才会按当前输入重新拆一次并扣 1 条。
+              </div>
+            </div>
+
+            <!-- 这是哪条视频（链接流不需要，因为链接是用户自己贴的） -->
+            <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+              <div class="serif" id="d-title" style="font-size: 18px; font-weight: 900; line-height: 1.5; margin-bottom: 4px;"></div>
+              <div id="d-sub" style="font-size: 12.5px; color: #8a8578; margin-bottom: 12px;"></div>
+              <div id="d-metrics" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+              <div id="d-desc" style="font-size: 12.5px; color: #6b6558; line-height: 1.65; margin-top: 12px;"></div>
+            </div>
+
+            <!-- 以下与拆视频完成态**完全同一份代码**（resultBlock 注入） -->
+            <div id="result-detail"></div>
+
+            <div style="font-size: 11.5px; color: #a09a8a; line-height: 1.7;">
+              这就是「拆视频」页本身：输入框填好链接、结果区被已留存数据填满，所以没有「返回」按钮——切 tab 或改输入框重拆即可；也不额外加「看原视频」，与现有页面保持一致。<br>
+              拿不到作品链接的条目（视频号待验证）输入框留空，下方结果照常展示；旧数据没有作者名时副行自动省略。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ 选题库 ══════════ -->
+    <div id="page-topics" style="display: none;">
+      <div style="max-width: 880px; margin: 0 auto;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+          <div class="serif" style="font-size: 26px; font-weight: 900;">选题库 <span style="font-family: inherit; font-size: 13px; font-weight: 400; color: #8a8578;">4 个待拍选题</span></div>
+          <span class="linkTxt" style="font-size: 12px; color: #8a5a2b; cursor: pointer;">拉取今日热点</span>
+        </div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">选题来自四个入口：每日热点、你的 FAQ、对标拆解、爆款复盘——都对齐你的内容支柱配比</div>
+        <div id="topicList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        <div style="margin-top: 14px; border: 1px dashed #c9b997; background: #f7f3ea; border-radius: 10px; padding: 14px 18px; font-size: 12.5px; color: #8a5a2b; line-height: 1.7;">
+          拆账号完成后 TOP 视频会自动汇入（标题 + 播放/收藏），可点「看文案」回看该条的完整文案与拆解；拆视频可点「存入选题库」；发布复盘续集也会写入这里。
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── 假数据（口径对齐真实字段：抖音有 videoUrl，视频号为 null） ──────────
+const TRANSCRIPT = `家人们，全屋定制装完别急着签验收单。今天讲四个地方，师傅最怕你检查——不是因为难，是因为一查就藏不住。
+
+第一处，柜体和墙面的阴阳角。你拿手机的手电筒斜着照过去，别正着照。正着照什么缝都看不见，斜光一打，缝隙、波浪、鼓包全出来。标准是缝隙不超过两毫米，超过就是板材没吃住墙，时间长了柜门会歪。
+
+第二处，抽屉滑轨。别只拉一次，连续开合十下，听声音。前三下顺、后面开始发涩，说明滑轨没装平，是斜着上的螺丝。这种一年之内必定卡死，到时候换滑轨要拆整个柜体。
+
+第三处，门板缝。所有门关上，从侧面平视看一条线。上下缝宽度要一致，误差别超过一毫米。我去年在杭州有个客户，门缝上宽下窄差了三毫米，师傅说是正常公差——不是正常，是柜体没调平，我们整柜返工重装的。
+
+第四处，台面接缝。厨房台面如果是两块拼的，用指甲从接缝上刮过去。刮着不挂手才算合格。挂手的话，用久了这条缝会存水发黑，最后从里面烂。
+
+这四处，验收时你按顺序走一遍，二十分钟够了。师傅看你这么查，后面所有活都会认真做——这是我们工厂人最欢迎的客户，因为较真的客户才留得住。
+
+我把完整的验收清单整理成了一张表，评论区扣「验收」两个字，我发给你。`;
+
+const VIDEO = {
+  title: '全屋定制验收，师傅最怕你检查这 4 个地方',
+  author: '装修避坑老张',
+  publishedAt: '2026-07-28',
+  durationSec: 58,
+  videoUrl: 'https://www.douyin.com/video/7412345678901234567',
+  description: '#全屋定制 #装修避坑 #验收清单 评论区扣「验收」领完整清单',
+  topicId: 8, // 拆账号完成时已汇入选题库 → 详情态直接是「已存入」终态；null 则按钮可点
+
+  metrics: [['播放', '128.4万'], ['点赞', '12.1万'], ['评论', '8632'], ['分享', '1.2万'], ['收藏', '2.1万']],
+  // 四字段与拆视频完全同构（sks-ai: structure / why_hot / framework / diff_hint）
+  structure: '钩子：「全屋定制装完别急着签验收单，师傅最怕你检查这四个地方」——用对立视角制造信息差，4 秒内给出观看收益。\n正文：四个检查点按「位置 + 手法 + 不查的后果」三段式讲，节奏一致、每点约 10 秒，天然可截图保存。\n转化：「评论区扣『验收』领完整清单」——用清单当钩子把流量沉进私域。',
+  whyHot: '清单体天然可保存，收藏 2.1 万超过点赞以外的一切互动；对立视角把师傅设为信息壁垒，驱动完播；第三点插入真实返工案例，可信度拉满；结尾扣字领资料拉高互动权重。',
+  framework: '对立视角钩子（「XX 最怕你…」）→ 观看收益承诺 → N 个三段式清单（位置+手法+后果）→ 清单引流转化',
+  diffHint: '老张人设是「第三方监理」，你是「工厂主」。照搬「师傅最怕」会打到自己人，建议换成「工厂人教你验自家柜子，我们最欢迎较真的客户」——反差感更强，且符合你的表达规则。',
+};
+
+const TOP = [
+  { rank: 1, title: '全屋定制验收，师傅最怕你检查这 4 个地方', dur: '58秒', pub: '2026-07-28', views: '128.4万', likes: '12.1万', cmts: '8632', shares: '1.2万', saves: '2.1万', brief: '钩子→四点清单→评论区扣字' },
+  { rank: 2, title: '定制柜报价单里最容易加钱的三行，别问设计师', dur: '1分12秒', pub: '2026-07-21', views: '96.2万', likes: '8.4万', cmts: '5210', shares: '9873', saves: '1.6万', brief: '拆报价→逐行对照→私域引流' },
+  { rank: 3, title: '这种柜门装法，两年后一定变形', dur: '46秒', pub: '2026-07-14', views: '73.8万', likes: '6.1万', cmts: '3902', shares: '6120', saves: '9840', brief: '反例开场→原理→替代方案' },
+  { rank: 4, title: '业主自己验收，需要带哪几样工具', dur: '52秒', pub: '2026-07-07', views: '61.5万', likes: '4.8万', cmts: '2740', shares: '5011', saves: '1.1万', brief: '清单体→工具逐项→保存提示' },
+  { rank: 5, title: '柜子进场当天必须做的一件事', dur: '39秒', pub: '2026-06-30', views: '54.1万', likes: '3.9万', cmts: '2103', shares: '4288', saves: '7620', brief: '悬念钩子→单点讲透→CTA' },
+];
+
+const TOPICS = [
+  { src: 'benchmark', label: '对标拆解', cls: 'border-color:#dcc6a4;background:#f7f3ea;color:#8a5a2b', title: '全屋定制验收，师傅最怕你检查这 4 个地方', line: '对标拆解 · 时长 58秒', chips: [['播放', '128.4万'], ['收藏', '2.1万']], videoId: 1 },
+  { src: 'benchmark', label: '对标拆解', cls: 'border-color:#dcc6a4;background:#f7f3ea;color:#8a5a2b', title: '定制柜报价单里最容易加钱的三行，别问设计师', line: '对标拆解 · 时长 1分12秒', chips: [['播放', '96.2万'], ['收藏', '1.6万']], videoId: 2 },
+  { src: 'hot', label: '每日热点', cls: 'border-color:#e4b9ab;background:#faf0ec;color:#b0492f', title: '装修补贴新政落地，旧房改造能省多少', line: '每日热点 · 热榜 #12 · 命中「政策解读」', chips: [], videoId: null },
+  { src: 'benchmark', label: '对标拆解', cls: 'border-color:#dcc6a4;background:#f7f3ea;color:#8a5a2b', title: '（存量选题）柜子进场当天必须做的一件事', line: '对标拆解 · 播放 54.1万', chips: [], videoId: null, legacy: true },
+];
+
+// ── 渲染 ─────────────────────────────────────────────────────────────
+function renderTop() {
+  document.getElementById('topList').innerHTML = TOP.map(v => `
+    <div class="row" style="display: grid; grid-template-columns: 28px 1fr repeat(5, 52px) minmax(100px, 1fr) 130px; gap: 8px; padding: 12px 24px; border-bottom: 1px solid #eee8da; font-size: 12.5px; align-items: center;">
+      <div style="color: #a09a8a; font-weight: 700;">${v.rank}</div>
+      <div style="min-width: 0; line-height: 1.5; font-size: 13px;">${v.title}
+        <div style="font-size: 11px; color: #a09a8a; margin-top: 2px;">发布 ${v.pub} · ${v.dur}</div>
+      </div>
+      <div style="color: #6b6558;">${v.views}</div>
+      <div style="color: #6b6558;">${v.likes}</div>
+      <div style="color: #6b6558;">${v.cmts}</div>
+      <div style="color: #6b6558;">${v.shares}</div>
+      <div style="color: #6b6558;">${v.saves}</div>
+      <div style="color: #8a8578; line-height: 1.5;">${v.brief}</div>
+      <div style="display: flex; gap: 6px;">
+        <button class="ghostBtn" onclick="go('detail')" title="查看该条的文案全文与结构化拆解（免费）" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;">深拆 →</button>
+        <button class="tintBtn" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;">仿写</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderDetail() {
+  document.getElementById('d-title').textContent = VIDEO.title;
+  const dur = VIDEO.durationSec < 60 ? VIDEO.durationSec + '秒'
+    : Math.floor(VIDEO.durationSec / 60) + '分' + (VIDEO.durationSec % 60 ? (VIDEO.durationSec % 60) + '秒' : '');
+  document.getElementById('d-sub').textContent = [VIDEO.author, '发布 ' + VIDEO.publishedAt, dur].filter(Boolean).join(' · ');
+  document.getElementById('d-metrics').innerHTML = VIDEO.metrics.map(([k, val]) =>
+    `<span style="border: 1px solid #d8d2c4; background: #faf8f2; border-radius: 4px; padding: 3px 8px; font-size: 11px; color: #6b6558;">${k} <strong style="color:#23231f;">${val}</strong></span>`).join('');
+  document.getElementById('d-desc').textContent = VIDEO.description;
+  // 输入框自动填该条链接；拿不到链接（如视频号）时留空，不影响下方结果
+  document.getElementById('d-input').value = VIDEO.videoUrl || '';
+}
+
+/** 复刻 helpers.structureTimeline：先认「钩子/正文/转化：」标记，再退回 → 切分。 */
+function timeline(structure) {
+  const t = (structure || '').trim();
+  if (!t) return [];
+  const tagged = [
+    { re: /钩子[:：]\s*([\s\S]+?)(?=(正文|承诺|清单|转化|CTA|结尾)[:：]|$)/i, label: '钩子', tone: 'hook' },
+    { re: /正文[:：]\s*([\s\S]+?)(?=(钩子|承诺|清单|转化|CTA|结尾)[:：]|$)/i, label: '正文', tone: 'body' },
+    { re: /(?:CTA|结尾|转化)[:：]\s*([\s\S]+?)$/i, label: '转化', tone: 'cta' },
+  ];
+  const out = [];
+  for (const g of tagged) {
+    const m = t.match(g.re);
+    if (m && m[1] && m[1].trim()) out.push({ label: g.label, tone: g.tone, text: m[1].trim() });
+  }
+  if (out.length >= 2) return out;
+  const parts = t.split(/(?:→|->|｜|\n{2,})/).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    const labels = ['钩子', '正文', '转化', '补充'], tones = ['hook', 'body', 'cta', 'plain'];
+    return parts.slice(0, 4).map((text, i) => ({ label: labels[i] || ('段' + (i + 1)), tone: tones[i] || 'plain', text }));
+  }
+  return [{ label: '结构', tone: 'plain', text: t }];
+}
+
+const TONE = {
+  hook: 'color: #b0492f; border: 1px solid #e4b9ab; background: #faf0ec;',
+  body: 'color: #8a5a2b; border: 1px solid #dcc6a4; background: #f7f3ea;',
+  cta: 'color: #4a6c8c; border: 1px solid #dcc6a4; background: #f7f3ea;',
+  plain: 'color: #8a8578; border: 1px solid #e2dccd; background: #faf8f2;',
+};
+
+/**
+ * 拆视频完成态结果区（对应 VideoResult.tsx）——详情态与链接流共用这一份。
+ *
+ * B 布局（spec D10）：分析区两栏 [1fr | 300px]，右栏 sticky 跟随；
+ * 文案全文移出两栏、全宽沉底，默认折叠 6 行 + 渐隐遮罩，展开即完整高度（无内框滚动）。
+ * 唯一入口差别：详情态上方多一张「这是哪条视频」卡，且 topicId 非空时按钮是已存入终态。
+ */
+function resultBlock(kind) {
+  // 详情态：该条的选题在拆账号完成时已自动汇入选题库 → 直接呈现「已存入」终态
+  const saved = kind === 'detail' && VIDEO.topicId != null;
+  const steps = timeline(VIDEO.structure).map(s => `
+    <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start;">
+      <span style="font-size: 11px; font-weight: 700; padding: 3px 0; border-radius: 4px; text-align: center; ${TONE[s.tone]}">${s.label}</span>
+      <div style="line-height: 1.65; white-space: pre-wrap;">${s.text}</div>
+    </div>`).join('');
+
+  const whyLines = VIDEO.whyHot.split(/\n+|(?<=[。；])/).map(s => s.trim()).filter(Boolean).slice(0, 6)
+    .map(l => `<div style="color: #23231f;">${l}</div>`).join('');
+
+  const chars = TRANSCRIPT.replace(/\s/g, '').length;
+
+  // ── 卡片片段 ──────────────────────────────────────────────────────
+  const cardStructure = `
+    <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+      <div style="font-size: 13px; font-weight: 700; margin-bottom: 14px;">结构拆解</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">${steps}</div>
+    </div>`;
+
+  const cardFramework = `
+    <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+      <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">可复用框架</div>
+      <div style="font-size: 13.5px; line-height: 1.7; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">${VIDEO.framework}</div>
+      <div style="font-size: 12.5px; color: #8a8578; line-height: 1.6;">⚠ 差异提醒：${VIDEO.diffHint}</div>
+    </div>`;
+
+  // 全宽沉底 + 折叠展开；正文限宽居中（约 62em），避免 1040px 宽度下的长行
+  const cardTranscript = `
+    <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 12px; padding: 20px 24px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 700;">文案全文 <span style="font-size: 11px; color: #8a8578; font-weight: 400;">${chars} 字</span></div>
+        <span class="linkTxt" onclick="copyText(this)" style="font-size: 12px; color: #8a5a2b; cursor: pointer;">复制全文</span>
+      </div>
+      <div class="foldWrap" style="position: relative;">
+        <div class="transcript foldBody" style="max-height: 168px; overflow: hidden; font-size: 13.5px; line-height: 1.8; background: #faf8f2; border: 1px solid #eee8da; border-radius: 8px; padding: 14px 16px; max-width: 62em; margin: 0 auto;">${TRANSCRIPT}</div>
+        <div class="foldMask" style="position: absolute; left: 0; right: 0; bottom: 0; height: 56px; border-radius: 0 0 8px 8px; background: linear-gradient(to bottom, rgba(250,248,242,0), #faf8f2); pointer-events: none;"></div>
+      </div>
+      <div style="text-align: center; margin-top: 10px;">
+        <span class="linkTxt" onclick="toggleFold(this)" style="font-size: 12px; color: #8a5a2b; cursor: pointer;">展开全文（${chars} 字）</span>
+      </div>
+    </div>`;
+
+  const cardWhyHot = `
+    <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+      <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">爆点归因</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; line-height: 1.6;">${whyLines}</div>
+    </div>`;
+
+  const cardKb = `
+    <div style="background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 18px;">
+      <div style="font-size: 11px; color: #8a5a2b; font-weight: 700; margin-bottom: 6px;">与你知识库的连接</div>
+      <div style="font-size: 12.5px; color: #6b6558; line-height: 1.65;">仿写时会按当前定位档案检索知识库引用；可先完善档案与 B 层案例卡。</div>
+    </div>`;
+
+  const btnImitate = `<button class="primaryBtn" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 20px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;">用这个框架仿写 →</button>`;
+  const btnSave = saved
+    ? `<button disabled style="border: 1px solid #4a8c5c; background: #edf5ef; color: #2f5c3b; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: not-allowed; white-space: nowrap;">✓ 已存入选题库</button>`
+    : `<button class="ghostBtn" style="border: 1px solid #d8d2c4; background: none; color: #23231f; border-radius: 8px; padding: 11px 20px; font-size: 13.5px; cursor: pointer; white-space: nowrap;">存入选题库</button>`;
+  const savedHint = saved
+    ? `<div style="font-size: 11px; color: #a09a8a; line-height: 1.6;">拆账号完成时这条已自动汇入选题库，所以直接是已存入态。</div>`
+    : `<div style="font-size: 11px; color: #a09a8a; line-height: 1.6;">这条是你自己贴链接拆的，选题库里还没有 → 可点。</div>`;
+  const linkToTopics = saved
+    ? `<span class="linkTxt" onclick="go('topics')" style="text-align: center; font-size: 12px; color: #8a5a2b; cursor: pointer;">去选题库查看 →</span>` : '';
+
+  return `
+  <div class="slideup">
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 14px;">${cardStructure}${cardFramework}</div>
+      <div style="position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px;">
+        ${cardWhyHot}${cardKb}${btnImitate}${btnSave}${linkToTopics}${savedHint}
+      </div>
+    </div>
+    <div style="margin-top: 16px;">${cardTranscript}</div>
+  </div>`;
+}
+
+/** 折叠态展开/收起：去掉高度限制并隐藏渐隐遮罩（不做内框滚动）。 */
+function toggleFold(el) {
+  const wrap = el.closest('div').previousElementSibling;
+  const body = wrap.querySelector('.foldBody');
+  const mask = wrap.querySelector('.foldMask');
+  const open = body.style.maxHeight === 'none';
+  body.style.maxHeight = open ? '168px' : 'none';
+  mask.style.display = open ? 'block' : 'none';
+  el.textContent = open ? el.textContent.replace('收起', '展开') : el.textContent.replace('展开', '收起');
+}
+
+function renderTopics() {
+  document.getElementById('topicList').innerHTML = TOPICS.map(t => `
+    <div style="display: flex; align-items: center; gap: 16px; background: #fff; border: 1px solid #e2dccd; border-radius: 10px; padding: 16px 20px;">
+      <span style="flex-shrink: 0; white-space: nowrap; border: 1px solid; ${t.cls}; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 700;">${t.label}</span>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 14px; font-weight: 500; margin-bottom: 3px; line-height: 1.5;">${t.title}</div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #8a8578;">
+          <span>${t.line}</span>
+          ${t.chips.map(([k, v]) => `<span style="border: 1px solid #d8d2c4; background: #faf8f2; border-radius: 4px; padding: 1px 6px; font-size: 11px; color: #6b6558;">${k} ${v}</span>`).join('')}
+          ${t.legacy ? '<span style="font-size: 11px; color: #a09a8a;">（本次上线前的存量选题，没有视频关联 → 不显示入口）</span>' : ''}
+        </div>
+      </div>
+      ${t.videoId != null
+        ? `<button class="ghostBtn" onclick="go('detail')" style="flex-shrink: 0; white-space: nowrap; border: 1px solid #d8d2c4; background: none; color: #6b6558; border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer;">看文案</button>`
+        : ''}
+      <button class="tintBtn" style="flex-shrink: 0; white-space: nowrap; border: 1px solid #8a5a2b; background: none; color: #8a5a2b; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer;">生成文案</button>
+    </div>`).join('');
+}
+
+// ── 页面/态切换（对应真实路由：/analyze、/analyze?video=<id>、/topics） ──
+const ON_TAB = 'border: 1px solid #8a5a2b; background: #8a5a2b; font-weight: 700; color: #fff;';
+const OFF_TAB = 'border: 1px solid #d8d2c4; background: #fff; font-weight: 400; color: #23231f;';
+
+function go(scene) {
+  const isTopics = scene === 'topics';
+  document.getElementById('page-topics').style.display = isTopics ? 'block' : 'none';
+  document.getElementById('page-bench').style.display = isTopics ? 'none' : 'block';
+  ['acct', 'video', 'detail'].forEach(s => {
+    document.getElementById('scene-' + s).style.display = s === scene ? 'block' : 'none';
+  });
+  // 详情态强制高亮「拆视频」tab（对齐 ?video= 在场时的行为）
+  const videoTabOn = scene === 'video' || scene === 'detail';
+  document.getElementById('tab-acct').setAttribute('style', 'padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer;' + (scene === 'acct' ? ON_TAB : OFF_TAB));
+  document.getElementById('tab-video').setAttribute('style', 'padding: 9px 22px; border-radius: 8px; font-size: 13.5px; cursor: pointer;' + (videoTabOn ? ON_TAB : OFF_TAB));
+  // 侧栏高亮
+  document.getElementById('nav-bench').style.background = isTopics ? 'none' : '#3a382f';
+  document.getElementById('nav-topics').style.background = isTopics ? '#3a382f' : 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function copyText(el) {
+  const box = el.closest('div').parentElement.querySelector('.transcript');
+  navigator.clipboard.writeText(box.textContent).then(() => {
+    const old = el.textContent;
+    el.textContent = '已复制';
+    setTimeout(() => { el.textContent = old; }, 2000);
+  }).catch(() => {});
+}
+
+renderTop();
+renderDetail();
+renderTopics();
+document.getElementById('result-video').innerHTML = resultBlock('video');
+document.getElementById('result-detail').innerHTML = resultBlock('detail');
+go('acct');
+</script>
+</body>
+</html>

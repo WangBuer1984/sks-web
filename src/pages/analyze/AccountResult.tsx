@@ -63,9 +63,10 @@ export default function AccountResult({
   }, [profile]);
 
   const peerSentences = splitProfileSentences(summary?.account_profile ?? '', 3);
+  // 规范键（D19）排在旧中文键前面：新档案只有 persona/conversionPath，老档案还是中文键，两种都要认。
   const youRows = [
-    profileField(profile?.content ?? {}, ['人设', '角色', '身份']),
-    profileField(profile?.content ?? {}, ['变现', '变现路径', '商业模式']),
+    profileField(profile?.content ?? {}, ['persona', '人设', '角色', '身份']),
+    profileField(profile?.content ?? {}, ['conversionPath', '变现', '变现路径', '商业模式']),
     profileField(profile?.content ?? {}, ['频率', '更新频率', '发布节奏']),
   ];
   // 对标列：有分句用分句，否则首格放整段画像摘要

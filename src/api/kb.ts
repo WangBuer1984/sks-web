@@ -1,3 +1,11 @@
+/**
+ * @deprecated 旧 A/B/C 卡片知识库 API（`/api/kb/cards`）。
+ *
+ * 知识库已重定义为「内容底仓」（spec 2026-08-15-kb-content-library-design D1/D5）：库里只有一种对象
+ * ——一篇内容。新契约见 {@link ./content}，端点实现落在后续任务。本模块<b>保留一个兼容周期</b>，
+ * 期间不再新增能力，也不要在新页面里引用；存量 B 卡不迁移（D5）。
+ */
+
 import { userClient } from './client';
 
 /** KB 卡片列表项（对齐 Java CardSummary）。embedding 不返回（太大）。 */

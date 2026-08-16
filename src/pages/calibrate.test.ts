@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { asText, extractProfileContent } from '../lib/profileText';
 import {
   currentStep,
+  extractFaqCandidates,
+  selectedFaqInputs,
   shouldApplySampleResponse,
   shouldShowSampleBlock,
   storeTurns,
+  toggleCandidate,
   type SampleState,
 } from './calibrateMode';
 
@@ -55,6 +58,67 @@ describe('storeTurns', () => {
     expect(storeTurns(['a', 'b'], ['a', 'b', 'ghost'])).toEqual(['a', 'b']));
   it('done null → 用 live', () => expect(storeTurns(null, ['a', 'b'])).toEqual(['a', 'b']));
   it('done 空数组 → 用空快照（不 fallback live）', () => expect(storeTurns([], ['a'])).toEqual([]));
+});
+
+describe('extractFaqCandidates', () => {
+  it('从 summarize draft 取 faq_candidates', () => {
+    const draft = {
+      profile: { persona: '工厂人' },
+      faq_candidates: [
+        { question: '报价为什么差一倍', answer: '看板材与五金' },
+        { question: '工期能压到多短' },
+      ],
+    };
+    expect(extractFaqCandidates(draft)).toEqual([
+      { question: '报价为什么差一倍', answer: '看板材与五金' },
+      { question: '工期能压到多短' },
+    ]);
+  });
+
+  it('没有候选 / 旧 checkpoint（只有 a_cards）→ 空数组，不报错', () => {
+    expect(extractFaqCandidates({ profile: { 人设: 'x' }, a_cards: [{ title: 't' }] })).toEqual([]);
+    expect(extractFaqCandidates(null)).toEqual([]);
+    expect(extractFaqCandidates({ faq_candidates: 'not-an-array' })).toEqual([]);
+  });
+
+  it('丢掉 question 空白的脏候选（勾了也没法入库）', () => {
+    expect(
+      extractFaqCandidates({ faq_candidates: [{ question: '  ' }, { question: '真问题' }] }),
+    ).toEqual([{ question: '真问题' }]);
+  });
+
+  it('answer 空白 → 不带 answer 键（后端把它当「答案后补」）', () => {
+    expect(extractFaqCandidates({ faq_candidates: [{ question: 'q', answer: '  ' }] })).toEqual([
+      { question: 'q' },
+    ]);
+  });
+});
+
+describe('toggleCandidate', () => {
+  it('勾选 / 取消勾选按下标切换', () => {
+    expect(toggleCandidate([0, 2], 1)).toEqual([0, 1, 2]);
+    expect(toggleCandidate([0, 1, 2], 1)).toEqual([0, 2]);
+  });
+});
+
+describe('selectedFaqInputs', () => {
+  const candidates = [
+    { question: 'q0', answer: 'a0' },
+    { question: 'q1' },
+    { question: 'q2' },
+  ];
+
+  it('只回勾中的候选，按候选原顺序', () => {
+    expect(selectedFaqInputs(candidates, [2, 0])).toEqual([{ question: 'q0', answer: 'a0' }, { question: 'q2' }]);
+  });
+
+  it('一条没勾 → []（confirm 仍照常提交，FAQ 不是校准前置条件）', () => {
+    expect(selectedFaqInputs(candidates, [])).toEqual([]);
+  });
+
+  it('越界下标忽略', () => {
+    expect(selectedFaqInputs(candidates, [9])).toEqual([]);
+  });
 });
 
 describe('shouldApplySampleResponse', () => {

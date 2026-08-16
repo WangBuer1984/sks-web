@@ -21,6 +21,15 @@ export interface Topic {
   status: string;
   /** 关联的拆账号明细 id：仅 benchmark 来源且标题对得上时有值——据它显示「看文案」入口。 */
   benchmarkVideoId: number | null;
+  /** 来源 FAQ 的 id：仅「由 FAQ 生成选题」产生时有值（手建的 faq 选题为 null）。 */
+  faqId: number | null;
+  /**
+   * 生成选题时的问题快照。**不是 join 出来的最新问题**——FAQ 改名不回写已生成选题，
+   * 记的是「当时问的是什么」。存量选题为 null。
+   */
+  faqQuestionSnapshot: string | null;
+  /** 来源 FAQ 是否已被删除（后端查询时算的派生值）。为 true 时选题照常可用，只是标注一下。 */
+  faqDeleted: boolean;
   createdAt: string;
 }
 
@@ -45,7 +54,7 @@ export function createTopic(
   return userClient.post<number, number>('/topics', { title, rationale, source });
 }
 
-/** 立刻为当前用户跑一轮热点打分（最多 3 条，需 B 层知识库卡匹配）。返回新入库条数。 */
+/** @deprecated 热点选题入口已下线（D10）。端点保留一个兼容周期，新 UI 不再调用。 */
 export function refreshHotTopics(): Promise<number> {
   return userClient.post<number, number>('/topics/refresh-hot', {});
 }

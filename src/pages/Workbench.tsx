@@ -1,7 +1,7 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { fetchMe } from '../api/auth';
 import { getBizMessage } from '../api/client';
-import { type CardSummary, listCards } from '../api/kb';
+import { listContents, type ContentSummary } from '../api/content';
 import { getActiveProfile } from '../api/profile';
 import { type ScriptSummary, listScripts } from '../api/script';
 import { type Topic, listTopics } from '../api/topic';
@@ -23,16 +23,14 @@ import {
  * 由 `deriveHomeMode(profile.calibrated)` 决定。额度余额改由侧边栏展示，本页不再做大号余额卡
  * 与 ad-hoc 导航条；退出登录只留侧边栏入口。
  *
- * 组合已有 API（`/me`、`/profile`、`/topics`、`/kb/cards`、`/scripts`），不新增后端。
- * homeNew 只依赖 me/profile；homeNormal 等 topics/cards/scripts 全部 settled 再渲染，
- * 避免「还在加载」被当成空库闪一下，也避免 isError 静默伪空态。
- * 知识空白条无后端信号，本期不渲染（见 PROTOTYPE_GAP）。
+ * 组合已有 API（`/me`、`/profile`、`/topics`、`/kb/contents`、`/scripts`），不新增后端。
+ * homeNew 只依赖 me/profile；homeNormal 等 topics/contents/scripts 全部 settled 再渲染。
  */
 export default function Workbench() {
   const meQ = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const profileQ = useQuery({ queryKey: ['profile'], queryFn: getActiveProfile });
   const topicsQ = useQuery({ queryKey: ['topics'], queryFn: () => listTopics() });
-  const cardsQ = useQuery({ queryKey: ['kb-cards'], queryFn: () => listCards() });
+  const contentsQ = useQuery({ queryKey: ['contents'], queryFn: () => listContents() });
   const scriptsQ = useQuery({ queryKey: ['scripts'], queryFn: () => listScripts() });
 
   if (meQ.isLoading || profileQ.isLoading) {
@@ -55,7 +53,7 @@ export default function Workbench() {
       {mode === 'new' ? (
         <HomeNew balance={balance} />
       ) : (
-        <HomeNormalBody topicsQ={topicsQ} cardsQ={cardsQ} scriptsQ={scriptsQ} />
+        <HomeNormalBody topicsQ={topicsQ} contentsQ={contentsQ} scriptsQ={scriptsQ} />
       )}
     </div>
   );
@@ -64,19 +62,19 @@ export default function Workbench() {
 /** homeNormal 专用：三路辅助查询必须 settled；失败与真·空库分开。 */
 function HomeNormalBody({
   topicsQ,
-  cardsQ,
+  contentsQ,
   scriptsQ,
 }: {
   topicsQ: UseQueryResult<Topic[], Error>;
-  cardsQ: UseQueryResult<CardSummary[], Error>;
+  contentsQ: UseQueryResult<ContentSummary[], Error>;
   scriptsQ: UseQueryResult<ScriptSummary[], Error>;
 }) {
-  const pending = topicsQ.isPending || cardsQ.isPending || scriptsQ.isPending;
+  const pending = topicsQ.isPending || contentsQ.isPending || scriptsQ.isPending;
   if (pending) {
     return <p className="text-copy text-paper-muted">加载工作台数据…</p>;
   }
 
-  const firstError = topicsQ.error ?? cardsQ.error ?? scriptsQ.error;
+  const firstError = topicsQ.error ?? contentsQ.error ?? scriptsQ.error;
   if (firstError) {
     return (
       <p className="text-copy text-paper-danger">
@@ -85,7 +83,7 @@ function HomeNormalBody({
     );
   }
 
-  const cards = cardsQ.data ?? [];
+  const contents = contentsQ.data ?? [];
   const scripts = scriptsQ.data ?? [];
   const topics = topicsQ.data ?? [];
   const since = weekStart(new Date());
@@ -93,9 +91,9 @@ function HomeNormalBody({
 
   return (
     <HomeNormal
-      cardCount={cards.length}
-      cardsUpdatedThisWeek={countSince(
-        cards.map((c) => c.updatedAt),
+      contentCount={contents.length}
+      contentsUpdatedThisWeek={countSince(
+        contents.map((c) => c.updatedAt),
         since,
       )}
       scriptsThisWeek={countSince(

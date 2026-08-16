@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getBizMessage } from '../api/client';
 import {
   asrVoice,
@@ -9,12 +9,21 @@ import {
   sampleOpening,
   type InterviewStepView,
 } from '../api/profile';
-import { asText, extractProfileContent } from '../lib/profileText';
+import { extractProfileContent } from '../lib/profileText';
+import {
+  PROFILE_FIELD_LABELS,
+  isListField,
+  readProfileFields,
+} from '../lib/profileFields';
+import { PROFILE_FIELD_KEYS, type ProfileFieldKey } from '../api/profile';
 import {
   currentStep,
+  extractFaqCandidates,
+  selectedFaqInputs,
   shouldApplySampleResponse,
   shouldShowSampleBlock,
   storeTurns,
+  toggleCandidate,
   type Phase,
   type SampleState,
 } from './calibrateMode';
@@ -28,16 +37,12 @@ interface Turn {
   text: string;
 }
 
-/** Step3 四宫格 → 档案键。原型「表达红线」对应档案 `红线`。 */
-const CARDS: { title: string; key: string }[] = [
-  { title: '人设', key: '人设' },
-  { title: '目标人群', key: '人群' },
-  { title: '差异化', key: '差异化' },
-  { title: '表达红线', key: '红线' },
-];
+/** 第 3 步展示的档案字段：七个规范键全给（D19，档案是唯一真源，不该有「确认时看不到的字段」）。 */
+const FIELDS: ProfileFieldKey[] = [...PROFILE_FIELD_KEYS];
 
 export default function Calibrate() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sessionId] = useState(() => crypto.randomUUID());
   const [phase, setPhase] = useState<Phase>('materials');
   const [materials, setMaterials] = useState('');
@@ -49,6 +54,9 @@ export default function Calibrate() {
   const [asrPending, setAsrPending] = useState(false);
   const [recording, setRecording] = useState(false);
   const [sampleData, setSampleData] = useState<SampleState | null>(null);
+  // FAQ 候选勾选（D20）：候选是 AI 从访谈里提取的，**默认一条不勾**——
+  // 默认全选会让用户一路点确认，事后在定位页看到几条自己没认过的问答。
+  const [selectedFaqs, setSelectedFaqs] = useState<number[]>([]);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   // turns 的同步镜像 ref（供 onSuccess 即时读 + done 快照），doneTurnsRef 首次进 done 时快照一次。
@@ -76,6 +84,7 @@ export default function Calibrate() {
       }
       if (resp.done) {
         setDraft(resp.profileDraft);
+        setSelectedFaqs([]);
         setPhase('done');
         if (doneTurnsRef.current === null) {
           doneTurnsRef.current = turnsRef.current; // 首次进 done 快照（含本轮 AI 问，不含后续补充幽灵 turn）
@@ -92,9 +101,20 @@ export default function Calibrate() {
   });
 
   const confirmMut = useMutation({
-    mutationFn: () => confirmProfile(sessionId, storeTurns(doneTurnsRef.current, turnsRef.current)),
-    onSuccess: () => {
+    mutationFn: () =>
+      confirmProfile(
+        sessionId,
+        storeTurns(doneTurnsRef.current, turnsRef.current),
+        selectedFaqInputs(extractFaqCandidates(draft), selectedFaqs),
+      ),
+    onSuccess: async () => {
       setError(null);
+      // **先失效再导航**：档案与 FAQ 刚被这次 confirm 改掉，若先跳走，工作台/定位页会先渲染 cache 里的
+      // 旧档案与旧 FAQ，一致性变成「靠下一次挂载碰巧重取」。exact 是因为回放等子 key 不受 confirm 影响。
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profile'], exact: true }),
+        queryClient.invalidateQueries({ queryKey: ['profile', 'faqs'], exact: true }),
+      ]);
       navigate('/workbench');
     },
     onError: (e: unknown) => setError(getBizMessage(e, '生效失败')),
@@ -217,7 +237,8 @@ export default function Calibrate() {
   const pending = stepMut.isPending || confirmMut.isPending;
   const showQA = phase === 'await_feedback' || phase === 'ask' || phase === 'summarize';
   const step = currentStep(phase);
-  const content = extractProfileContent(draft);
+  const profile = readProfileFields(extractProfileContent(draft));
+  const candidates = extractFaqCandidates(draft);
 
   return (
     <main className="mx-auto min-h-full max-w-3xl px-5 py-8">
@@ -415,14 +436,27 @@ export default function Calibrate() {
             第 3 步 · 你的定位档案
           </div>
           <div className="mb-4 grid grid-cols-2 gap-2.5 text-body">
-            {CARDS.map((c) => {
-              const text = asText(content[c.key]);
+            {FIELDS.map((key) => {
+              const value = profile[key];
+              const text = isListField(key)
+                ? ((value as string[] | undefined) ?? []).join(' · ')
+                : ((value as string | undefined) ?? '').trim();
               return (
                 <div
-                  key={c.key}
-                  className="rounded-card border border-paper-tintDeep bg-paper-sunken px-3.5 py-3"
+                  key={key}
+                  className={`rounded-card border px-3.5 py-3 ${
+                    key === 'redlines'
+                      ? 'border-paper-dangerLine bg-paper-dangerTint'
+                      : 'border-paper-tintDeep bg-paper-sunken'
+                  } ${key === 'contentPillars' ? 'col-span-2' : ''}`}
                 >
-                  <div className="mb-1 text-hint font-bold text-paper-primary">{c.title}</div>
+                  <div
+                    className={`mb-1 text-hint font-bold ${
+                      key === 'redlines' ? 'text-paper-danger' : 'text-paper-primary'
+                    }`}
+                  >
+                    {PROFILE_FIELD_LABELS[key]}
+                  </div>
                   <div className="leading-normal">
                     {text || <span className="text-paper-mutedLight">档案里没有这一项</span>}
                   </div>
@@ -430,6 +464,45 @@ export default function Calibrate() {
               );
             })}
           </div>
+
+          {/* 高频问答候选（D20）：AI 只提取、用户勾选，没勾的一条都不入库 */}
+          {candidates.length > 0 && (
+            <div className="mb-4 rounded-card border border-paper-goldSoft bg-paper-tint px-4 py-3.5">
+              <div className="mb-1 text-hint font-bold text-paper-primary">
+                聊的时候你提到这些常被问的问题
+              </div>
+              <p className="mb-2.5 text-caption leading-normal text-paper-muted">
+                勾中的会存进「高频问答」，之后随时能一键变成选题；不勾的直接丢掉，以后也能手动补。
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {candidates.map((c, i) => (
+                  <li key={`${i}-${c.question}`}>
+                    <label className="flex cursor-pointer items-start gap-2.5 rounded-card bg-paper-card px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedFaqs.includes(i)}
+                        onChange={() => setSelectedFaqs(toggleCandidate(selectedFaqs, i))}
+                        className="mt-[3px] accent-paper-primary"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-body leading-normal text-paper-ink">
+                          {c.question}
+                        </span>
+                        {c.answer && (
+                          <span className="mt-0.5 block text-caption leading-normal text-paper-muted">
+                            {c.answer}
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-hint text-paper-mutedLight">
+                已勾选 {selectedFaqs.length} / {candidates.length} 条
+              </p>
+            </div>
+          )}
 
           {/* 试试效果对比块（失败/竞态丢弃 → sampleData null → 不渲染） */}
           {shouldShowSampleBlock(sampleData) && (

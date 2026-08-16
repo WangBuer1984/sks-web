@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getBizMessage } from '../api/client';
-import { listTopics, refreshHotTopics, type Topic } from '../api/topic';
+import { useQuery } from '@tanstack/react-query';
+import { listTopics, type Topic } from '../api/topic';
 import { topicSourceMeta } from '../lib/topicSourceMeta';
+import { topicFaqOrigin } from '../lib/topicFaqOrigin';
 
 /**
  * 选题库 `/topics`——对齐原型 `sections/12-选题库.html`。
@@ -49,24 +48,9 @@ function parseTopicSrc(t: Topic): {
 
 export default function Topics() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [hotMsg, setHotMsg] = useState<string | null>(null);
   const { data: topics, isLoading } = useQuery<Topic[]>({
     queryKey: ['topics'],
     queryFn: () => listTopics(),
-  });
-
-  const hotMut = useMutation({
-    mutationFn: () => refreshHotTopics(),
-    onSuccess: (n) => {
-      void queryClient.invalidateQueries({ queryKey: ['topics'] });
-      setHotMsg(
-        n > 0
-          ? `已写入 ${n} 条热点选题`
-          : '未匹配到新热点（需知识库 B 层案例卡，或热点已入库）',
-      );
-    },
-    onError: (e: unknown) => setHotMsg(getBizMessage(e, '拉取热点失败')),
   });
 
   const pending = (topics ?? []).filter((t) => t.status === 'open');
@@ -80,22 +64,10 @@ export default function Topics() {
             {isLoading ? '加载中…' : `${pending.length} 个待拍选题`}
           </span>
         </h1>
-        <button
-          type="button"
-          disabled={hotMut.isPending}
-          onClick={() => {
-            setHotMsg(null);
-            hotMut.mutate();
-          }}
-          className="shrink-0 text-meta text-paper-primary hover:text-paper-primaryHover disabled:opacity-45"
-        >
-          {hotMut.isPending ? '拉取中…' : '拉取今日热点'}
-        </button>
       </div>
       <p className="mb-5 text-lead text-paper-muted">
-        选题来自四个入口：每日热点、你的 FAQ、对标拆解、爆款复盘——都对齐你的内容支柱配比
+        选题来自三个入口：你的 FAQ、对标拆解、爆款复盘。FAQ 需在定位页点「生成选题」后才会出现在这里。
       </p>
-      {hotMsg ? <p className="mb-3 text-meta text-paper-muted">{hotMsg}</p> : null}
 
       {isLoading ? (
         <p className="text-copy text-paper-muted">加载中…</p>
@@ -103,22 +75,17 @@ export default function Topics() {
         <div className="rounded-block border border-dashed border-paper-lineStrong px-10 py-11 text-center">
           <p className="mb-2 font-serif text-sub font-black text-paper-ink">选题库还是空的</p>
           <p className="mb-5 text-body leading-relaxed text-paper-muted">
-            完成账号定位校准并补充知识库案例卡后，可拉取热点选题
+            在定位页维护高频问答并点「生成选题」，或拆一个对标账号
             <br />
-            也可以现在拆一个对标账号，拆完 TOP 视频会自动写入这里
+            爆款复盘产生的续集也会自动写入这里
           </p>
           <div className="flex flex-wrap justify-center gap-2.5">
-            <button
-              type="button"
-              disabled={hotMut.isPending}
-              onClick={() => {
-                setHotMsg(null);
-                hotMut.mutate();
-              }}
-              className="rounded-card bg-paper-primary px-6 py-3 text-body text-white hover:bg-paper-primaryHover disabled:opacity-45"
+            <Link
+              to="/positioning"
+              className="rounded-card bg-paper-primary px-6 py-3 text-body text-white hover:bg-paper-primaryHover"
             >
-              {hotMut.isPending ? '拉取中…' : '拉取今日热点'}
-            </button>
+              去维护 FAQ
+            </Link>
             <Link
               to="/analyze"
               className="rounded-card border border-paper-primary px-6 py-3 text-body text-paper-primary hover:bg-paper-tint"
@@ -129,7 +96,7 @@ export default function Topics() {
               to="/kb"
               className="rounded-card border border-paper-lineStrong px-6 py-3 text-body text-paper-inkSoft hover:border-paper-primary"
             >
-              先补知识库
+              先去知识库
             </Link>
           </div>
         </div>
@@ -138,6 +105,7 @@ export default function Topics() {
           {pending.map((t) => {
             const meta = topicSourceMeta(t.source);
             const { sourceLine, metrics } = parseTopicSrc(t);
+            const faqOrigin = topicFaqOrigin(t);
             return (
               <div
                 key={t.id}
@@ -153,7 +121,18 @@ export default function Topics() {
                     {t.title}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-meta text-paper-muted">
-                    <span className="min-w-0 truncate">{sourceLine}</span>
+                    {/* 由 FAQ 生成的选题：显示生成时的问题快照（FAQ 后来改名也不动它）。
+                        原 FAQ 已删除只做标注——稿子可能已经写了甚至发了，连选题一起删才是数据丢失。 */}
+                    {faqOrigin ? (
+                      <span className="min-w-0 truncate">
+                        {faqOrigin.question ? `来自你的问答「${faqOrigin.question}」` : '来自你的高频问答'}
+                        {faqOrigin.deleted && (
+                          <span className="ml-1 text-paper-mutedLight">· 原问答已删除</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="min-w-0 truncate">{sourceLine}</span>
+                    )}
                     {metrics.map((m) => (
                       <span
                         key={m.label}
@@ -187,7 +166,7 @@ export default function Topics() {
       )}
 
       <p className="mt-3.5 rounded-panel border border-dashed border-paper-goldSoft bg-paper-tint px-[18px] py-3.5 text-caption leading-normal text-paper-primary">
-        拆账号完成后 TOP 视频会自动汇入（标题 + 播放/收藏），可点「看文案」回看该条的完整文案与拆解；拆视频可点「存入选题库」；发布复盘续集也会写入这里。
+        拆账号完成后 TOP 视频会自动汇入；拆视频可点「存入选题库」；发布复盘的爆款续集也会写入这里。FAQ 请在定位页维护后再点「生成选题」。
       </p>
     </div>
   );

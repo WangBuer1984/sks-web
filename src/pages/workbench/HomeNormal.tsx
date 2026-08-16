@@ -11,8 +11,8 @@ import { topicSourceMeta } from '../../lib/topicSourceMeta';
  *   - 文案采用率不造假「↑12%」环比——无环比 API；样本为 0 显示「—」。
  */
 export interface HomeNormalProps {
-  cardCount: number;
-  cardsUpdatedThisWeek: number;
+  contentCount: number;
+  contentsUpdatedThisWeek: number;
   scriptsThisWeek: number;
   adoptPct: number;
   adoptSample: number; // 0 → UI 显示「—」而非 0%
@@ -36,8 +36,8 @@ function MetricCard({ label, children }: { label: string; children: ReactNode })
 }
 
 export default function HomeNormal({
-  cardCount,
-  cardsUpdatedThisWeek,
+  contentCount,
+  contentsUpdatedThisWeek,
   scriptsThisWeek,
   adoptPct,
   adoptSample,
@@ -48,11 +48,12 @@ export default function HomeNormal({
   return (
     <>
       <div className="mb-[30px] grid grid-cols-3 gap-3.5">
-        <MetricCard label="知识库卡片">
-          {cardCount}
-          {cardsUpdatedThisWeek > 0 && (
-            <span className="ml-1 text-meta font-normal text-paper-success">+{cardsUpdatedThisWeek} 本周</span>
+        <MetricCard label="知识库内容">
+          {contentCount}
+          {contentsUpdatedThisWeek > 0 && (
+            <span className="ml-1 text-meta font-normal text-paper-success">+{contentsUpdatedThisWeek} 本周</span>
           )}
+          <span className="ml-1 text-meta font-normal text-paper-muted">篇</span>
         </MetricCard>
         <MetricCard label="本周生成文案">
           {scriptsThisWeek}
@@ -65,14 +66,14 @@ export default function HomeNormal({
 
       <div className="mb-3 flex items-baseline justify-between">
         <div className="text-[16px] font-bold text-paper-ink">今日选题建议</div>
-        <div className="text-meta text-paper-muted">基于你的账号定位 + 今日行业热点</div>
+        <div className="text-meta text-paper-muted">来自你的高频问答、对标拆解与爆款复盘</div>
       </div>
 
       {picks.length === 0 ? (
         <div className="mb-[30px] rounded-block border border-dashed border-paper-lineStrong px-10 py-11 text-center">
           <p className="mb-2 font-serif text-[18px] font-black">选题库还是空的</p>
           <p className="mb-5 text-body leading-[1.8] text-paper-muted">
-            完成账号定位校准后，每天会自动送 3 个热点选题
+            在定位页把高频问答生成选题，或拆一个对标账号
           </p>
           <Link
             to="/topics"

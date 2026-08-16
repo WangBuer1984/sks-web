@@ -48,19 +48,32 @@ export function asrVoice(audio: Blob): Promise<string> {
   });
 }
 
-/** 校准生效：写 active 档案 + 批量建 A 层卡。turns 入库为 content 的 _interview_turns 供回放。 */
+/**
+ * 校准生效：写 active 档案（+ 用户勾选的高频问答）。
+ *
+ * - `turns` 入库为 content 的 `_interview_turns` 供回放。
+ * - `faqs` 只放**用户勾中**的候选（D20）：候选是 AI 从访谈里提取的，没勾的一条都不入库。
+ *   传 `[]` 与不传语义不同——前者是「看过候选、都不要」，两者后端都接受（FAQ 不是校准前置条件）。
+ * - D19 起后端**不再建 A 层卡**：档案本身是唯一真源。
+ */
 export function confirmProfile(
   sessionId: string,
   turns?: { role: 'ai' | 'user'; text: string }[],
+  faqs?: FaqInput[],
 ): Promise<void> {
-  return userClient.post<void, void>('/profile/confirm', { sessionId, turns: turns ?? null });
+  return userClient.post<void, void>('/profile/confirm', {
+    sessionId,
+    turns: turns ?? null,
+    faqs: faqs ?? null,
+  });
 }
 
 /**
  * active 定位档案（对齐 Java `ProfileController.ActiveProfileView`）。
  *
- * <p>`content` 的键由 Python summarize 产出，契约为 `人设 / 人群 / 差异化 / 变现 / 红线 / 支柱配比`
- * ——**中文键**，且 prompt 迭代频繁故后端整体透传不拆字段，前端也按 `Record` 读、缺键降级显示。
+ * <p>`content` 的规范键是 {@link PROFILE_FIELD_KEYS} 七项（D19）。**读侧仍可能遇到旧中文键**
+ * （`人设 / 人群 / …`，老档案不迁移），故这里保持 `Record` 宽松类型，展示前过
+ * `lib/profileFields.ts::readProfileFields` 规范化——不要在页面里直接按键取值。
  *
  * <p>未校准不是错误：`calibrated=false` + `content={}`，据此渲染引导态而非报错。
  */
@@ -100,6 +113,130 @@ export function sampleOpening(
     { sessionId, topic: topic ?? null },
     { signal },
   );
+}
+
+/**
+ * 定位档案的七个权威字段名（D19：定位档案是<b>唯一真源</b>）。
+ *
+ * <p>不存在第二套人设卡、也不存在不可见的「创作偏好」：定位页展示完整档案，创作页「人设声音」只投影
+ * {@link VOICE_FIELD_KEYS} 三项，编辑保存回写同一对象——两处改的是同一份数据。
+ *
+ * <p>这七个 key 同时是 `positioning_profile.content` 的 JSONB 键名与 REST 出参键名：`GET /api/profile`
+ * 由服务端投影成规范键返回。**读侧仍要过 `readProfileFields`**——老档案里的旧中文键不迁移，
+ * 服务端映射的是它认得的那些键，页面不该假设 `content` 里只有这七项。
+ */
+export const PROFILE_FIELD_KEYS = [
+  'persona',
+  'targetAudience',
+  'differentiation',
+  'conversionPath',
+  'tone',
+  'redlines',
+  'contentPillars',
+] as const;
+export type ProfileFieldKey = (typeof PROFILE_FIELD_KEYS)[number];
+
+/** 创作页「人设声音」区可见可改的三项——它是生成的<b>输入</b>，生成前就要可改。 */
+export const VOICE_FIELD_KEYS = ['persona', 'tone', 'redlines'] as const;
+export type VoiceFieldKey = (typeof VOICE_FIELD_KEYS)[number];
+
+/**
+ * 规范化后的定位档案内容。
+ *
+ * <p>`redlines` / `contentPillars` 是多值（红线是清单、内容支柱是几类内容），其余五项是单段文本。
+ * 全部可缺省——未校准或档案不全时按缺键降级渲染，不报错。
+ */
+export interface PositioningProfileContent {
+  persona?: string | null;
+  targetAudience?: string | null;
+  differentiation?: string | null;
+  conversionPath?: string | null;
+  tone?: string | null;
+  redlines?: string[] | null;
+  contentPillars?: string[] | null;
+}
+
+/** 创作页「人设声音」的投影视图：只有三项，保存回写同一档案对象。 */
+export type VoiceProfileView = Pick<PositioningProfileContent, VoiceFieldKey>;
+
+/**
+ * 改档案字段——**唯一写入路径**（D19）。传七字段的任意子集，未出现的键后端保持不变。
+ *
+ * <p>定位页整档编辑与创作页「人设声音」共用它，后者只提交 `persona/tone/redlines`：
+ * 两处改的是同一个对象，所以「创作页改完口吻、定位页立刻可见」不靠调用方自觉。
+ *
+ * <p>空白文本 / 类型错误 / 未知键（含旧中文键）后端一律 4005。取消编辑时**不要**调它——
+ * 草稿只在本地，不存在「边输入边污染档案」的中间态。
+ *
+ * <p>返回更新后的整份档案，调用方拿它 invalidate `['profile']`。
+ */
+export function updateProfileFields(
+  patch: Partial<PositioningProfileContent>,
+): Promise<ActiveProfileView> {
+  return userClient.put<ActiveProfileView, ActiveProfileView>('/profile/fields', patch);
+}
+
+/**
+ * 高频问答（对齐 Java `FaqView`）——属于定位档案（D20），在账号定位页维护，不在选题库维护。
+ *
+ * <p>`answer` 可为 null（先记问题、答案后补）；顺序由用户拖动维护，不宣称咨询频率。
+ * 每条 FAQ 由用户点「生成选题」后才进入选题库。
+ */
+export interface FaqView {
+  id: number;
+  question: string;
+  answer: string | null;
+  sortOrder: number;
+  updatedAt: string;
+}
+
+/** 新建 FAQ 的入参形状。也是 confirm 里勾选候选的形状（`answer` 缺省 = 答案后补）。 */
+export interface FaqInput {
+  question: string;
+  answer?: string;
+}
+
+/** FAQ 列表（用户维护的顺序）。免额度。 */
+export function listFaqs(): Promise<FaqView[]> {
+  return userClient.get<FaqView[], FaqView[]>('/profile/faqs');
+}
+
+/** 新增 FAQ（追加到末尾）。question 过 UGC 内容安全；answer 可空。返回新 id。 */
+export function createFaq(question: string, answer?: string): Promise<number> {
+  return userClient.post<number, number>('/profile/faqs', {
+    question,
+    answer: answer ?? null,
+  });
+}
+
+/** 编辑 FAQ。**已生成的选题不受影响**——选题侧存的是当时的问题快照。 */
+export function updateFaq(id: number, question: string, answer?: string): Promise<void> {
+  return userClient.put<void, void>(`/profile/faqs/${id}`, {
+    question,
+    answer: answer ?? null,
+  });
+}
+
+/** 删除 FAQ（软删）。由它生成的选题**保留**，靠快照显示「原 FAQ 已删除」。 */
+export function deleteFaq(id: number): Promise<void> {
+  return userClient.delete<void, void>(`/profile/faqs/${id}`);
+}
+
+/**
+ * 重排 FAQ。`ids` 必须是当前用户**全部**未删 FAQ 的一套（不缺、不重、无外来 id），
+ * 否则后端整次 4005 且一条都不改——半套顺序比拒绝更难修。
+ */
+export function reorderFaqs(ids: number[]): Promise<void> {
+  return userClient.put<void, void>('/profile/faqs/order', { ids });
+}
+
+/**
+ * 「生成选题」：由 FAQ 建一条 open 选题（`source=faq`），后端写来源快照。返回新选题 id。
+ *
+ * <p>**用户主动触发**（D20）：不做后台自动生成——选题库被系统塞满的话，用户就不再看它了。
+ */
+export function createTopicFromFaq(id: number): Promise<number> {
+  return userClient.post<number, number>(`/profile/faqs/${id}/topic`, {});
 }
 
 /** /api/profile/interview/history 响应（对齐 Java ProfileService.InterviewHistoryView）。 */

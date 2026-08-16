@@ -1,14 +1,14 @@
 <!-- 段：历史稿件　条件：{{ isHistory }}
-     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4961–5032 行
+     来源：prototypes/随口说原型-07191700.html 第 387 行内嵌页面源码的第 4987–5069 行
      本文件由 scripts/extract-prototype.mjs 生成，勿手改 -->
 <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
       <div style="max-width: 980px; margin: 0 auto;">
         <div style="font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 900; margin-bottom: 4px;">发布复盘</div>
-        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">闭环的最后一站：登记发布地址 → 数据回来 → 爆款沉淀进知识库 → 续集回到选题库</div>
+        <div style="font-size: 14px; color: #8a8578; margin-bottom: 20px;">闭环的最后一站：采用的稿出现在这里 → 登记发布地址 → 你点「复盘」抓真实数据 → 爆款打上标签 → 续集回到选题库</div>
         <sc-if value="{{ historyEmpty }}" hint-placeholder-val="{{ false }}">
           <div style="border: 1px dashed #d8d2c4; border-radius: 12px; padding: 44px 40px; text-align: center;">
             <div style="font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 900; margin-bottom: 8px;">还没有稿件</div>
-            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">生成并采用第一条文案后，它会出现在这里<br>发布后登记视频地址，数据回来自动做爆款归因</div>
+            <div style="font-size: 13.5px; color: #8a8578; line-height: 1.8; margin-bottom: 20px;">生成并采用第一条文案后，它会出现在这里<br>发布后登记视频地址，想看表现时点「复盘」，抓真实数据 + 归因爆点</div>
             <button sc-camel-on-click="{{ goTopics }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 8px; padding: 12px 24px; font-size: 13.5px; cursor: pointer;" style-hover="background: #6e4620;">去选题库挑一个选题</button>
           </div>
         </sc-if>
@@ -29,45 +29,56 @@
               <div style="font-size: 12.5px; color: #6b6558;">{{ h.collectCount }}</div>
               <div style="font-size: 12px;">
                 <sc-if value="{{ h.isHot }}" hint-placeholder-val="{{ false }}">
-                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button sc-camel-on-click="{{ h.mark }}" style="border: 1px solid {{ h.markBorder }}; color: {{ h.markColor }}; background: {{ h.markBg }}; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;">{{ h.markLabel }}</button>
-                    <button sc-camel-on-click="{{ h.sequel }}" style="border: 1px solid {{ h.seqBorder }}; color: {{ h.seqColor }}; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="background: #f7f3ea;">{{ h.seqLabel }}</button>
+                  <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                    <span style="color: #4a8c5c; font-size: 11.5px;">✓ 知识库已标「爆款」</span>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                      <button sc-camel-on-click="{{ h.sequel }}" style="border: 1px solid {{ h.seqBorder }}; color: {{ h.seqColor }}; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="background: #f7f3ea;">{{ h.seqLabel }}</button>
+                      <button sc-camel-on-click="{{ h.review }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">重新抓数据</button>
+                    </div>
                   </div>
                 </sc-if>
-                <sc-if value="{{ h.isRejected }}" hint-placeholder-val="{{ false }}">
-                  <sc-if value="{{ h.fbPending }}" hint-placeholder-val="{{ true }}">
-                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                      <span style="color: #8a8578;">没用它是因为？</span>
-                      <button sc-camel-on-click="{{ h.fbTopic }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">选题不对</button>
-                      <button sc-camel-on-click="{{ h.fbVoice }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">不像我说话</button>
-                    </div>
-                  </sc-if>
-                  <sc-if value="{{ h.fbDone }}" hint-placeholder-val="{{ false }}">
-                    <span style="color: #4a8c5c;">✓ {{ h.fbNote }}</span>
-                  </sc-if>
-                </sc-if>
                 <sc-if value="{{ h.isPlain }}" hint-placeholder-val="{{ false }}">
-                  <span style="color: #a09a8a;">数据正常，无需动作</span>
+                  <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                    <span style="color: #a09a8a; font-size: 11.5px;">{{ h.plainNote }}</span>
+                    <button sc-camel-on-click="{{ h.review }}" style="border: 1px solid #d8d2c4; color: #6b6558; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="border-color: #8a5a2b; color: #8a5a2b;">重新抓数据</button>
+                  </div>
                 </sc-if>
                 <sc-if value="{{ h.isPending }}" hint-placeholder-val="{{ false }}">
                   <button sc-camel-on-click="{{ h.openPub }}" style="border: 1px solid #b0492f; color: #b0492f; background: #faf0ec; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #f4e3dd;">登记视频地址 →</button>
                 </sc-if>
-                <sc-if value="{{ h.isTracking }}" hint-placeholder-val="{{ false }}">
-                  <span style="color: #4a8c5c;">✓ 已登记，追踪中 · 24h 后出归因</span>
+                <sc-if value="{{ h.isRegistered }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                    <span style="color: #8a8578; font-size: 11.5px;">已登记 · 还没抓数据</span>
+                    <button sc-camel-on-click="{{ h.review }}" style="border: 1px solid #8a5a2b; color: #8a5a2b; background: #f7f3ea; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #efe6d4;">复盘 · 抓数据 →</button>
+                  </div>
                 </sc-if>
                 <sc-if value="{{ h.flopPending }}" hint-placeholder-val="{{ false }}">
                   <button sc-camel-on-click="{{ h.flopWhy }}" style="border: 1px solid #b0492f; color: #b0492f; background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;" style-hover="background: #faf0ec;">低于预期 · 看归因</button>
                 </sc-if>
                 <sc-if value="{{ h.flopDone }}" hint-placeholder-val="{{ false }}">
-                  <span style="color: #6b6558; line-height: 1.5;">归因：钩子前 3 秒无冲突 + 发布时段偏差<br><span style="color: #4a8c5c;">✓ 改进建议已写入创作偏好</span></span>
+                  <span style="color: #6b6558; line-height: 1.5;">已抓数据 · 归因：钩子前 3 秒无冲突 + 发布时段偏差<br><span style="color: #4a8c5c;">✓ 改进建议已写入创作偏好</span></span>
                 </sc-if>
               </div>
             </div>
           </sc-for>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px;">
-          <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65;"><strong>本周归因：</strong>清单体（验收 5 个地方）播放是均值的 6 倍——你的观众为「可保存的干货」停留，建议下周清单体占比提到 2/4 条。</div>
-          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65; color: #6b6558;">「未采用」的回答会写回账号档案与口吻样本；「爆款素材」进知识库 C 层，供后续创作引用。</div>
+          <div style="background: #f7f3ea; border-left: 3px solid #8a5a2b; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65;">
+            <sc-if value="{{ weeklyIdle }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="flex: 1;"><strong>本周复盘还没生成</strong><br><span style="color: #6b6558;">聚合这周已复盘的稿子，看哪种结构最吃香——你点才跑，不扣额度</span></div>
+                <button sc-camel-on-click="{{ genWeekly }}" style="border: none; background: #8a5a2b; color: #fff; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; white-space: nowrap;" style-hover="background: #6e4620;">生成本周复盘</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ weeklyDone }}" hint-placeholder-val="{{ false }}">
+              <div><strong>本周归因：</strong>清单体（验收 5 个地方）播放是均值的 6 倍——你的观众为「可保存的干货」停留，建议下周清单体占比提到 2/4 条。</div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                <span style="font-size: 11.5px; color: #a09a8a;">刚生成 · 数据变了再点一次</span>
+                <span sc-camel-on-click="{{ genWeekly }}" style="font-size: 12px; color: #8a5a2b; cursor: pointer;" style-hover="color: #6e4620;">重新生成</span>
+              </div>
+            </sc-if>
+          </div>
+          <div style="background: #faf8f2; border: 1px solid #e2dccd; border-radius: 8px; padding: 14px 18px; font-size: 13px; line-height: 1.65; color: #6b6558;">判为爆款的稿在知识库自动打「爆款」标签，之后创作优先参考它。未采用的稿不会出现在这里。</div>
         </div>
         </sc-if>
       </div>
