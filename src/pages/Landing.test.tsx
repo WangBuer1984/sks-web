@@ -18,6 +18,7 @@ describe('Landing footer', () => {
     expect(icp.getAttribute('href')).toBe('https://beian.miit.gov.cn/');
     expect(icp.getAttribute('target')).toBe('_blank');
     expect(icp.getAttribute('rel')).toBe('noreferrer');
+    expect(icp.className).toMatch(/text-paper-mutedLight/);
     expect(icp.className).not.toMatch(/bg-paper-primary/);
   });
 });

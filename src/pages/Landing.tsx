@@ -221,7 +221,12 @@ export default function Landing() {
           随口说 · by 王不二 · 微信：suikoushuo-wang
         </p>
         <p className="mt-2 text-meta text-paper-mutedLight">
-          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-paper-mutedLight hover:text-paper-mutedLight"
+          >
             鲁ICP备2026038792号
           </a>
         </p>
