@@ -220,6 +220,11 @@ export default function Landing() {
         <p className="mt-12 border-t border-paper-line pt-[22px] text-meta text-paper-mutedLight">
           随口说 · by 王不二 · 微信：suikoushuo-wang
         </p>
+        <p className="mt-2 text-meta text-paper-mutedLight">
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+            鲁ICP备2026038792号
+          </a>
+        </p>
       </section>
     </div>
   );
