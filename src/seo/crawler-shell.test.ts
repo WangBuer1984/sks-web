@@ -32,4 +32,28 @@ describe('crawler shell files', () => {
     expect(xml).not.toContain('/admin');
     expect(xml).not.toContain('<html');
   });
+
+  it('exposes Baidu-readable meta and noscript on the HTML shell', () => {
+    const html = readRepo('index.html');
+    expect(html).toContain('<html lang="zh-CN">');
+    expect(html).toContain('<title>随口说 — 口播博主的 AI 内容工作台</title>');
+    expect(html).toContain(
+      'content="面向口播博主与获客老板的 AI 内容工作台。「随口说」记住你的人设、口吻和业务知识，从账号定位到选题、创作、发布复盘，全流程陪你把号做起来。"',
+    );
+    expect(html).toContain(
+      'content="随口说,口播,口播文案,AI写作,抖音口播,视频号,内容工作台"',
+    );
+    expect(html).toContain('<link rel="canonical" href="https://suikoushuo.com/" />');
+    expect(html).toContain('<noscript>');
+    expect(html).toContain('随口说');
+    expect(html).toContain('让每条口播稿都像你本人写的');
+    expect(html).toContain(
+      '不是又一个 AI 写作工具。「随口说」记住你的人设、口吻和业务知识，从账号定位到选题、创作、发布复盘，全流程陪你把号做起来。',
+    );
+    expect(html).toContain('免费开始，手机号登录');
+    expect(html).toContain('https://suikoushuo.com/');
+    expect(html).toContain('<div id="root"></div>');
+    expect(html).toContain('name="theme-color"');
+    expect(html).not.toContain('VITE_');
+  });
 });
